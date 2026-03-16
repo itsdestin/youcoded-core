@@ -1,0 +1,26 @@
+{
+  "notebook_dir": "~/Desktop/Elections Notebook",
+  "data_file": "~/Desktop/Elections Notebook/Pipeline Data/elections_data.json",
+  "flag_cache_file": "~/Desktop/Elections Notebook/Pipeline Data/flag_decisions_cache.json",
+  "pdf_dir": "~/Desktop/Elections Notebook/Campaign Finance PDFs",
+  "output_dir": "~/Desktop/Elections Notebook/Completed Notebooks",
+  "soi_url": "https://apps.arizona.vote/electioninfo/SOI/68",
+  "roster_house_url": "https://www.azleg.gov/MemberRoster/?body=H",
+  "roster_senate_url": "https://www.azleg.gov/MemberRoster/?body=S",
+  "finance_api_url": "https://seethemoney.az.gov/Reporting/GetNEWTableData/",
+  "reports_api_url": "https://seethemoney.az.gov/Reporting/GetTableData",
+  "extraction_concurrency": 10,
+  "election_cycle_year": 2026,
+  "party_colors": {
+    "Republican": "FF0000",
+    "Democrat": "0432FF",
+    "Democratic": "0432FF",
+    "Libertarian": "FFC000",
+    "Green": "008000",
+    "No Labels": "E36C0A",
+    "Independent": "E36C0A",
+    "Arizona Independent": "E36C0A",
+    "Other": "008000",
+    "default": "000000"
+  }
+}
