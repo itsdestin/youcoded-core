@@ -1,6 +1,6 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.5
+**Version:** 1.6
 **Last updated:** 2026-03-17
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
@@ -77,7 +77,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 |-------|--------|----------|-------|-------------|
 | Core | setup-wizard | setup, toolkit, contribute, toolkit-uninstall, update, health | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
 | Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, google-drive, journaling-assistant | — | sync-encyclopedia | — |
-| Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages |
+| Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages, windows-control (Windows) |
 | Elections Notebook | elections-notebook | — | — | — |
 | JLBC Fiscal Note | jlbc-fiscal-note | — | — | — |
 
@@ -122,15 +122,16 @@ The toolkit ships CLAUDE.md fragment templates in `core/templates/claude-md-frag
 
 ## Known Issues
 
-### MCP servers not matched to desktop environment
+### MCP servers — resolved items and remaining gaps
 
-The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. The published toolkit does not yet replicate that setup during installation:
+MCP server configs have been audited against the author's desktop `~/.claude.json` and ported to the toolkit:
 
-- **Desktop control** — The author's Windows setup uses `windows-control` (uvx/stdio). No Mac/Linux equivalent is bundled. Need to add platform-appropriate desktop control MCP server (e.g., mac-control or cross-platform alternative).
-- **gmessages** — The setup wizard has instructions and JSON templates for registering the MCP server, but the actual config has not been tested end-to-end on a fresh install. The author's MCP server definitions need to be ported from the desktop `~/.claude.json`.
-- **todoist** — Same as gmessages — wizard has the JSON template (`"type": "http", "url": "https://ai.todoist.net/mcp"`) but the full config (including any project-level `mcpServers` entries) needs to be verified against the author's working setup.
-- **gmail-extended** — Deprecated and removed from the toolkit. Superseded by Claude.ai's native Gmail MCP connector.
-- **Other MCP servers** — The author's desktop may have additional MCP servers not yet documented or included in the toolkit. A full audit of `~/.claude.json` mcpServers is needed.
+- **windows-control** — Added to setup wizard (Windows only, `uvx windows-mcp`). No Mac/Linux equivalent bundled yet.
+- **todoist** — Config verified: `"type": "http", "url": "https://ai.todoist.net/mcp"`. Works out of the box.
+- **gmessages** — Config verified. Pre-built Windows binary (`gmessages.exe`) included in repo. Setup wizard handles platform-appropriate binary name.
+- **gmail-extended** — Deprecated and removed. Superseded by Claude.ai's native Gmail MCP connector.
+
+Remaining gap: No Mac/Linux desktop control MCP server equivalent to `windows-control`.
 
 ### `/contribute` command has no recovery path for non-technical users
 
@@ -147,8 +148,7 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 
 ## Planned Updates
 
-- Audit author's desktop `~/.claude.json` and port all MCP server configs to the toolkit
-- Add platform-appropriate desktop control MCP server
+- Add Mac/Linux desktop control MCP server equivalent
 - Add MCP connectivity verification to Phase 6
 - Convert root-level `skills/setup-wizard` from copy to proper symlink in git
 - Add recovery/bail-out instructions to `/contribute` command for non-technical users
@@ -158,6 +158,7 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-17 | 1.6 | Ported MCP server configs from author's desktop: added windows-control (Windows), verified todoist and gmessages configs, included pre-built gmessages.exe binary, removed gmail-extended (deprecated), updated mcp-servers.md template fragment | Update |
 | 2026-03-17 | 1.5 | Usability review: added /health command, fixed uninstall marker mismatch, improved wizard phase summaries and first-run experience, added messaging and /contribute to known issues with planned extraction, improved template variable prompts and rclone fallback guidance, fixed PowerShell installer instructions | Update |
 | 2026-03-16 | 1.4 | Documented CLAUDE.md fragments system, /toolkit reference card + periodic reminder, error guidance tips, contribute policy. Updated install flow diagram. Synced with CHANGELOG v1.0.1. | Update |
 | 2026-03-16 | 1.3 | Added /toolkit command. Reverted premature MCP "resolved" claims — configs are untested templates, not working setups. Toned down upstream contribution pressure. Added MCP audit to planned updates. | Update |

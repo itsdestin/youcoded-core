@@ -724,6 +724,27 @@ MCP servers let Claude talk to external services. They're configured in `~/.clau
 
 Tell the user: "Now I'll register the services we set up so Claude can use them automatically in every conversation."
 
+**windows-control** (Windows only):
+
+The windows-control MCP server lets Claude interact with the Windows desktop — clicking, typing, taking screenshots, managing windows. It's installed via `uvx` (part of `uv`, the Python package runner). Add this to `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "windows-control": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["windows-mcp"],
+      "env": {}
+    }
+  }
+}
+```
+
+If `uvx` is not installed, install it first: `pip install uv` or `pipx install uv`.
+
+Tell the user: "Windows desktop control is registered. Claude can now interact with windows, click buttons, take screenshots, and automate desktop tasks."
+
 **Todoist** (if Productivity selected and Todoist token provided):
 
 The Todoist MCP server is a cloud-hosted service — no local binary needed. Add this to `~/.claude.json`:
