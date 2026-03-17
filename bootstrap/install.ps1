@@ -55,13 +55,29 @@ try {
 } catch {}
 
 if (-not $gitFound) {
-    Write-Host ""
-    Write-Host "  Git is required but not installed." -ForegroundColor Red
-    Write-Host "  Install from https://git-scm.com/download/win" -ForegroundColor Yellow
-    Write-Host "  Or run: winget install Git.Git" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  Install git, then re-run this script."
-    exit 1
+    Write-Host "  Installing Git..." -ForegroundColor Yellow
+    $wingetAvailable = $false
+    try {
+        & winget --version 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { $wingetAvailable = $true }
+    } catch {}
+
+    if ($wingetAvailable) {
+        winget install Git.Git --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "  Git install failed. Please install from https://git-scm.com/download/win" -ForegroundColor Red
+            exit 1
+        }
+        # Refresh PATH so git is available in this session
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        Write-Host "  Git installed" -ForegroundColor Green
+    } else {
+        Write-Host ""
+        Write-Host "  Please install Git from https://git-scm.com/download/win" -ForegroundColor Red
+        Write-Host "  Or install winget first, then re-run this script."
+        exit 1
+    }
 }
 
 # --- Check for Claude Code ---
@@ -97,7 +113,15 @@ if (-not $claudeFound) {
 # --- Clone the toolkit ---
 $toolkitDir = Join-Path $HOME ".claude\plugins\destinclaude"
 if (Test-Path $toolkitDir) {
-    Write-Host "  Toolkit already cloned at $toolkitDir" -ForegroundColor Green
+    Write-Host "  Updating toolkit..." -ForegroundColor Yellow
+    Push-Location $toolkitDir
+    git pull --ff-only 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Toolkit updated" -ForegroundColor Green
+    } else {
+        Write-Host "  Toolkit update skipped (local changes present)" -ForegroundColor Yellow
+    }
+    Pop-Location
 } else {
     Write-Host "  Cloning toolkit..." -ForegroundColor Yellow
     $pluginsDir = Join-Path $HOME ".claude\plugins"
@@ -106,15 +130,15 @@ if (Test-Path $toolkitDir) {
     Write-Host "  Toolkit cloned" -ForegroundColor Green
 }
 
-# --- Register /setup-wizard command and wizard skill ---
+# --- Register /setup command and wizard skill ---
 Write-Host "  Registering setup wizard..." -ForegroundColor Yellow
 $commandsDir = Join-Path $HOME ".claude\commands"
 $skillsDir = Join-Path $HOME ".claude\skills"
 if (-not (Test-Path $commandsDir)) { New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null }
 if (-not (Test-Path $skillsDir)) { New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null }
 
-$commandSrc = Join-Path $toolkitDir "core\commands\setup-wizard.md"
-$commandDst = Join-Path $commandsDir "setup-wizard.md"
+$commandSrc = Join-Path $toolkitDir "core\commands\setup.md"
+$commandDst = Join-Path $commandsDir "setup.md"
 $skillSrc = Join-Path $toolkitDir "core\skills\setup-wizard"
 $skillDst = Join-Path $skillsDir "setup-wizard"
 
@@ -144,18 +168,10 @@ Write-Host ""
 Write-Host ""
 Write-Host "  =====================================================" -ForegroundColor Green
 Write-Host "  |                                                   |" -ForegroundColor Green
-Write-Host "  |   Download complete!                              |" -ForegroundColor Green
-Write-Host "  |                                                   |" -ForegroundColor Green
-Write-Host "  |   Now, just open a new terminal window, type      |" -ForegroundColor Green
-Write-Host '  |   "claude", and hit the enter key.                |' -ForegroundColor Green
-Write-Host "  |   This is how you will access Claude going        |" -ForegroundColor Green
-Write-Host "  |   forward.                                        |" -ForegroundColor Green
-Write-Host "  |                                                   |" -ForegroundColor Green
-Write-Host "  |   One final step:                                 |" -ForegroundColor Green
-Write-Host '  |     Launch Claude and say "set me up."            |' -ForegroundColor Green
-Write-Host "  |     Claude will walk you through a series of      |" -ForegroundColor Green
-Write-Host "  |     questions to finalize and customize your      |" -ForegroundColor Green
-Write-Host "  |     installation.                                 |" -ForegroundColor Green
+Write-Host "  |   Download complete! Starting setup...            |" -ForegroundColor Green
 Write-Host "  |                                                   |" -ForegroundColor Green
 Write-Host "  =====================================================" -ForegroundColor Green
 Write-Host ""
+
+# Launch Claude and kick off the setup wizard automatically.
+& claude "set me up"

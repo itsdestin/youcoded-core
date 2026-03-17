@@ -98,16 +98,31 @@ fi
 if command -v git &> /dev/null; then
     echo "  Git found: $(git --version | head -1)"
 else
-    echo ""
-    echo "  Git is required but not installed."
+    echo "  Installing git..."
     if [[ "$OS" == "macos" ]]; then
-        echo "  Run: xcode-select --install"
+        brew install git
     elif [[ "$OS" == "linux" ]]; then
-        echo "  Run: sudo apt install git  (or your distro's equivalent)"
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get install -y git
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y git
+        else
+            echo ""
+            echo "  Please install git using your distro's package manager."
+            exit 1
+        fi
+    else
+        echo ""
+        echo "  Please install git manually, then re-run this script."
+        exit 1
     fi
-    echo ""
-    echo "  Install git, then re-run this script."
-    exit 1
+    if ! command -v git &> /dev/null; then
+        echo ""
+        echo "  Git installation didn't seem to take effect in this session."
+        echo "  Close this terminal, open a new one, and re-run this script."
+        exit 1
+    fi
+    echo "  Git installed: $(git --version | head -1)"
 fi
 
 # --- Check for Claude Code ---
@@ -129,7 +144,12 @@ fi
 # --- Clone the toolkit ---
 TOOLKIT_DIR="$HOME/.claude/plugins/destinclaude"
 if [ -d "$TOOLKIT_DIR" ]; then
-    echo "  Toolkit already cloned at $TOOLKIT_DIR"
+    echo "  Updating toolkit..."
+    if git -C "$TOOLKIT_DIR" pull --ff-only 2>/dev/null; then
+        echo "  Toolkit updated"
+    else
+        echo "  Toolkit update skipped (local changes present)"
+    fi
 else
     echo "  Cloning toolkit..."
     mkdir -p "$HOME/.claude/plugins"
@@ -137,15 +157,15 @@ else
     echo "  Toolkit cloned"
 fi
 
-# --- Register /setup-wizard command and wizard skill ---
+# --- Register /setup command and wizard skill ---
 # Claude Code auto-discovers commands from ~/.claude/commands/ and skills
 # from ~/.claude/skills/. Symlink the setup wizard into these standard
-# locations so /setup-wizard works immediately — no plugin registration needed.
+# locations so /setup works immediately — no plugin registration needed.
 echo "  Registering setup wizard..."
 mkdir -p "$HOME/.claude/commands" "$HOME/.claude/skills"
 
 # Remove any stale symlinks/copies before creating new ones
-rm -f "$HOME/.claude/commands/setup-wizard.md" 2>/dev/null
+rm -f "$HOME/.claude/commands/setup.md" 2>/dev/null
 # rm -f won't remove a directory symlink on some systems; use explicit check
 if [ -L "$HOME/.claude/skills/setup-wizard" ]; then
     rm "$HOME/.claude/skills/setup-wizard"
@@ -154,13 +174,13 @@ elif [ -d "$HOME/.claude/skills/setup-wizard" ]; then
 fi
 
 # Use the core skill directly (not the root-level copy) to avoid symlink chains
-ln -sf "$TOOLKIT_DIR/core/commands/setup-wizard.md" "$HOME/.claude/commands/setup-wizard.md"
+ln -sf "$TOOLKIT_DIR/core/commands/setup.md" "$HOME/.claude/commands/setup.md"
 ln -sf "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
 
 # Verify symlinks resolve correctly
 SETUP_OK=true
-if [ ! -e "$HOME/.claude/commands/setup-wizard.md" ]; then
-    echo "  WARNING: /setup-wizard command symlink is broken"
+if [ ! -e "$HOME/.claude/commands/setup.md" ]; then
+    echo "  WARNING: /setup command symlink is broken"
     SETUP_OK=false
 fi
 if [ ! -e "$HOME/.claude/skills/setup-wizard/SKILL.md" ]; then
@@ -173,7 +193,7 @@ if [ "$SETUP_OK" = true ]; then
 else
     echo ""
     echo "  Symlink creation failed. Falling back to copy..."
-    cp "$TOOLKIT_DIR/core/commands/setup-wizard.md" "$HOME/.claude/commands/setup-wizard.md"
+    cp "$TOOLKIT_DIR/core/commands/setup.md" "$HOME/.claude/commands/setup.md"
     cp -R "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
     echo "  Setup wizard registered (copied)"
 fi
@@ -183,18 +203,19 @@ echo ""
 echo ""
 echo "  ====================================================="
 echo "  |                                                   |"
-echo "  |   Download complete!                              |"
-echo "  |                                                   |"
-echo "  |   Now, just open a new terminal window, type      |"
-echo "  |   \"claude\", and hit the enter key.                |"
-echo "  |   This is how you will access Claude going        |"
-echo "  |   forward.                                        |"
-echo "  |                                                   |"
-echo "  |   One final step:                                 |"
-echo "  |     Launch Claude and say \"set me up.\"            |"
-echo "  |     Claude will walk you through a series of      |"
-echo "  |     questions to finalize and customize your      |"
-echo "  |     installation.                                 |"
+echo "  |   Download complete! Starting setup...            |"
 echo "  |                                                   |"
 echo "  ====================================================="
 echo ""
+
+# Launch Claude and kick off the setup wizard automatically.
+# If stdout is a terminal we can start an interactive session right here.
+# curl|bash sets stdin to a pipe, so redirect from /dev/tty so Claude can
+# still receive keyboard input even in that case.
+if [ -t 1 ]; then
+    claude "set me up" < /dev/tty
+else
+    echo "  Open a new terminal window and run:"
+    echo "    claude"
+    echo '  Then say: "set me up"'
+fi
