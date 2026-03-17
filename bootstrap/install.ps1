@@ -140,16 +140,16 @@ if ($symlinkOk) {
 }
 
 Write-Host ""
-Write-Host "===================================" -ForegroundColor Cyan
-Write-Host "  Ready!" -ForegroundColor Green
-Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Next steps:"
-Write-Host "  1. Open a terminal (or stay in this one)"
-Write-Host "  2. Type: claude"
-Write-Host "  3. Type: /setup"
 Write-Host ""
-Write-Host "The /setup command launches the setup wizard, which walks you"
-Write-Host "through choosing what to install, personalizing your setup,"
-Write-Host "and verifying everything works."
+Write-Host "  ========================================" -ForegroundColor Green
+Write-Host "  |                                      |" -ForegroundColor Green
+Write-Host "  |   Installation complete!             |" -ForegroundColor Green
+Write-Host "  |                                      |" -ForegroundColor Green
+Write-Host "  |   Now run these two commands:        |" -ForegroundColor Green
+Write-Host "  |                                      |" -ForegroundColor Green
+Write-Host "  |     1.  claude                       |" -ForegroundColor Green
+Write-Host "  |     2.  /setup                       |" -ForegroundColor Green
+Write-Host "  |                                      |" -ForegroundColor Green
+Write-Host "  ========================================" -ForegroundColor Green
 Write-Host ""
