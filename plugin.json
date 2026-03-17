@@ -8,9 +8,5 @@
   "homepage": "https://github.com/itsdestin/claudifest-destiny",
   "repository": "https://github.com/itsdestin/claudifest-destiny",
   "license": "MIT",
-  "keywords": ["claude-code", "toolkit", "journal", "encyclopedia", "productivity"],
-  "skills": "./core/skills/",
-  "commands": "./core/commands/",
-  "agents": "./core/agents/",
-  "hooks": "./core/hooks/"
+  "keywords": ["claude-code", "toolkit", "journal", "encyclopedia", "productivity"]
 }
