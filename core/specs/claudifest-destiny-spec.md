@@ -1,6 +1,6 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.2
+**Version:** 1.3
 **Last updated:** 2026-03-16
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
@@ -74,7 +74,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 
 | Layer | Skills | Commands | Hooks | MCP Servers |
 |-------|--------|----------|-------|-------------|
-| Core | setup-wizard | setup, contribute, toolkit-uninstall, update | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
+| Core | setup-wizard | setup, toolkit, contribute, toolkit-uninstall, update | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
 | Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, google-drive, journaling-assistant | — | sync-encyclopedia | — |
 | Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages |
 | Elections Notebook | elections-notebook | — | — | — |
@@ -99,17 +99,15 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 
 ## Known Issues
 
-### MCP servers not fully matched to desktop environment
+### MCP servers not matched to desktop environment
 
-The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. Most gaps have been addressed; remaining issues:
+The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. The published toolkit does not yet replicate that setup during installation:
 
 - **Desktop control** — The author's Windows setup uses `windows-control` (uvx/stdio). No Mac/Linux equivalent is bundled. Need to add platform-appropriate desktop control MCP server (e.g., mac-control or cross-platform alternative).
+- **gmessages** — The setup wizard has instructions and JSON templates for registering the MCP server, but the actual config has not been tested end-to-end on a fresh install. The author's MCP server definitions need to be ported from the desktop `~/.claude.json`.
+- **todoist** — Same as gmessages — wizard has the JSON template (`"type": "http", "url": "https://ai.todoist.net/mcp"`) but the full config (including any project-level `mcpServers` entries) needs to be verified against the author's working setup.
 - **gmail-extended** — Deprecated and removed from the toolkit. Superseded by Claude.ai's native Gmail MCP connector.
-
-**Resolved (2026-03-16):**
-- ~~gmessages~~ — Setup wizard now writes the correct `stdio` MCP server entry to `~/.claude.json` with the built binary path.
-- ~~todoist~~ — Setup wizard now writes `"type": "http", "url": "https://ai.todoist.net/mcp"` to `~/.claude.json`.
-- ~~MCP config templates~~ — Phase 5 Step 6 now has concrete JSON for both servers.
+- **Other MCP servers** — The author's desktop may have additional MCP servers not yet documented or included in the toolkit. A full audit of `~/.claude.json` mcpServers is needed.
 
 ### Other gaps
 
@@ -118,6 +116,7 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 
 ## Planned Updates
 
+- Audit author's desktop `~/.claude.json` and port all MCP server configs to the toolkit
 - Add platform-appropriate desktop control MCP server
 - Add MCP connectivity verification to Phase 6
 - Convert root-level `skills/setup-wizard` from copy to proper symlink in git
@@ -126,6 +125,7 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
-| 2026-03-16 | 1.2 | Reconciled known issues (MCP config templates resolved), added design decisions for beginner-friendly walkthroughs and symlink fallback, documented root-level copy sync gap | Update |
+| 2026-03-16 | 1.3 | Added /toolkit command. Reverted premature MCP "resolved" claims — configs are untested templates, not working setups. Toned down upstream contribution pressure. Added MCP audit to planned updates. | Update |
+| 2026-03-16 | 1.2 | Added design decisions for beginner-friendly walkthroughs and symlink fallback, documented root-level copy sync gap | Update |
 | 2026-03-16 | 1.1 | Statusline is not a hook — documented as separate component type with own config entry in settings.json. gh CLI upgraded to strongly recommended. | Update |
 | 2026-03-16 | 1.0 | Initial spec — documents install flow, registration mechanism, dependency chain, and known MCP gaps | New |
