@@ -106,7 +106,7 @@ if (Test-Path $toolkitDir) {
     Write-Host "  Toolkit cloned" -ForegroundColor Green
 }
 
-# --- Register /setup-wizard command and wizard skill ---
+# --- Register /setup command and wizard skill ---
 Write-Host "  Registering setup wizard..." -ForegroundColor Yellow
 $commandsDir = Join-Path $HOME ".claude\commands"
 $skillsDir = Join-Path $HOME ".claude\skills"
@@ -142,14 +142,14 @@ if ($symlinkOk) {
 Write-Host ""
 Write-Host ""
 Write-Host ""
-Write-Host "  ========================================" -ForegroundColor Green
-Write-Host "  |                                      |" -ForegroundColor Green
-Write-Host "  |   Installation complete!             |" -ForegroundColor Green
-Write-Host "  |                                      |" -ForegroundColor Green
-Write-Host "  |   Now run these two commands:        |" -ForegroundColor Green
-Write-Host "  |                                      |" -ForegroundColor Green
-Write-Host "  |     1.  claude                       |" -ForegroundColor Green
-Write-Host "  |     2.  /setup-wizard                       |" -ForegroundColor Green
-Write-Host "  |                                      |" -ForegroundColor Green
-Write-Host "  ========================================" -ForegroundColor Green
+Write-Host "  Download complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host '  Now, just open a new terminal window, type "claude",'
+Write-Host "  and hit the enter key. This is how you will access"
+Write-Host "  Claude going forward."
+Write-Host ""
+Write-Host "  One final step:"
+Write-Host '    Launch Claude and say "set me up."'
+Write-Host "    Claude will walk you through a series of questions"
+Write-Host "    to finalize and customize your installation."
 Write-Host ""
