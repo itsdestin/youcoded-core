@@ -2,6 +2,29 @@
 
 All notable changes to ClaudifestDestiny will be documented in this file.
 
+## v1.0.1 (2026-03-16)
+
+### Fixes
+- Fixed plugin registration — uses symlinks into `~/.claude/skills/`, `~/.claude/commands/`, `~/.claude/hooks/` instead of broken `enabledPlugins` path entries
+- Fixed statusline not working after install — now uses `statusLine` config in `settings.json` instead of hook registration
+- Bootstrap installer verifies symlinks on Mac, falls back to copy if broken
+
+### New Features
+- `/toolkit` command — full reference card with all features, trigger phrases, and available-but-not-installed modules
+- Periodic `/toolkit` reminder every ~20 sessions via session-start hook
+- Error guidance tips (`★ Tip` blocks) — reassures non-technical users that Claude can fix errors on its own
+- gcloud CLI as optional core dependency for direct Google API authorization
+- Homebrew installed by default on Mac before all other dependencies
+
+### Improvements
+- Every auth step (gcloud, gh, rclone, Todoist) rewritten as beginner-friendly step-by-step walkthroughs
+- gh CLI upgraded from optional to strongly recommended (needed for updates and config backup)
+- MCP server config (Phase 5 Step 6) now has concrete JSON templates for todoist and gmessages
+- Setup completion now shows `/toolkit` reference card instead of contribute prompts
+- Removed contribute pressure from setup flow — no more asking new users to contribute upstream
+- DRIVE_ROOT prompt explains what "root folder" means in plain language
+- rclone setup uses direct `config create` command with interactive fallback (type #24 hint)
+
 ## v1.0.0 (2026-03-16)
 
 Initial public release.

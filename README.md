@@ -80,6 +80,16 @@ Each layer is a standalone [Claude Code plugin](https://docs.anthropic.com/en/do
 
 The setup wizard (`/setup`) handles layer selection, conflict resolution with your existing setup, dependency installation, and personalization. Everything is non-destructive — your existing configuration is backed up and can be restored with `/toolkit-uninstall`.
 
+## See What You Can Do
+
+After setup, type `/toolkit` to see all your features, useful phrases, and available modules:
+
+```
+/toolkit
+```
+
+Claude shows you everything installed, plus modules you haven't added yet.
+
 ## Keeping Up to Date
 
 The statusline shows your version and flags available updates. To update:
@@ -88,17 +98,9 @@ The statusline shows your version and flags available updates. To update:
 /update
 ```
 
-Claude shows you what changed and merges the update safely.
-
 ## Contributing
 
-Made the toolkit better? Share it:
-
-```
-/contribute
-```
-
-Claude diffs your changes, filters out anything personal, and creates a pull request. No git knowledge required. See the [Contributing Guide](docs/contributing.md) for details.
+See the [Contributing Guide](docs/contributing.md) for details, or just type `/contribute` and Claude handles the rest.
 
 ## Built By
 

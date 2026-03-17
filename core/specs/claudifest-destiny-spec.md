@@ -1,6 +1,6 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.3
+**Version:** 1.4
 **Last updated:** 2026-03-16
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
@@ -50,7 +50,8 @@ User runs: claude → /setup
   ├── Phase 3: Layer selection (core/life/productivity/modules)
   ├── Phase 4: Dependency installation (git, gh, gcloud, rclone, go, todoist)
   ├── Phase 5: Personalization (templates, CLAUDE.md, symlinks, hooks, MCP)
-  └── Phase 6: Verification (health checks on all installed components)
+  ├── Phase 6: Verification (health checks on all installed components)
+  └── Show /toolkit reference card (first look at all features)
 ```
 
 ### 2. Component Registration
@@ -92,6 +93,28 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 | rclone | Life | Yes | `brew install rclone` |
 | Go | Productivity | Yes (for gmessages) | `brew install go` |
 
+### 5. CLAUDE.md Fragments
+
+The toolkit ships CLAUDE.md fragment templates in `core/templates/claude-md-fragments/`. Each fragment is merged into the user's `~/.claude/CLAUDE.md` during setup (Phase 5 Step 4), wrapped in markers for clean updates on re-install:
+
+| Fragment | Purpose |
+|----------|---------|
+| `installed-skills.md` | Skill table populated by setup wizard based on selected layers |
+| `mcp-servers.md` | MCP server table populated based on configured servers |
+| `specs-system.md` | Specs system rules (mandates, versioning, governance) |
+| `system-change-protocol.md` | Mandatory checklist for modifying system features |
+| `error-guidance.md` | Instructs Claude to show `★ Tip` blocks when errors occur and the user seems unsure |
+
+### 6. User Experience Features
+
+**`/toolkit` command** — Full reference card showing all installed features, trigger phrases, hooks, and commands. Always includes an "AVAILABLE (not installed)" section listing layers/modules the user doesn't have, with descriptions. When a user asks about a feature from an uninstalled layer, Claude explains which layer it belongs to and offers `/setup`.
+
+**Periodic `/toolkit` reminder** — The session-start hook counts sessions and shows `Tip: Type /toolkit to see all your features and useful phrases.` every ~20 sessions. Tracked in `~/.claude/toolkit-state/toolkit-reminder.json`.
+
+**Error guidance tips** — CLAUDE.md fragment that instructs Claude to occasionally show a `★ Tip` block when errors occur, reassuring non-technical users that Claude can likely fix the problem if they say "go ahead and fix it" or "propose some solutions." Throttled to ~once per 5 errors, suppressed for technical users.
+
+**Contribute policy** — The `/contribute` command and contribution-detector agent exist for organic discovery, but contributing is NOT promoted during setup. The setup completion message and gh auth success message focus on the user's features, not upstream contributions. New users should explore before being asked to give back.
+
 ## Dependencies
 
 - **Depends on:** Claude Code (skill/command/hook auto-discovery, settings.json hook registration), git, Node.js, platform package manager (Homebrew on Mac)
@@ -125,6 +148,7 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-16 | 1.4 | Documented CLAUDE.md fragments system, /toolkit reference card + periodic reminder, error guidance tips, contribute policy. Updated install flow diagram. Synced with CHANGELOG v1.0.1. | Update |
 | 2026-03-16 | 1.3 | Added /toolkit command. Reverted premature MCP "resolved" claims — configs are untested templates, not working setups. Toned down upstream contribution pressure. Added MCP audit to planned updates. | Update |
 | 2026-03-16 | 1.2 | Added design decisions for beginner-friendly walkthroughs and symlink fallback, documented root-level copy sync gap | Update |
 | 2026-03-16 | 1.1 | Statusline is not a hook — documented as separate component type with own config entry in settings.json. gh CLI upgraded to strongly recommended. | Update |

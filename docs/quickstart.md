@@ -23,9 +23,9 @@ That's it. Your new commands:
 
 | Command | What It Does |
 |---------|-------------|
+| `/toolkit` | See all features, commands, and useful phrases |
 | `/setup` | Re-run setup wizard (safe to run again) |
 | `/update` | Check for and install toolkit updates |
-| `/contribute` | Submit your improvements back upstream |
 | `/toolkit-uninstall` | Cleanly remove the toolkit |
 
 ## What You Just Installed
@@ -50,4 +50,4 @@ The statusline shows your current version. When an update is available, you'll s
 
 ## Questions?
 
-Ask Claude: "What skills do I have installed?" or "Help me understand the toolkit architecture."
+Type `/toolkit` to see everything you can do, or just start talking — try "let's journal" or "check my inbox."
