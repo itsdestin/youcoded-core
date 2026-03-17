@@ -137,12 +137,14 @@ $skillsDir = Join-Path $HOME ".claude\skills"
 if (-not (Test-Path $commandsDir)) { New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null }
 if (-not (Test-Path $skillsDir)) { New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null }
 
-$commandSrc = Join-Path $toolkitDir "commands\setup.md"
-$commandDst = Join-Path $commandsDir "setup.md"
+$commandSrc = Join-Path $toolkitDir "core\commands\setup-wizard.md"
+$commandDst = Join-Path $commandsDir "setup-wizard.md"
 $skillSrc = Join-Path $toolkitDir "core\skills\setup-wizard"
 $skillDst = Join-Path $skillsDir "setup-wizard"
 
 # Remove stale links/copies
+$oldCommandDst = Join-Path $commandsDir "setup.md"
+if (Test-Path $oldCommandDst) { Remove-Item $oldCommandDst -Force }
 if (Test-Path $commandDst) { Remove-Item $commandDst -Force }
 if (Test-Path $skillDst) { Remove-Item $skillDst -Recurse -Force }
 
