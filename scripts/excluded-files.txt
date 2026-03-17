@@ -5,7 +5,6 @@
 # Personal content (user-specific data, not shareable)
 encyclopedia/
 memory/
-skills/destins-writing-voice/
 
 # Runtime state (generated during sessions, not part of the toolkit)
 sessions/
