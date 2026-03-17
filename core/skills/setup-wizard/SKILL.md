@@ -124,7 +124,7 @@ For each skill directory in `~/.claude/skills/` that shares a name with a toolki
 
 ### Step 5: Resolve MCP server conflicts
 
-If any existing MCP server names match toolkit servers (e.g., `gmessages`, `imessages`, `todoist`):
+If any existing MCP server names match toolkit servers (e.g., `gmessages`, `imessages`, `todoist`, `macos-automator`, `home-mcp`, `apple-events`):
 
 1. Show the user the existing config vs. what the toolkit would set up
 2. Offer: **Keep yours** / **Use toolkit's** / **Skip this server**
@@ -903,6 +903,7 @@ Run a health check on everything that was installed.
 - [ ] imessages server responds to initialize (if iMessage was selected and macOS)
 - [ ] gmessages binary exists (if Google Messages was selected and Go was available)
 - [ ] Todoist API responds (if token was provided)
+- [ ] macos-automator, home-mcp, apple-events registered in `~/.claude.json` (if macOS and selected)
 
 ### Step 4: Report results
 
@@ -926,6 +927,9 @@ Productivity:
   imessages ready ...................... OK
   gmessages built ...................... OK
   Todoist connected .................... OK
+  macos-automator registered ........... OK (macOS only)
+  home-mcp registered .................. OK (macOS only)
+  apple-events registered .............. OK (macOS only)
 ```
 
 If anything failed, show: "These items need attention:" with specific guidance on how to fix each one. Offer to retry the failed items.
