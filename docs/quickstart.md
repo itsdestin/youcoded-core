@@ -1,6 +1,6 @@
 # Quickstart
 
-Already using Claude Code? Here's the fast path.
+Already using Claude Code? Clone, setup, go.
 
 ## Install
 
@@ -26,6 +26,7 @@ That's it. Your new commands:
 | `/toolkit` | See all features, commands, and useful phrases |
 | `/setup` | Re-run setup wizard (safe to run again) |
 | `/update` | Check for and install toolkit updates |
+| `/health` | Quick check that everything is working |
 | `/toolkit-uninstall` | Cleanly remove the toolkit |
 
 ## What You Just Installed

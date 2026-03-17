@@ -26,6 +26,7 @@ ClaudifestDestiny Toolkit — Quick Reference
 COMMANDS (type these in Claude)
   /setup ................ Run or re-run the setup wizard
   /update ............... Check for and install toolkit updates
+  /health ............... Quick check that everything is working
   /toolkit .............. Show this reference card
   /toolkit-uninstall .... Remove the toolkit and restore your previous setup
 

@@ -50,7 +50,7 @@ powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.c
 - **Session hooks** — Auto-sync, statusline, write guards, git backup
 - **Specs system** — Structured documentation that persists across conversations
 - **Memory templates** — Organized persistent memory for Claude
-- **Commands** — `/setup`, `/update`, `/contribute`, `/toolkit-uninstall`
+- **Commands** — `/setup`, `/update`, `/health`, `/contribute`, `/toolkit-uninstall`
 - **Contribution detector** — Notices your improvements, offers to share them upstream
 
 ### Life (Personal Knowledge)

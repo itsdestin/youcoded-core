@@ -52,6 +52,7 @@ But when you close the terminal and start a new conversation later, Claude start
 - `/help` — shows available commands
 - `/setup` — runs the toolkit setup wizard (after you install the toolkit)
 - `/update` — checks for toolkit updates
+- `/health` — checks that everything is working properly
 
 **Permissions:** Claude will ask before doing anything that modifies your computer. You can approve each action individually or allow certain types of actions automatically.
 

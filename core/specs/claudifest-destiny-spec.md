@@ -1,7 +1,7 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.4
-**Last updated:** 2026-03-16
+**Version:** 1.5
+**Last updated:** 2026-03-17
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
 ## Purpose
@@ -75,7 +75,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 
 | Layer | Skills | Commands | Hooks | MCP Servers |
 |-------|--------|----------|-------|-------------|
-| Core | setup-wizard | setup, toolkit, contribute, toolkit-uninstall, update | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
+| Core | setup-wizard | setup, toolkit, contribute, toolkit-uninstall, update, health | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
 | Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, google-drive, journaling-assistant | — | sync-encyclopedia | — |
 | Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages |
 | Elections Notebook | elections-notebook | — | — | — |
@@ -132,6 +132,14 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 - **gmail-extended** — Deprecated and removed from the toolkit. Superseded by Claude.ai's native Gmail MCP connector.
 - **Other MCP servers** — The author's desktop may have additional MCP servers not yet documented or included in the toolkit. A full audit of `~/.claude.json` mcpServers is needed.
 
+### `/contribute` command has no recovery path for non-technical users
+
+The `/contribute` flow involves git concepts (forks, branches, remotes, pull requests) that non-technical users can't recover from if something goes wrong mid-flow. If a fork fails, a branch checkout errors, or a push is rejected, the user may be stranded on a detached or orphan branch with no idea how to get back to a working state. The command instructs Claude to "explain what GitHub is" at the start, but the mid-flow steps (diffing against tags, checking out contribution branches, adding fork remotes) generate git output that Claude would need to interpret and recover from on behalf of the user. Needs: a clear "bail out" instruction at the top (e.g., "If anything goes wrong, type `git checkout main` to get back to safety"), and ideally a pre-flight check that verifies the repo is in a clean state before starting.
+
+### Messaging setup is the longest and most complex optional phase
+
+The messaging setup (iMessage permissions + Google Messages Go compilation) is easily the most intimidating part of the wizard for non-technical users. It involves granting macOS Full Disk Access, installing a compiler, building from source, and deferring phone pairing to a future session. This complexity is embedded in the middle of the setup wizard rather than being a separate, deferrable flow. Users who just want journaling or task management may abandon setup when confronted with "I need to install a programming language to build a text messaging server." Consider: extracting messaging into a standalone post-setup flow (e.g., "say 'set up messaging' anytime") so users can finish core setup quickly and tackle messaging later if they want it.
+
 ### Other gaps
 
 - No automated test for verifying MCP server connectivity after setup.
@@ -143,11 +151,14 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 - Add platform-appropriate desktop control MCP server
 - Add MCP connectivity verification to Phase 6
 - Convert root-level `skills/setup-wizard` from copy to proper symlink in git
+- Add recovery/bail-out instructions to `/contribute` command for non-technical users
+- Extract messaging setup from the main wizard into a standalone post-setup flow
 
 ## Change Log
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-17 | 1.5 | Usability review: added /health command, fixed uninstall marker mismatch, improved wizard phase summaries and first-run experience, added messaging and /contribute to known issues with planned extraction, improved template variable prompts and rclone fallback guidance, fixed PowerShell installer instructions | Update |
 | 2026-03-16 | 1.4 | Documented CLAUDE.md fragments system, /toolkit reference card + periodic reminder, error guidance tips, contribute policy. Updated install flow diagram. Synced with CHANGELOG v1.0.1. | Update |
 | 2026-03-16 | 1.3 | Added /toolkit command. Reverted premature MCP "resolved" claims — configs are untested templates, not working setups. Toned down upstream contribution pressure. Added MCP audit to planned updates. | Update |
 | 2026-03-16 | 1.2 | Added design decisions for beginner-friendly walkthroughs and symlink fallback, documented root-level copy sync gap | Update |

@@ -24,13 +24,13 @@ Safely remove the ClaudifestDestiny toolkit and restore the user's previous conf
    - Remove the file
    - Remove any now-empty parent directories
 
-5. **Clean CLAUDE.md.** If CLAUDE.md was modified (not replaced), remove only the sections between toolkit marker comments:
+5. **Clean CLAUDE.md.** If CLAUDE.md was modified (not replaced), remove only the sections between toolkit marker comments. The setup wizard wraps each section with markers like:
    ```
-   <!-- CLAUDIFEST-DESTINY BEGIN -->
+   <!-- claudifest:section-name:start -->
    ...content added by toolkit...
-   <!-- CLAUDIFEST-DESTINY END -->
+   <!-- claudifest:section-name:end -->
    ```
-   Leave all other content intact.
+   Find and remove all `<!-- claudifest:*:start -->` / `<!-- claudifest:*:end -->` blocks (and their contents). Leave all other content intact.
 
 6. **Remove toolkit plugins.** Remove the toolkit plugin directories from Claude Code's plugin system. The plugin directories are the layer folders (`core/`, `life/`, `productivity/`, `modules/`) within the toolkit installation directory.
 
