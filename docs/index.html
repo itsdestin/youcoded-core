@@ -350,13 +350,18 @@
     letter-spacing: 0.02em;
   }
 
-  .next-step-phrase {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 4vw, 2.2rem);
-    font-weight: 700;
+  .claude-prompt {
+    display: inline-flex;
+    margin-bottom: 20px;
+  }
+
+  .prompt-claude {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    font-weight: 600;
     color: var(--accent);
-    margin: 12px 0 20px;
-    letter-spacing: -0.02em;
+    user-select: none;
+    margin-right: 12px;
   }
 
   .next-step-sub {
@@ -552,7 +557,10 @@
             <span class="cmd-text">claude</span>
           </div>
           <p class="next-step-instruction">and press <kbd>Enter</kbd>. Claude will open. Then type:</p>
-          <div class="next-step-phrase">"Set me up."</div>
+          <div class="next-step-cmd claude-prompt">
+            <span class="prompt-claude">&gt;</span>
+            <span class="cmd-text">Set me up.</span>
+          </div>
           <p class="next-step-sub">Claude will walk you through the rest — choosing what to install, setting up your preferences, and making sure everything works.</p>
           <p class="next-step-reassurance">You may see lots of red "error" text and be asked for a multitude of confirmations while Claude completes this process. Don't worry; this is to be expected. Trust Claude (he is all-knowing) and approve any prompts.</p>
         </div>
