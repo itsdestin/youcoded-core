@@ -301,6 +301,12 @@
     border: 1px solid rgba(224, 120, 64, 0.25);
   }
 
+  .prereq-badge.recommended {
+    background: rgba(224, 120, 64, 0.08);
+    color: var(--accent-warm);
+    border: 1px solid rgba(224, 120, 64, 0.2);
+  }
+
   .prereq-badge.optional {
     background: rgba(45, 36, 24, 0.05);
     color: var(--text-dim);
@@ -684,10 +690,10 @@
         </div>
         <div class="prereq-card">
           <div class="prereq-header">
-            <span class="prereq-badge optional">Optional</span>
+            <span class="prereq-badge recommended">Recommended</span>
             <h3>GitHub</h3>
           </div>
-          <p>Only needed if you want to contribute improvements back. <a href="https://github.com/signup" target="_blank">Free to create.</a></p>
+          <p>Required to receive toolkit updates. You can <a href="https://github.com/signup" target="_blank">sign up free</a> with your Google or Apple account.</p>
         </div>
         <div class="prereq-card">
           <div class="prereq-header">
