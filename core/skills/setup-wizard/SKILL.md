@@ -724,81 +724,28 @@ MCP servers let Claude talk to external services. They're configured in `~/.clau
 
 Tell the user: "Now I'll register the services we set up so Claude can use them automatically in every conversation."
 
-**windows-control** (Windows only):
+#### Auto-registering platform MCPs
 
-The windows-control MCP server lets Claude interact with the Windows desktop — clicking, typing, taking screenshots, managing windows. It's installed via `uvx` (part of `uv`, the Python package runner). Add this to `~/.claude.json`:
+Read `<toolkit_root>/core/mcp-manifest.json`. For each entry where `"auto": true` and `platform` matches the current platform (or `"platform": "all"`):
 
-```json
-{
-  "mcpServers": {
-    "windows-control": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": ["windows-mcp"],
-      "env": {}
-    }
-  }
-}
+1. Check if it's already registered in `~/.claude.json` — skip if so
+2. Build the config object from the manifest entry (`type`, `command`, `args`, `env`, `url` as applicable)
+3. Replace any `{{toolkit_root}}` placeholders with the actual toolkit root path
+4. On Windows, use `command_windows` instead of `command` if present
+5. Merge into `~/.claude.json` under `mcpServers`
+
+After registering all auto MCPs, tell the user which were added:
+
+```
+Registered platform MCPs:
+  macos-automator ........ AppleScript + JXA Mac automation
+  home-mcp ............... HomeKit device control
+  apple-events ........... Native Reminders + Calendar
 ```
 
-If `uvx` is not installed, install it first: `pip install uv` or `pipx install uv`.
+(shows only the MCPs relevant to the detected platform — Windows users see `windows-control` instead)
 
-Tell the user: "Windows desktop control is registered. Claude can now interact with windows, click buttons, take screenshots, and automate desktop tasks."
-
-**macos-automator** (macOS only):
-
-The macos-automator MCP server lets Claude run AppleScript and JXA (JavaScript for Automation) to control any Mac app — Finder, Safari, Mail, Contacts, Music, and more. It's installed via `npx` (comes with Node.js — no separate install). Add this to `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "macos-automator": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@steipete/macos-automator-mcp@latest"]
-    }
-  }
-}
-```
-
-Tell the user: "Mac automation is registered. Claude can now control any app on your Mac using AppleScript — automate Finder, send Mail, control Music, and more."
-
-**home-mcp** (macOS only):
-
-The home-mcp server lets Claude control your HomeKit smart home — lights, locks, thermostats, scenes, and automations. Requires the Home app on macOS with your devices already set up. Add this to `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "home-mcp": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "home-mcp@latest"]
-    }
-  }
-}
-```
-
-Tell the user: "HomeKit control is registered. Claude can turn lights on/off, run scenes, and check the status of your smart home devices."
-
-**apple-events** (macOS only):
-
-The apple-events MCP server gives Claude native access to Reminders and Calendar using EventKit — the same framework the built-in apps use. No Google Calendar needed. Add this to `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "apple-events": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-apple-events@latest"]
-    }
-  }
-}
-```
-
-Tell the user: "Apple Reminders and Calendar are registered. Claude can create reminders, check your calendar, and manage events natively."
-
+**Important:** When merging into `~/.claude.json`, preserve ALL existing content. Only add or update the `mcpServers` entries.
 **Todoist** (if Productivity selected and Todoist token provided):
 
 The Todoist MCP server is a cloud-hosted service — no local binary needed. Add this to `~/.claude.json`:
