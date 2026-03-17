@@ -1,6 +1,6 @@
 ---
 name: setup-wizard
-description: Interactive toolkit installer — inventories the user's environment, resolves conflicts, installs dependencies, personalizes templates, and verifies everything works. Invoked via /setup or when user says "set me up."
+description: Interactive toolkit installer — inventories the user's environment, resolves conflicts, installs dependencies, personalizes templates, and verifies everything works. Invoked via /setup-wizard or when user says "set me up."
 ---
 
 # DestinClaude Setup Wizard
@@ -234,7 +234,7 @@ gh --version
 
 Tell the user: "GitHub is how the toolkit receives updates and backs up your configuration. Without it, you won't get new features or bug fixes, and your setup won't be backed up to the cloud. I'd strongly recommend setting this up — it only takes a minute. Want me to handle it for you?"
 
-If the user agrees (or `gh` is already installed but not authenticated), proceed with installation and authentication below. If the user declines, warn them clearly: "Understood — just so you know, without GitHub you'll miss out on toolkit updates and cloud backups of your configuration. You can always set it up later by running `/setup` again."
+If the user agrees (or `gh` is already installed but not authenticated), proceed with installation and authentication below. If the user declines, warn them clearly: "Understood — just so you know, without GitHub you'll miss out on toolkit updates and cloud backups of your configuration. You can always set it up later by running `/setup-wizard` again."
 
 If missing:
 
@@ -311,7 +311,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   "https://www.googleapis.com/drive/v3/files?q=name='example'"
 ```
 
-If gcloud is not installed and a feature needs it, tell the user: "This feature needs Google API access. Run `/setup` again or install gcloud manually with `brew install --cask google-cloud-sdk` (Mac) / `winget install Google.CloudSDK` (Windows)."
+If gcloud is not installed and a feature needs it, tell the user: "This feature needs Google API access. Run `/setup-wizard` again or install gcloud manually with `brew install --cask google-cloud-sdk` (Mac) / `winget install Google.CloudSDK` (Windows)."
 
 ### Life Dependencies
 
@@ -576,7 +576,7 @@ When asking about `PERSONAL_SYNC_BACKEND`, frame the distinction clearly: "Your 
 Then present the options:
 1. **Google Drive** — recommended if the user already set up rclone for the Life layer. Set `PERSONAL_SYNC_BACKEND: "drive"`.
 2. **Private GitHub repo** — if the user chose this, check if `gh` is authenticated. If so, offer to create a private repo for them: `gh repo create claude-personal-data --private --clone`. Clone to `~/.claude/toolkit-state/personal-sync-repo/`, set the `personal-sync` remote, and store the URL in `PERSONAL_SYNC_REPO`. If `gh` is not available, ask for a repo URL directly.
-3. **Skip for now** — set `PERSONAL_SYNC_BACKEND: "none"`. Tell them: "No problem — your data stays on this device only. You can set this up later by running `/setup` again."
+3. **Skip for now** — set `PERSONAL_SYNC_BACKEND: "none"`. Tell them: "No problem — your data stays on this device only. You can set this up later by running `/setup-wizard` again."
 
 Only ask `PERSONAL_SYNC_REPO` if the user chose the GitHub backend.
 
@@ -621,7 +621,7 @@ Claude Code auto-discovers skills from `~/.claude/skills/`, commands from `~/.cl
 
 **Important:** `enabledPlugins` in `settings.json` only works for marketplace plugins (`"name@marketplace": true`). It does NOT support local path-based registration. Always use symlinks for local toolkit components.
 
-**Windows symlink fallback:** On Windows, `ln -sf` may fail if Developer Mode is not enabled. After each `ln -sf` call, check if the symlink resolves (`[ -e target ]`). If it doesn't, fall back to copying instead (`cp -R` for directories, `cp` for files). The bootstrap installer already does this — the wizard must match. When using copy fallback, inform the user: "Symlinks aren't available on your system — using copies instead. Everything works the same, but if you update the toolkit you'll need to re-run `/setup` to refresh these copies."
+**Windows symlink fallback:** On Windows, `ln -sf` may fail if Developer Mode is not enabled. After each `ln -sf` call, check if the symlink resolves (`[ -e target ]`). If it doesn't, fall back to copying instead (`cp -R` for directories, `cp` for files). The bootstrap installer already does this — the wizard must match. When using copy fallback, inform the user: "Symlinks aren't available on your system — using copies instead. Everything works the same, but if you update the toolkit you'll need to re-run `/setup-wizard` to refresh these copies."
 
 #### 5a: Symlink skills
 
