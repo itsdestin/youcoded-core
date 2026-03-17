@@ -106,6 +106,39 @@ if (Test-Path $toolkitDir) {
     Write-Host "  Toolkit cloned" -ForegroundColor Green
 }
 
+# --- Register /setup command and wizard skill ---
+Write-Host "  Registering setup wizard..." -ForegroundColor Yellow
+$commandsDir = Join-Path $HOME ".claude\commands"
+$skillsDir = Join-Path $HOME ".claude\skills"
+if (-not (Test-Path $commandsDir)) { New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null }
+if (-not (Test-Path $skillsDir)) { New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null }
+
+$commandSrc = Join-Path $toolkitDir "core\commands\setup.md"
+$commandDst = Join-Path $commandsDir "setup.md"
+$skillSrc = Join-Path $toolkitDir "core\skills\setup-wizard"
+$skillDst = Join-Path $skillsDir "setup-wizard"
+
+# Remove stale links/copies
+if (Test-Path $commandDst) { Remove-Item $commandDst -Force }
+if (Test-Path $skillDst) { Remove-Item $skillDst -Recurse -Force }
+
+# Try symlinks first, fall back to copy
+$symlinkOk = $true
+try {
+    New-Item -ItemType SymbolicLink -Path $commandDst -Target $commandSrc -Force -ErrorAction Stop | Out-Null
+    New-Item -ItemType SymbolicLink -Path $skillDst -Target $skillSrc -Force -ErrorAction Stop | Out-Null
+} catch {
+    $symlinkOk = $false
+    Copy-Item $commandSrc $commandDst -Force
+    Copy-Item $skillSrc $skillDst -Recurse -Force
+}
+
+if ($symlinkOk) {
+    Write-Host "  Setup wizard registered" -ForegroundColor Green
+} else {
+    Write-Host "  Setup wizard registered (copied — enable Developer Mode for symlinks)" -ForegroundColor Green
+}
+
 Write-Host ""
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host "  Ready!" -ForegroundColor Green

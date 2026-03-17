@@ -55,15 +55,16 @@ if [ ! -f "$REGISTRY" ]; then
 fi
 
 # Read registry entry for this file
+# Pass REGISTRY as process.argv[1] to avoid Git Bash path mangling in Node
 ENTRY=$(node -e "
 const fs = require('fs');
 try {
-    const reg = JSON.parse(fs.readFileSync('$REGISTRY', 'utf8'));
-    const e = reg[process.argv[1]];
+    const reg = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+    const e = reg[process.argv[2]];
     if (e) console.log(JSON.stringify(e));
     else console.log('');
 } catch { console.log(''); }
-" "$FILE_PATH" 2>/dev/null)
+" "$REGISTRY" "$FILE_PATH" 2>/dev/null)
 
 # No registry entry for this file — allow
 if [ -z "$ENTRY" ]; then
@@ -72,8 +73,8 @@ fi
 
 # Parse registry entry
 REG_PID=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).pid)}catch{console.log('')}})" 2>/dev/null)
-REG_TS=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).ts)}catch{console.log('')}})" 2>/dev/null)
-REG_HASH=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).hash)}catch{console.log('')}})" 2>/dev/null)
+REG_TS=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).timestamp)}catch{console.log('')}})" 2>/dev/null)
+REG_HASH=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).content_hash)}catch{console.log('')}})" 2>/dev/null)
 
 # Same-session check — if we're the last writer, allow
 if [ "$REG_PID" = "$PPID" ]; then
@@ -81,8 +82,15 @@ if [ "$REG_PID" = "$PPID" ]; then
 fi
 
 # Liveness check — if the other session is dead, allow (stale entry)
-# Note: kill -0 doesn't work for Windows PIDs in Git Bash; use tasklist instead
-if ! tasklist //FI "PID eq $REG_PID" //NH 2>/dev/null | grep -q "$REG_PID"; then
+# Platform-conditional: tasklist on Windows, kill -0 on macOS/Linux
+process_alive() {
+    local pid="$1"
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) tasklist //FI "PID eq $pid" //NH 2>/dev/null | grep -q "$pid" ;;
+        *) kill -0 "$pid" 2>/dev/null ;;
+    esac
+}
+if ! process_alive "$REG_PID"; then
     exit 0
 fi
 
@@ -98,8 +106,9 @@ fi
 
 # Another active session owns this file — block the write
 # Format timestamp for human-readable message
-WRITE_TIME=$(date -d "@$REG_TS" +"%I:%M%p" 2>/dev/null | sed 's/^0//;s/AM/am/;s/PM/pm/')
-# Fallback for systems where date -d doesn't work
+# Cross-platform timestamp: GNU date uses -d, macOS uses -r
+WRITE_TIME=$(date -d "@$REG_TS" +"%I:%M%p" 2>/dev/null || date -r "$REG_TS" +"%I:%M%p" 2>/dev/null || echo "")
+WRITE_TIME=$(echo "$WRITE_TIME" | sed 's/^0//;s/AM/am/;s/PM/pm/')
 if [ -z "$WRITE_TIME" ]; then
     WRITE_TIME="ts:$REG_TS"
 fi

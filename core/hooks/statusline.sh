@@ -63,12 +63,12 @@ if [[ -f "$UPDATE_FILE" ]] && command -v node &>/dev/null; then
     TOOLKIT_INFO=$(node -e "
         const fs = require('fs');
         try {
-            const s = JSON.parse(fs.readFileSync('$UPDATE_FILE', 'utf8'));
+            const s = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
             const ver = s.current || 'unknown';
             const upd = s.update_available ? ' (Update Available)' : '';
             console.log(ver + '\t' + (s.update_available ? '1' : '0'));
         } catch { console.log('unknown\t0'); }
-    " 2>/dev/null) || TOOLKIT_INFO=""
+    " "$UPDATE_FILE" 2>/dev/null) || TOOLKIT_INFO=""
     if [[ -n "$TOOLKIT_INFO" ]]; then
         IFS=$'\t' read -r TK_VER TK_UPD <<< "$TOOLKIT_INFO"
         if [[ "$TK_UPD" == "1" ]]; then
