@@ -144,13 +144,11 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 ### Other gaps
 
 - No automated test for verifying MCP server connectivity after setup.
-- Root-level `skills/setup-wizard/` is a file copy of `core/skills/setup-wizard/`, not a git symlink — must be manually synced after edits.
 
 ## Planned Updates
 
 - Add Mac/Linux desktop control MCP server equivalent
 - Add MCP connectivity verification to Phase 6
-- Convert root-level `skills/setup-wizard` from copy to proper symlink in git
 - Add recovery/bail-out instructions to `/contribute` command for non-technical users
 - Extract messaging setup from the main wizard into a standalone post-setup flow
 
