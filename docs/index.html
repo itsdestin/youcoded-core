@@ -104,12 +104,25 @@
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.1;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     color: var(--text-primary);
-    padding: 12px 32px;
+  }
+
+  .title-box {
+    display: inline-block;
+    padding: 16px 28px 14px;
     background: rgba(224, 120, 64, 0.07);
     border: 1px solid rgba(224, 120, 64, 0.15);
     border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .title-sub {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-top: 6px;
   }
 
   .title-accent {
@@ -213,6 +226,31 @@
     text-align: center;
     color: var(--text-dim);
     font-size: 0.9rem;
+  }
+
+  /* --- INTRO CALLOUT --- */
+  .intro-callout {
+    background: var(--bg-surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 20px 24px;
+    margin-bottom: 8px;
+    line-height: 1.7;
+  }
+
+  .intro-callout p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+  }
+
+  .intro-callout strong {
+    color: var(--text-primary);
+  }
+
+  .intro-callout .permission-note {
+    margin-top: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   /* --- INSTALL --- */
@@ -531,11 +569,24 @@
   <!-- HERO -->
   <header class="hero">
     <div class="container">
-      <h1 class="animate animate-d1">Claudifest <span class="title-accent">Destin-y</span></h1>
-      <p class="hero-subtitle animate animate-d1">or something...</p>
+      <div class="title-box animate animate-d1">
+        <h1>Claudifest <span class="title-accent">Destin-y</span></h1>
+        <p class="title-sub">For Claude Code</p>
+      </div>
+      <p class="hero-subtitle animate animate-d2">or something...</p>
       <p class="hero-personal animate animate-d2">Built for my friends. Shared with everyone.</p>
     </div>
   </header>
+
+  <!-- INTRO -->
+  <section>
+    <div class="container">
+      <div class="intro-callout">
+        <p><strong>Claude can create every type of file, search the web, open any app, and navigate your screen</strong> if you desire. It is designed to be a complete personal assistant.</p>
+        <p class="permission-note">It will not do any of this without your permission.</p>
+      </div>
+    </div>
+  </section>
 
   <!-- INSTALL -->
   <section>
