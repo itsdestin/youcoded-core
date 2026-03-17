@@ -1,6 +1,6 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.1
+**Version:** 1.2
 **Last updated:** 2026-03-16
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
@@ -23,6 +23,8 @@ Individual features (skills, hooks, MCP servers) have their own specs — this s
 | Homebrew installed by default on Mac | Nearly every Mac dependency (node, gh, rclone, gcloud, go) uses `brew install`. Installing Homebrew first simplifies all downstream steps to one-liners | Ask user to choose (rejected: added friction for non-technical users), direct .pkg downloads (rejected: inconsistent install paths, harder to update) |
 | Bootstrap script + setup wizard (two-phase install) | Bootstrap handles prerequisites and cloning (can run via `curl \| bash`). Setup wizard handles interactive decisions (layer selection, personalization, conflict resolution) that require Claude | Single script (rejected: can't do interactive Claude conversation), wizard-only (rejected: can't install prerequisites without Claude running) |
 | Root-level `skills/` and `commands/` mirror core | Bootstrap needs to symlink setup-wizard before the full setup runs. Root-level dirs provide a stable reference without depending on layer structure | Symlink directly to `core/` (current approach after fix), hardcoded paths (rejected: fragile) |
+| Beginner-friendly auth walkthroughs | Users may be non-technical. Every auth step (gcloud, gh, rclone, Todoist) is written as a click-by-click walkthrough with plain-English explanations of what each tool is and why it's needed | Terse developer-style instructions (rejected: confused non-technical testers), links to external docs (rejected: context-switching loses users) |
+| Bootstrap symlink fallback to copy | Some Mac filesystems or permission configs break symlinks. If symlink verification fails, bootstrap copies the files directly so `/setup` always works | Symlink-only (rejected: silent failure on some Macs), copy-only (rejected: doesn't track upstream changes) |
 
 ## Current Implementation
 
@@ -97,23 +99,25 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 
 ## Known Issues
 
-### MCP servers not accurately matched to desktop environment
+### MCP servers not fully matched to desktop environment
 
-The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. The published toolkit does not yet replicate that setup during installation:
+The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. Most gaps have been addressed; remaining issues:
 
 - **Desktop control** — The author's Windows setup uses `windows-control` (uvx/stdio). No Mac/Linux equivalent is bundled. Need to add platform-appropriate desktop control MCP server (e.g., mac-control or cross-platform alternative).
-- **gmessages** — Source code is included and the setup wizard builds it via `go build`, but the wizard doesn't write the correct `~/.claude.json` MCP server entry to actually register it. Users must manually add the `mcpServers` config.
-- **todoist** — The setup wizard collects the API token but doesn't write the exact config format needed. Should write: `"todoist": { "type": "http", "url": "https://ai.todoist.net/mcp" }`.
 - **gmail-extended** — Deprecated and removed from the toolkit. Superseded by Claude.ai's native Gmail MCP connector.
+
+**Resolved (2026-03-16):**
+- ~~gmessages~~ — Setup wizard now writes the correct `stdio` MCP server entry to `~/.claude.json` with the built binary path.
+- ~~todoist~~ — Setup wizard now writes `"type": "http", "url": "https://ai.todoist.net/mcp"` to `~/.claude.json`.
+- ~~MCP config templates~~ — Phase 5 Step 6 now has concrete JSON for both servers.
 
 ### Other gaps
 
-- Setup wizard's MCP server config step (Phase 5, Step 6) needs concrete config templates for each server rather than vague instructions.
 - No automated test for verifying MCP server connectivity after setup.
+- Root-level `skills/setup-wizard/` is a file copy of `core/skills/setup-wizard/`, not a git symlink — must be manually synced after edits.
 
 ## Planned Updates
 
-- Write correct `~/.claude.json` entries for todoist and gmessages during setup
 - Add platform-appropriate desktop control MCP server
 - Add MCP connectivity verification to Phase 6
 - Convert root-level `skills/setup-wizard` from copy to proper symlink in git
@@ -122,5 +126,6 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-16 | 1.2 | Reconciled known issues (MCP config templates resolved), added design decisions for beginner-friendly walkthroughs and symlink fallback, documented root-level copy sync gap | Update |
 | 2026-03-16 | 1.1 | Statusline is not a hook — documented as separate component type with own config entry in settings.json. gh CLI upgraded to strongly recommended. | Update |
 | 2026-03-16 | 1.0 | Initial spec — documents install flow, registration mechanism, dependency chain, and known MCP gaps | New |
