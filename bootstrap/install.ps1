@@ -142,14 +142,20 @@ if ($symlinkOk) {
 Write-Host ""
 Write-Host ""
 Write-Host ""
-Write-Host "  Download complete!" -ForegroundColor Green
-Write-Host ""
-Write-Host '  Now, just open a new terminal window, type "claude",'
-Write-Host "  and hit the enter key. This is how you will access"
-Write-Host "  Claude going forward."
-Write-Host ""
-Write-Host "  One final step:"
-Write-Host '    Launch Claude and say "set me up."'
-Write-Host "    Claude will walk you through a series of questions"
-Write-Host "    to finalize and customize your installation."
+Write-Host "  =====================================================" -ForegroundColor Green
+Write-Host "  |                                                   |" -ForegroundColor Green
+Write-Host "  |   Download complete!                              |" -ForegroundColor Green
+Write-Host "  |                                                   |" -ForegroundColor Green
+Write-Host "  |   Now, just open a new terminal window, type      |" -ForegroundColor Green
+Write-Host '  |   "claude", and hit the enter key.                |' -ForegroundColor Green
+Write-Host "  |   This is how you will access Claude going        |" -ForegroundColor Green
+Write-Host "  |   forward.                                        |" -ForegroundColor Green
+Write-Host "  |                                                   |" -ForegroundColor Green
+Write-Host "  |   One final step:                                 |" -ForegroundColor Green
+Write-Host '  |     Launch Claude and say "set me up."            |' -ForegroundColor Green
+Write-Host "  |     Claude will walk you through a series of      |" -ForegroundColor Green
+Write-Host "  |     questions to finalize and customize your      |" -ForegroundColor Green
+Write-Host "  |     installation.                                 |" -ForegroundColor Green
+Write-Host "  |                                                   |" -ForegroundColor Green
+Write-Host "  =====================================================" -ForegroundColor Green
 Write-Host ""
