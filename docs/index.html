@@ -104,10 +104,16 @@
     letter-spacing: -0.03em;
     line-height: 1.1;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
+    display: inline-block;
+    padding: 12px 32px;
+    background: rgba(224, 120, 64, 0.07);
+    border: 1px solid rgba(224, 120, 64, 0.15);
+    border-radius: 16px;
+  }
+
+  .title-accent {
+    color: var(--accent);
   }
 
   .hero-personal {
@@ -244,14 +250,14 @@
   .install-panel.active { display: block; }
 
   .install-cmd {
-    background: #2d2418;
-    border: 1px solid rgba(45, 36, 24, 0.2);
+    background: #f0e8de;
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 16px 20px;
     font-family: var(--font-mono);
     font-size: 0.82rem;
     line-height: 1.6;
-    color: #f0ebe4;
+    color: var(--text-primary);
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -264,17 +270,17 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 5px 10px;
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
   }
-  .copy-btn:hover { background: rgba(255, 255, 255, 0.15); color: #f0ebe4; }
+  .copy-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 
   .install-step {
     font-size: 0.9rem;
@@ -328,8 +334,8 @@
     display: inline-flex;
     align-items: center;
     gap: 12px;
-    background: #2d2418;
-    border: 1px solid rgba(45, 36, 24, 0.2);
+    background: #f0e8de;
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 14px 28px;
     margin-bottom: 20px;
@@ -346,7 +352,7 @@
     font-family: var(--font-mono);
     font-size: 1.3rem;
     font-weight: 600;
-    color: #f0ebe4;
+    color: var(--text-primary);
     letter-spacing: 0.02em;
   }
 
@@ -516,7 +522,7 @@
   <header class="hero">
     <div class="container">
       <span class="hero-badge animate">Open Source Toolkit</span>
-      <h1 class="animate animate-d1">ClaudifestDestiny</h1>
+      <h1 class="animate animate-d1">Claudifest<span class="title-accent">Destiny</span></h1>
       <p class="hero-personal animate animate-d2">Built for my friends. Shared with everyone.</p>
     </div>
   </header>
