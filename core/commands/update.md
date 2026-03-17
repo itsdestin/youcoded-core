@@ -46,4 +46,27 @@ Check for and install updates to the DestinClaude toolkit.
 
 10. **Update VERSION.** Write the new version (without the `v` prefix) to the VERSION file in the toolkit root.
 
-11. **Confirm.** Tell the user: "Updated to LATEST_TAG. You're all set."
+11. **Check for new MCPs.** Read `<toolkit_root>/core/mcp-manifest.json`. Detect the current platform. Load registered MCP servers from `~/.claude.json`. For each manifest entry matching the current platform that is NOT registered in `~/.claude.json`:
+    - Collect it as a "new available MCP"
+
+    If any are found, tell the user:
+
+    ```
+    New MCP servers are available in this version:
+
+      macos-automator ........ AppleScript + JXA automation for any Mac app
+      home-mcp ............... HomeKit device, scene, and automation control
+
+    Run /health to register them — it takes about 30 seconds.
+    ```
+
+    Only show `auto: true` MCPs here. For `auto: false` MCPs that are unregistered, add a separate note:
+
+    ```
+    These MCPs require additional setup (run /setup-wizard to configure):
+      imessages .............. Requires Full Disk Access for your terminal
+    ```
+
+    If nothing is new/missing, skip this step silently.
+
+12. **Confirm.** Tell the user: "Updated to LATEST_TAG. You're all set."
