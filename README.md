@@ -100,17 +100,6 @@ Made the toolkit better? Share it:
 
 Claude diffs your changes, filters out anything personal, and creates a pull request. No git knowledge required. See the [Contributing Guide](docs/contributing.md) for details.
 
-## Known Issues
-
-**MCP servers are not fully configured.** The toolkit was developed on a Windows desktop with MCP servers configured locally in `~/.claude.json`. The published toolkit does not yet accurately replicate that setup during installation. Gaps include:
-
-- **Desktop control** — Windows uses `windows-control` (uvx/stdio); no Mac equivalent is bundled yet
-- **gmessages** — Source code is included and builds, but the setup wizard doesn't write the correct `~/.claude.json` entry to register it as an MCP server
-- **Todoist** — Setup wizard collects the API token but doesn't write the exact config format (`"type": "http", "url": "https://ai.todoist.net/mcp"`)
-- **gmail-extended** — Deprecated and removed; superseded by Claude.ai's native Gmail connector
-
-If you run into MCP issues after setup, check `~/.claude.json` manually. Fixes for all of the above are tracked and coming in a future release.
-
 ## Built By
 
 Created by [Destin](https://github.com/itsdestin) — originally as a personal system, now shared for anyone who wants to make Claude Code genuinely useful for daily life.
