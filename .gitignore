@@ -27,6 +27,8 @@ __pycache__/
 
 # Go
 *.exe
+# Exception: pre-built gmessages binary for Windows
+!productivity/mcp-servers/gmessages/gmessages.exe
 
 # OS
 .DS_Store
