@@ -11,7 +11,7 @@
     "DRIVE_ROOT": {
       "description": "Google Drive base path for toolkit data (rclone remote prefix)",
       "used_in": ["life/skills/google-drive/SKILL.md", "core/hooks/sync-to-drive.sh", "core/hooks/sync-from-drive.sh"],
-      "prompt": "Where should Claude store files on your Google Drive? (e.g., 'Claude')",
+      "prompt": "Where should Claude store files on your Google Drive? ('Root' just means a top-level folder — one of the first folders you see when you open Drive, not inside any other folder.)",
       "default": "Claude",
       "required": true
     },

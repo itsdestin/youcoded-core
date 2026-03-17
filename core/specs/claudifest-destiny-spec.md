@@ -80,7 +80,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 | Homebrew | All (Mac) | Yes | Auto-installed by bootstrap |
 | Node.js | All | Yes | `brew install node` |
 | git | All | Yes | Xcode CLI tools |
-| gh CLI | Core | Optional | `brew install gh` |
+| gh CLI | Core | Strongly recommended | `brew install gh` |
 | gcloud CLI | Core | Optional | `brew install --cask google-cloud-sdk` |
 | rclone | Life | Yes | `brew install rclone` |
 | Go | Productivity | Yes (for gmessages) | `brew install go` |

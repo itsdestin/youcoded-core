@@ -222,15 +222,17 @@ git --version
 
 Should already be installed (they cloned the repo). If somehow missing, this is a blocker — tell the user to install git first and restart.
 
-#### gh CLI (optional)
+#### gh CLI (strongly recommended)
 
 ```bash
 gh --version
 ```
 
-Needed for the `/contribute` command (submitting improvements back upstream). Not required for basic usage.
+Tell the user: "GitHub is how the toolkit receives updates and backs up your configuration. Without it, you won't get new features or bug fixes, and your setup won't be backed up to the cloud. I'd strongly recommend setting this up — it only takes a minute. Want me to handle it for you?"
 
-If missing and the user wants it:
+If the user agrees (or `gh` is already installed but not authenticated), proceed with installation and authentication below. If the user declines, warn them clearly: "Understood — just so you know, without GitHub you'll miss out on toolkit updates and cloud backups of your configuration. You can always set it up later by running `/setup` again."
+
+If missing:
 
 | Platform | Install command |
 |----------|----------------|
@@ -482,10 +484,15 @@ Read `<toolkit_root>/core/templates/template-variables.json`. For each variable:
 3. Accept their answer, or use the default if they press enter / say "default is fine"
 4. Store all responses in `~/.claude/toolkit-state/config.json` under a `variables` key
 
+When asking about `DRIVE_ROOT`, explain what "root" means: "Where should Claude store files on your Google Drive? By 'root' I just mean a top-level folder — one of the first folders you see when you open Drive, not inside any other folder. (default: Claude)"
+
 Example interaction:
 ```
 What's your name? > Alex
-Where should Claude store files on your Google Drive? (default: Claude) > Claude
+Where should Claude store files on your Google Drive?
+  ("Root" just means a top-level folder — one of the first folders you
+   see when you open Drive, not inside any other folder.)
+  (default: Claude) > Claude
 What Todoist project should Claude use as your inbox? (default: Claude's Inbox) > My Inbox
 ```
 

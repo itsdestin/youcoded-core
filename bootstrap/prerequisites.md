@@ -4,20 +4,26 @@ This page explains exactly what the bootstrap scripts (`install.sh` and `install
 
 ## What Gets Installed
 
-The scripts check for three things and install any that are missing:
+The scripts check for these and install any that are missing:
 
-### 1. Node.js
+### 1. Homebrew (Mac only)
+- **What it is:** A package manager for macOS — think of it as an app store for developer tools, but free and in the terminal.
+- **Why it's needed:** Almost everything else the toolkit installs (Node.js, git tools, Google Cloud SDK, rclone, Go) is installed through Homebrew. Setting it up first makes everything else a one-liner.
+- **Where it comes from:** brew.sh — the official Homebrew project.
+- **On Windows/Linux:** Not needed. Windows uses `winget`, Linux uses `apt`/`dnf`.
+
+### 2. Node.js
 - **What it is:** A program that runs JavaScript on your computer. Claude Code is built with it.
 - **Why it's needed:** Claude Code won't work without it.
 - **Where it comes from:** The official Node.js website (nodejs.org) or your system's package manager.
 - **What version:** The latest LTS (Long Term Support) version — the most stable one.
 
-### 2. Git
+### 3. Git
 - **What it is:** A tool developers use to track changes to code. It's how you'll receive toolkit updates.
 - **Why it's needed:** The toolkit is downloaded using git, and updates are delivered through it.
 - **Where it comes from:** Already installed on most Macs. On Windows, from git-scm.com.
 
-### 3. Claude Code
+### 4. Claude Code
 - **What it is:** Anthropic's command-line tool for Claude. This is the main program the toolkit extends.
 - **Why it's needed:** The whole toolkit is built for Claude Code.
 - **Where it comes from:** npm (Node.js's package registry), installed globally on your system.
