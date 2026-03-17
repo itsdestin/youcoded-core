@@ -201,21 +201,28 @@ fi
 echo ""
 echo ""
 echo ""
-echo "  ====================================================="
-echo "  |                                                   |"
-echo "  |   Download complete! Starting setup...            |"
-echo "  |                                                   |"
-echo "  ====================================================="
-echo ""
 
 # Launch Claude and kick off the setup wizard automatically.
 # If stdout is a terminal we can start an interactive session right here.
 # curl|bash sets stdin to a pipe, so redirect from /dev/tty so Claude can
 # still receive keyboard input even in that case.
 if [ -t 1 ]; then
+    echo "  ====================================================="
+    echo "  |                                                   |"
+    echo "  |   Download complete! Starting setup...            |"
+    echo "  |                                                   |"
+    echo "  ====================================================="
+    echo ""
     claude "set me up" < /dev/tty
 else
-    echo "  Open a new terminal window and run:"
-    echo "    claude"
-    echo '  Then say: "set me up"'
+    echo "  ====================================================="
+    echo "  |                                                   |"
+    echo "  |   Download complete!                              |"
+    echo "  |                                                   |"
+    echo "  |   Open a new terminal and run:                    |"
+    echo "  |     claude                                        |"
+    echo "  |   Then say: \"set me up\"                           |"
+    echo "  |                                                   |"
+    echo "  ====================================================="
+    echo ""
 fi
