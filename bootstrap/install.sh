@@ -174,7 +174,7 @@ elif [ -d "$HOME/.claude/skills/setup-wizard" ]; then
 fi
 
 # Use the core skill directly (not the root-level copy) to avoid symlink chains
-ln -sf "$TOOLKIT_DIR/core/commands/setup.md" "$HOME/.claude/commands/setup.md"
+ln -sf "$TOOLKIT_DIR/commands/setup.md" "$HOME/.claude/commands/setup.md"
 ln -sf "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
 
 # Verify symlinks resolve correctly
@@ -193,7 +193,7 @@ if [ "$SETUP_OK" = true ]; then
 else
     echo ""
     echo "  Symlink creation failed. Falling back to copy..."
-    cp "$TOOLKIT_DIR/core/commands/setup.md" "$HOME/.claude/commands/setup.md"
+    cp "$TOOLKIT_DIR/commands/setup.md" "$HOME/.claude/commands/setup.md"
     cp -R "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
     echo "  Setup wizard registered (copied)"
 fi
