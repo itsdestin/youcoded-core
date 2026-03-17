@@ -24,7 +24,7 @@ Present this as a clean, scannable reference card. Show installed features first
 DestinClaude Toolkit — Quick Reference
 
 COMMANDS (type these in Claude)
-  /setup ................ Run or re-run the setup wizard
+  /setup-wizard ................ Run or re-run the setup wizard
   /update ............... Check for and install toolkit updates
   /health ............... Quick check that everything is working
   /toolkit .............. Show this reference card
@@ -108,7 +108,7 @@ WHAT TO SAY
 **Always show this section** if any layers or modules are not installed. This is how users discover features they might want.
 
 ```
-AVAILABLE (not installed — run /setup to add)
+AVAILABLE (not installed — run /setup-wizard to add)
 ```
 
 For each layer/module that is NOT installed, show a one-line description of what it adds:
@@ -124,4 +124,4 @@ If everything is installed, show: "You have everything installed! Check https://
 
 If the user asks about a feature that belongs to a layer they haven't installed (e.g., they say "let's journal" but Life isn't installed, or "check my inbox" but Productivity isn't installed), respond with:
 
-"That feature is part of the **[Layer Name]** layer, which isn't installed yet. Here's what it includes: [one-line description]. Want me to install it? Just say /setup and I'll add it to your existing setup."
+"That feature is part of the **[Layer Name]** layer, which isn't installed yet. Here's what it includes: [one-line description]. Want me to install it? Just say /setup-wizard and I'll add it to your existing setup."
