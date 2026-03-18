@@ -1,6 +1,6 @@
 # DestinClaude Toolkit — Spec
 
-**Version:** 1.6
+**Version:** 1.7
 **Last updated:** 2026-03-17
 **Feature location:** `~/.claude/plugins/destinclaude/` (toolkit root)
 
@@ -150,11 +150,17 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 - Add MCP connectivity verification to Phase 6
 - Add recovery/bail-out instructions to `/contribute` command for non-technical users
 - Extract messaging setup from the main wizard into a standalone post-setup flow
+- Add difficulty options for install: (1) full beginner — hold my hand, (2) some experience — guidance but not every explanation, (3) expert — let's hurry this up (from inbox 2026-03-17)
+- Include superpowers and plugins in the repo, or walk users through plugin docs; add clearer explanations of how to create new skills/workflows and how dynamic Claude is (from inbox 2026-03-17)
+- Add setup feature to restore configuration from Google Drive (from inbox 2026-03-17)
+- Add more tip prompts and hints in the first setup wizard run — mention Google Drive widget or Apple Notes widget on home screen for quick inbox capture, which can be emptied later from laptop, etc. (from inbox 2026-03-17)
+- Add iCloud support via rclone as a Drive alternative — rclone has native iCloud backend (from inbox 2026-03-17)
 
 ## Change Log
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-17 | 1.7 | Inbox processing: add 5 planned updates (difficulty options, superpowers in repo, restore from Drive, setup wizard tips, iCloud support) | Inbox |
 | 2026-03-17 | 1.6 | Ported MCP server configs from author's desktop: added windows-control (Windows), verified todoist and gmessages configs, included pre-built gmessages.exe binary, removed gmail-extended (deprecated), updated mcp-servers.md template fragment | Update |
 | 2026-03-17 | 1.5 | Usability review: added /health command, fixed uninstall marker mismatch, improved wizard phase summaries and first-run experience, added messaging and /contribute to known issues with planned extraction, improved template variable prompts and rclone fallback guidance, fixed PowerShell installer instructions | Update |
 | 2026-03-16 | 1.4 | Documented CLAUDE.md fragments system, /toolkit reference card + periodic reminder, error guidance tips, contribute policy. Updated install flow diagram. Synced with CHANGELOG v1.0.1. | Update |
