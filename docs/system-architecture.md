@@ -96,6 +96,29 @@ Claude Code's built-in memory system stores persistent context in `~/.claude/pro
 
 Memory files use YAML frontmatter and markdown content. The index (`MEMORY.md`) maps to individual files — it's a table of contents, not a store.
 
+## Marketplace Plugins
+
+In addition to local toolkit components (registered via symlinks), the setup wizard registers 14 marketplace plugins via `enabledPlugins` in `~/.claude/settings.json`. These are downloaded automatically by Claude Code on first use — no local binary or manual install needed.
+
+| Plugin | Purpose |
+|--------|---------|
+| `superpowers` | Core workflow discipline: TDD, debugging, collaboration patterns |
+| `claude-md-management` | Audit and maintain CLAUDE.md files |
+| `code-review` | Automated PR code review with specialized agents |
+| `code-simplifier` | Simplifies code for clarity while preserving functionality |
+| `commit-commands` | Streamlined git commit/push/PR workflow |
+| `feature-dev` | Full feature development workflow (explore → architect → review) |
+| `hookify` | Create hooks to prevent unwanted Claude behaviors |
+| `skill-creator` | Create, test, and benchmark skills |
+| `explanatory-output-style` | Adds educational insights about implementation choices |
+| `learning-output-style` | Requests meaningful code contributions at decision points |
+| `context7` | Live documentation lookup from source repos |
+| `linear` | Linear issue tracking integration |
+| `playwright` | Browser automation and end-to-end testing |
+| `plugin-dev` | Tools for building Claude Code plugins |
+
+Registration happens in Phase 5 (Step 5f) of the setup wizard. The setup wizard merges these into any existing `enabledPlugins` entries — it never overwrites plugins already present.
+
 ## Commands
 
 | Command | Purpose |

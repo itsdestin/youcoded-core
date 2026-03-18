@@ -2,6 +2,17 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## v1.1.2 (2026-03-18)
+
+### Features
+- **Marketplace plugin registration** — Setup wizard (Phase 5, Step 5f) now registers 14 recommended marketplace plugins via `enabledPlugins` in `settings.json`: superpowers, claude-md-management, code-review, code-simplifier, commit-commands, feature-dev, hookify, skill-creator, explanatory-output-style, learning-output-style, context7, linear, playwright, plugin-dev. Plugins download automatically on first use — no manual install needed.
+- **Phase 6 verification** — Health check now confirms all 14 marketplace plugins are registered in `settings.json`.
+
+### Documentation
+- `docs/system-architecture.md` — Added Marketplace Plugins section with full plugin table
+- `docs/for-beginners/03-installing-the-toolkit.md` — Updated Phase 5 description to mention plugin registration
+- `core/specs/destinclaude-spec.md` — Documented `enabledPlugins` mechanism in Component Registration and Design Decisions (v1.8)
+
 ## v1.1.1 (2026-03-17)
 
 ### Security

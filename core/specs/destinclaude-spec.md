@@ -1,7 +1,7 @@
 # DestinClaude Toolkit — Spec
 
-**Version:** 1.7
-**Last updated:** 2026-03-17
+**Version:** 1.8
+**Last updated:** 2026-03-18
 **Feature location:** `~/.claude/plugins/destinclaude/` (toolkit root)
 
 ## Purpose
@@ -19,7 +19,8 @@ Individual features (skills, hooks, MCP servers) have their own specs — this s
 
 | Decision | Rationale | Alternatives considered |
 |----------|-----------|----------------------|
-| Symlink-based registration (not plugin marketplace) | Claude Code's `enabledPlugins` only supports `"name@marketplace": true` format. Symlinks into standard auto-discovery dirs (`~/.claude/skills/`, etc.) work reliably across platforms without requiring marketplace setup | `enabledPlugins` with paths (rejected: silently ignored), `--plugin-dir` flag (rejected: per-session only), local marketplace (rejected: over-engineered for current scope) |
+| Symlink-based registration for local components (not `enabledPlugins` paths) | Claude Code's `enabledPlugins` only supports `"name@marketplace": true` format for local paths — those are silently ignored. Symlinks into standard auto-discovery dirs (`~/.claude/skills/`, etc.) work reliably across platforms | `enabledPlugins` with paths (rejected: silently ignored), `--plugin-dir` flag (rejected: per-session only), local marketplace (rejected: over-engineered for current scope) |
+| `enabledPlugins` for marketplace plugins | Marketplace plugins (superpowers, context7, etc.) use `"name@marketplace": true` in `settings.json` and are downloaded automatically by Claude Code — no local binary or symlink needed | Skipping marketplace plugins entirely (rejected: superpowers provides core workflow discipline that new installs benefit from immediately), manual post-install docs (rejected: users won't read them) |
 | Homebrew installed by default on Mac | Nearly every Mac dependency (node, gh, rclone, gcloud, go) uses `brew install`. Installing Homebrew first simplifies all downstream steps to one-liners | Ask user to choose (rejected: added friction for non-technical users), direct .pkg downloads (rejected: inconsistent install paths, harder to update) |
 | Bootstrap script + setup wizard (two-phase install) | Bootstrap handles prerequisites and cloning (can run via `curl \| bash`). Setup wizard handles interactive decisions (layer selection, personalization, conflict resolution) that require Claude | Single script (rejected: can't do interactive Claude conversation), wizard-only (rejected: can't install prerequisites without Claude running) |
 | Root-level `skills/` and `commands/` mirror core | Bootstrap needs to symlink setup-wizard before the full setup runs. Root-level dirs provide a stable reference without depending on layer structure | Symlink directly to `core/` (current approach after fix), hardcoded paths (rejected: fragile) |
@@ -56,7 +57,7 @@ User runs: claude → /setup
 
 ### 2. Component Registration
 
-Skills, commands, and hooks are registered via symlinks into Claude Code's auto-discovery directories:
+**Local toolkit components** (skills, commands, hooks) are registered via symlinks into Claude Code's auto-discovery directories:
 
 | Component type | Source location | Symlink target |
 |---------------|----------------|---------------|
@@ -69,6 +70,12 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 
 ```json
 { "statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh" } }
+```
+
+**Marketplace plugins** are registered separately via `enabledPlugins` in `~/.claude/settings.json`. The setup wizard (Phase 5, Step 5f) merges 14 recommended plugins into this key. Claude Code downloads them automatically on first use — no local binary or symlink needed:
+
+```json
+{ "enabledPlugins": { "superpowers@claude-plugins-official": true, "context7@claude-plugins-official": true, ... } }
 ```
 
 ### 3. Layers and Components
@@ -151,7 +158,7 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 - Add recovery/bail-out instructions to `/contribute` command for non-technical users
 - Extract messaging setup from the main wizard into a standalone post-setup flow
 - Add difficulty options for install: (1) full beginner — hold my hand, (2) some experience — guidance but not every explanation, (3) expert — let's hurry this up (from inbox 2026-03-17)
-- Include superpowers and plugins in the repo, or walk users through plugin docs; add clearer explanations of how to create new skills/workflows and how dynamic Claude is (from inbox 2026-03-17)
+- Add clearer explanations of how to create new skills/workflows and how dynamic Claude is (from inbox 2026-03-17, partial — marketplace plugin registration resolved in v1.8)
 - Add setup feature to restore configuration from Google Drive (from inbox 2026-03-17)
 - Add more tip prompts and hints in the first setup wizard run — mention Google Drive widget or Apple Notes widget on home screen for quick inbox capture, which can be emptied later from laptop, etc. (from inbox 2026-03-17)
 - Add iCloud support via rclone as a Drive alternative — rclone has native iCloud backend (from inbox 2026-03-17)
@@ -160,6 +167,7 @@ The messaging setup (iMessage permissions + Google Messages Go compilation) is e
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-18 | 1.8 | Add marketplace plugin registration to setup wizard (Phase 5 Step 5f + Phase 6 check): 14 plugins via `enabledPlugins`. Document in Component Registration section and Design Decisions. Partially resolve "superpowers in repo" planned item. | Update |
 | 2026-03-17 | 1.7 | Inbox processing: add 5 planned updates (difficulty options, superpowers in repo, restore from Drive, setup wizard tips, iCloud support) | Inbox |
 | 2026-03-17 | 1.6 | Ported MCP server configs from author's desktop: added windows-control (Windows), verified todoist and gmessages configs, included pre-built gmessages.exe binary, removed gmail-extended (deprecated), updated mcp-servers.md template fragment | Update |
 | 2026-03-17 | 1.5 | Usability review: added /health command, fixed uninstall marker mismatch, improved wizard phase summaries and first-run experience, added messaging and /contribute to known issues with planned extraction, improved template variable prompts and rclone fallback guidance, fixed PowerShell installer instructions | Update |

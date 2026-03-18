@@ -708,6 +708,37 @@ If any symlinks are broken (target doesn't exist), report them to the user and o
 
 After verification, confirm: "Toolkit registered — all skills, commands, and hooks are linked. From now on just run `claude` and everything loads automatically."
 
+#### 5f: Register marketplace plugins
+
+Marketplace plugins extend Claude Code with additional skills and tools. They're registered via `enabledPlugins` in `~/.claude/settings.json` — distinct from the symlink-based local toolkit components.
+
+Read the existing `~/.claude/settings.json`, then merge the following entries into the `enabledPlugins` object. Preserve any existing entries the user already has.
+
+```json
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "linear@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true
+  }
+}
+```
+
+**Important:** These plugins are downloaded automatically by Claude Code on first use — no manual install step needed. If a plugin is already present in `enabledPlugins`, skip it (don't overwrite the existing value).
+
+After registering, tell the user: "I've registered 14 recommended plugins. They'll download automatically the first time you use them."
+
 ### Step 6: Configure MCP servers (if applicable)
 
 MCP servers let Claude talk to external services. They're configured in `~/.claude.json` — read the file first (it may have existing settings to preserve), then add entries under the `mcpServers` key.
@@ -828,6 +859,7 @@ Run a health check on everything that was installed.
 - [ ] Hooks are registered in `~/.claude/settings.json` under the `hooks` key
 - [ ] `statusLine` is configured in `~/.claude/settings.json` (separate from hooks)
 - [ ] `~/.claude/statusline.sh` exists and resolves (not a broken symlink)
+- [ ] All 14 marketplace plugins present in `~/.claude/settings.json` `enabledPlugins`
 
 ### Step 2: Life checks (if installed)
 

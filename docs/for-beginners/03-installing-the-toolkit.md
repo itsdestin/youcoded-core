@@ -83,7 +83,7 @@ Some layers need additional software. Claude will tell you what's needed and off
 - **Productivity layer** may need `Go` for the text messaging server
 
 ### 5. Personalization
-Claude asks your name and a few preferences, then fills in the templates so everything is customized for you.
+Claude asks your name and a few preferences, fills in the templates so everything is customized for you, and registers 14 recommended marketplace plugins (like superpowers, context7, and commit-commands) that extend Claude Code with additional skills and workflows. The plugins download automatically the first time you use them — nothing to install manually.
 
 ### 6. Verification
 Claude runs a health check to make sure everything is working. If anything failed, it tells you what happened and how to fix it.
