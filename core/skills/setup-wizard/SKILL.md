@@ -32,9 +32,13 @@ If the user answers **2 (no)** or indicates they're new, skip directly to **Phas
 
 If the user answers **1 (yes)** or indicates prior use, continue to Step 2.
 
+(The user may answer in plain language — treat any affirmative as option 1, any negative as option 2.)
+
+**Wait for the user's answer before proceeding.**
+
 ### Step 2: Ask which backup source
 
-Say:
+Say exactly:
 
 ```
 Where did you back up your data?
@@ -45,10 +49,10 @@ Where did you back up your data?
   4. Not sure / skip
 ```
 
-- **4 (not sure / skip):** Proceed to Phase 1 normally.
-- **3 (iCloud):** Say "iCloud restore support is coming — for now, let's do a fresh install. I'll make sure everything is set up to back up to iCloud going forward." Then proceed to Phase 1 normally.
 - **1 (GitHub):** Proceed to **Phase 0A: GitHub Restore**.
 - **2 (Google Drive):** Proceed to **Phase 0B: Drive Restore**.
+- **3 (iCloud):** Say "iCloud restore support is coming — for now, let's do a fresh install. I'll make sure everything is set up to back up to iCloud going forward." Then proceed to Phase 1 normally.
+- **4 (not sure / skip):** Proceed to Phase 1 normally.
 
 **Wait for the user's answer before proceeding.**
 
