@@ -39,6 +39,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `todo-capture.sh` | PostToolUse | Captures TODO items from conversation |
 | `checklist-reminder.sh` | PostToolUse | Reminds about incomplete checklist items |
 | `usage-fetch.js` | PostToolUse | Tracks API usage statistics |
+| `announcement-fetch.js` | SessionStart | Fetches announcements from GitHub, caches to `~/.claude/.announcement-cache.json` |
 
 **Hook composition:** If a user already has hooks at the same trigger points, the setup wizard offers to merge logic (preserving both) or let the user choose which to keep. The backup system ensures nothing is lost.
 
