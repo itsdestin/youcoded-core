@@ -21,10 +21,21 @@ case "$(uname -s)" in
 esac
 
 if [[ "$OS" == "windows" ]]; then
-    echo "On Windows? Use the PowerShell installer instead:"
-    echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
-    echo ""
-    echo "Or if you're in Git Bash and want to continue, that works too."
+    # Check if Developer Mode is enabled (required for symlinks on Windows)
+    DEV_MODE=$(reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense 2>/dev/null | grep -o "0x1" || true)
+    if [[ -z "$DEV_MODE" ]]; then
+        echo "On Windows without Developer Mode, symlinks won't work."
+        echo "The PowerShell installer can enable Developer Mode automatically:"
+        echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
+        echo ""
+        echo "If you continue here, the toolkit will use file copies instead"
+        echo "of symlinks (updates require re-running /setup-wizard)."
+    else
+        echo "On Windows? The PowerShell installer is also available:"
+        echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
+        echo ""
+        echo "Or continue here in Git Bash — symlinks will work fine."
+    fi
     read -p "Continue in bash? (y/N) " -n 1 -r < /dev/tty
     echo ""
     [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0

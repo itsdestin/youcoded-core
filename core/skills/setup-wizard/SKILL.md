@@ -861,7 +861,7 @@ Claude Code auto-discovers skills from `~/.claude/skills/`, commands from `~/.cl
 
 **Important:** `enabledPlugins` in `settings.json` only works for marketplace plugins (`"name@marketplace": true`). It does NOT support local path-based registration. Always use symlinks for local toolkit components.
 
-**Windows symlink fallback:** On Windows, `ln -sf` may fail if Developer Mode is not enabled. After each `ln -sf` call, check if the symlink resolves (`[ -e target ]`). If it doesn't, fall back to copying instead (`cp -R` for directories, `cp` for files). The bootstrap installer already does this — the wizard must match. When using copy fallback, inform the user: "Symlinks aren't available on your system — using copies instead. Everything works the same, but if you update the toolkit you'll need to re-run `/setup-wizard` to refresh these copies."
+**Windows symlink fallback:** On Windows, `ln -sf` requires Developer Mode. The bootstrap installer (`install.ps1`) enables Developer Mode automatically during installation, so symlinks should work for most users. However, if the user declined the elevation prompt or ran the bash installer without Developer Mode, symlinks will fail silently. After each `ln -sf` call, check if the symlink resolves (`[ -e target ]`). If it doesn't, fall back to copying instead (`cp -R` for directories, `cp` for files). When using copy fallback, inform the user: "Symlinks aren't available on your system — using copies instead. Everything works the same, but if you update the toolkit you'll need to re-run `/setup-wizard` to refresh these copies."
 
 #### 5a: Symlink skills
 
