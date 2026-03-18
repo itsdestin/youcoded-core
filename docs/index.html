@@ -279,6 +279,7 @@
   }
 
   .prereq-card {
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -287,10 +288,18 @@
 
   .prereq-header {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px 10px;
+    align-items: flex-start;
+    gap: 8px;
     margin-bottom: 8px;
+  }
+
+  .prereq-badges {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
   }
 
   .prereq-header h3 {
@@ -826,28 +835,34 @@
       <h2 class="section-title">You'll need a couple of accounts.</h2>
       <div class="prereq-grid">
         <div class="prereq-card">
-          <div class="prereq-header">
-            <h3>Anthropic</h3>
+          <div class="prereq-badges">
             <span class="prereq-badge required">Required</span>
             <span class="prereq-badge paid">Paid — $20</span>
+          </div>
+          <div class="prereq-header">
+            <h3>Anthropic</h3>
           </div>
           <p>Requires a subscription for Claude Code, which underlies the system.</p>
           <a href="https://claude.ai/upgrade" target="_blank" class="prereq-link">Subscribe to Claude Pro &rarr;</a>
         </div>
         <div class="prereq-card">
-          <div class="prereq-header">
-            <h3>Google or Apple</h3>
+          <div class="prereq-badges">
             <span class="prereq-badge required">Required</span>
             <span class="prereq-badge free">Free</span>
+          </div>
+          <div class="prereq-header">
+            <h3>Google or Apple</h3>
           </div>
           <p>DestinClaude stores all of your personal information in your own Google Drive or Apple iCloud account.</p>
           <a href="https://accounts.google.com/signup" target="_blank" class="prereq-link">Create Google Account &rarr;</a>
         </div>
         <div class="prereq-card">
-          <div class="prereq-header">
-            <h3>GitHub</h3>
+          <div class="prereq-badges">
             <span class="prereq-badge required">Required</span>
             <span class="prereq-badge free">Free</span>
+          </div>
+          <div class="prereq-header">
+            <h3>GitHub</h3>
           </div>
           <p>Required to receive toolkit updates. Sign up with your Google or Apple account.</p>
           <a href="https://github.com/signup" target="_blank" class="prereq-link">Create GitHub Account &rarr;</a>
