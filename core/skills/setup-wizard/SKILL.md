@@ -28,7 +28,7 @@ Before we get started — have you used DestinClaude before on another device?
   2. No — this is my first time
 ```
 
-If the user answers **2 (no)** or indicates they're new, skip directly to **Phase 1**.
+If the user answers **2 (no)** or indicates they're new, proceed to **Phase 0.5**.
 
 If the user answers **1 (yes)** or indicates prior use, continue to Step 2.
 
@@ -245,6 +245,85 @@ After completing all checks:
 Tell the user: "Since your config is restored from backup, I'll skip the personalization step — your name, preferences, and settings are already in place. Let me just verify everything works."
 
 **Skip Phase 1 through Phase 5 entirely.** Proceed directly to **Phase 6: Verification**.
+
+---
+
+## Phase 0.5: Comfort Level
+
+*Only for fresh installs. If the user restored from backup (Phase 0A/0B → 0C), this phase was skipped — proceed to Phase 6 as directed by Phase 0C.*
+
+*If this is a re-run and `~/.claude/toolkit-state/config.json` already has a `comfort_level`, pre-select it:* "Last time you chose [beginner/intermediate/power user]. Still feel the same, or want to change?"
+
+*Otherwise, say exactly:*
+
+```
+How comfortable are you with this terminal and Claude Code?
+
+  1. I have no idea what I'm doing and I'm scared
+     → Full guided setup with detailed explanations at every step
+
+  2. I know what I'm doing, but walk me through linking my accounts
+     → Full setup wizard, standard pacing
+
+  3. I really don't need any setup help
+     → Speed run — defaults where possible, only asks what it has to
+```
+
+(The user may answer in plain language — "I'm terrified" maps to 1, "just set it up" maps to 3, etc.)
+
+**Wait for the user's answer before proceeding.**
+
+### Step 1: Store comfort level
+
+Map the answer to a comfort level and store in working state:
+
+- Option 1 → `"beginner"`
+- Option 2 → `"intermediate"`
+- Option 3 → `"power_user"`
+
+### Step 2: Activate output style immediately
+
+Read `~/.claude/settings.json` (create it if it doesn't exist). Merge the output style plugins into `enabledPlugins` based on comfort level:
+
+**Beginner:**
+```json
+{
+  "enabledPlugins": {
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": false
+  }
+}
+```
+
+**Intermediate:**
+```json
+{
+  "enabledPlugins": {
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true
+  }
+}
+```
+
+**Power User:**
+```json
+{
+  "enabledPlugins": {
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true
+  }
+}
+```
+
+On re-runs where the user is re-choosing, overwrite the existing output style values rather than skipping them.
+
+Preserve all other existing content in `settings.json`. Only add or update the two output style entries.
+
+### Step 3: Persist to config
+
+Write `comfort_level` to `~/.claude/toolkit-state/config.json` (create the file/directory if needed). This goes alongside the other top-level keys (`platform`, `toolkit_root`, etc.).
+
+**Proceed to Phase 1.**
 
 ---
 
