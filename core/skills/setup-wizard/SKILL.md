@@ -228,7 +228,11 @@ Proceed to **Phase 0C: Abbreviated Dependency Check**.
 
 Tell the user: "Let me make sure all the tools your restored config needs are installed on this machine."
 
-Read `~/.claude/toolkit-state/config.json` to determine which layers were previously installed (`installed_layers`). Run the dependency checks from **Phase 4** for each relevant layer:
+Read `~/.claude/toolkit-state/config.json` to determine which layers were previously installed (`installed_layers`).
+
+If `config.json` exists but does not contain a `comfort_level` key (backups from before this feature), default to `"intermediate"` and store it in working state. Do not ask the user — this preserves the pre-comfort-gate behavior. The user can change it on a future re-run of `/setup-wizard`.
+
+Run the dependency checks from **Phase 4** for each relevant layer:
 
 - Always run **Core Dependencies** checks (git, gh CLI, gcloud)
 - Run **Life Dependencies** checks (rclone, Google Drive) only if `"life"` is in `installed_layers` — or if Phase 0B just ran (rclone is already configured)
