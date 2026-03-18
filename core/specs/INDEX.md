@@ -21,8 +21,6 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Encyclopedia Compile | skill | ~/.claude/skills/encyclopedia-compile/specs/encyclopedia-compile-spec.md | 1.1 |
 | Encyclopedia Interviewer | skill | ~/.claude/skills/encyclopedia-interviewer/specs/encyclopedia-interviewer-spec.md | 1.1 |
 | Encyclopedia Librarian | skill | ~/.claude/skills/encyclopedia-librarian/specs/encyclopedia-librarian-spec.md | 1.2 |
-| Elections Notebook | skill | ~/.claude/skills/elections-notebook/specs/elections-notebook-spec.md | 1.0 |
-| JLBC Fiscal Note | skill | ~/.claude/skills/jlbc-fiscal-note/specs/jlbc-fiscal-note-spec.md | 1.0 |
 | Writing Voice | skill | ~/.claude/skills/writing-voice/specs/writing-voice-spec.md | 2.2 |
 | Skill Creator | skill | ~/.claude/skills/skill-creator/specs/skill-creator-spec.md | 1.0 |
 | Google Drive | skill | ~/.claude/skills/google-drive/specs/google-drive-spec.md | 1.1 |
