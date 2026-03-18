@@ -2,6 +2,15 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## v1.1.5 (2026-03-18)
+
+### Features
+- **Landing page redesign (mockup)** — Major overhaul prepared in `docs/index-mockup.html`: sticky navigation bar, dark mode toggle with `prefers-color-scheme` and `localStorage` persistence, scroll-triggered animations via IntersectionObserver, "How It Works" 3-step flow, hero tagline + CTA button, animated demo terminal showing a journaling session, FAQ accordion (6 questions), polished footer with back-to-top button, OS auto-detection for install tabs (defaults macOS), accessibility fixes (`:focus-visible`, ARIA attributes, `<button>` integration tags), Open Graph + Twitter Card meta tags, adaptive demo terminal for light/dark mode
+- **Brand icons** — New `docs/icon-light.svg` and `docs/icon-dark.svg`. Terminal-inspired design modeled after the Claude Code input box: filled chevron with flat horizontal cuts, "DC" in Cascadia Code, accent cursor block. Light mode uses cream background with dark D; dark mode uses charcoal background with light D. Orange accent throughout. Used in nav, footer, and favicon (swaps on theme toggle).
+
+### Documentation
+- `core/specs/landing-page-spec.md` — Updated to v1.4: added Brand Icons subsection, new sections 0 (Nav), 1.5 (How It Works), 9 (Demo), 10 (FAQ), 11 (Footer). Visual Design split into Light/Dark/Shared. Added Planned Updates for icon self-hosting and OG image.
+
 ## v1.1.4 (2026-03-18)
 
 ### Features

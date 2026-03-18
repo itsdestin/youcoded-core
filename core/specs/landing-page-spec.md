@@ -1,6 +1,6 @@
 ---
 name: Landing Page
-version: 1.3
+version: 1.4
 last_updated: 2026-03-18
 ---
 
@@ -13,13 +13,40 @@ A single-page site that non-technical friends can open from a text message, unde
 
 ## Architecture
 
-Single self-contained `docs/index.html`. CSS inline, fonts loaded from Google Fonts (JetBrains Mono + DM Sans). Minimal JS for tab toggle and copy-to-clipboard. No frameworks, no build step, no dependencies. `.nojekyll` file in `docs/` prevents Jekyll from processing markdown files alongside the HTML. Orange diamond SVG favicon inline in `<head>`.
+Single self-contained `docs/index.html`. CSS inline, fonts loaded from Google Fonts (JetBrains Mono + DM Sans). Minimal JS for tab toggle, copy-to-clipboard, theme switching, scroll animations, and demo playback. No frameworks, no build step, no dependencies. `.nojekyll` file in `docs/` prevents Jekyll from processing markdown files alongside the HTML.
+
+### Brand Icons
+
+Two SVG icon files in `docs/`:
+- `icon-light.svg` — for light mode (cream background `#f5efe8`, dark D `#2d2418`)
+- `icon-dark.svg` — for dark mode (charcoal background `#2a2520`, light D `#f0e8dd`)
+
+Design: Terminal-inspired, modeled after the Claude Code input box. Elements (left to right):
+- **Chevron** (`>`) — filled polygon with flat horizontal top/bottom cuts (parallel to decorative lines), wide opening angle (~103°), slightly bolder than letter strokes
+- **D** — Cascadia Code bold, color matches page text color per mode
+- **C** — Cascadia Code bold, always in accent orange (`#e07840` light / `#e8945c` dark)
+- **Cursor block** — rectangular block with minimal rounding (`rx="0.5"`), accent orange with reduced opacity
+
+Framing: rounded rect with accent-color border + subtle horizontal accent lines at top and bottom (inside the border). Favicon swaps between the two SVGs on theme toggle.
 
 ## Page Sections
 
+### 0. Sticky Navigation
+- Fixed top bar (`56px` height) with blur backdrop
+- Left: brand icon (swaps light/dark per theme) + "DestinClaude" wordmark
+- Right: section links (About, Prerequisites, Install, Features, Docs, FAQ) + dark mode toggle button
+- Mobile: hides Prerequisites and Features links
+
 ### 1. Hero
 - Title box with warm orange tint: "Destin**Claude**" (second word in accent color) + "For Claude Code by Anthropic" subtitle
-- Personal warmth line: "Built for my friends. Shared with everyone."
+- Tagline: "Your life, organized by conversation."
+- Personal warmth line: "Trust me, I promise it's actually kinda cool."
+- Prominent "Get Started" CTA button (orange pill, scrolls to install section)
+
+### 1.5. How It Works
+- Three-step visual flow: **Install** → **Chat** → **It just works**
+- Each step has an icon in a bordered square, step number, title, and one-line description
+- Connected by arrow characters on desktop; stacks with scaled-down layout on mobile
 
 ### 2. What Is This? (Intro)
 - Section label: "What is this?"
@@ -86,22 +113,56 @@ Single self-contained `docs/index.html`. CSS inline, fonts loaded from Google Fo
 | System Architecture | `docs/system-architecture.md` | Technical deep dive into layers, hooks, specs, and data flow. |
 | Specs Index | `core/specs/INDEX.md` | Feature documentation and design decisions. |
 
-### 9. Footer
-- "Built by Destin" (links to GitHub profile)
-- GitHub repo link + "MIT License"
+### 9. Demo Session
+- Section label: "See it in action"
+- Heading: "What a session looks like"
+- Faux terminal window (title bar with red/yellow/green dots) showing an animated journaling session
+- Lines appear sequentially via `data-delay` attributes, triggered by IntersectionObserver on scroll
+- Terminal adapts to light/dark mode via CSS variables
+- "Replay" button below the terminal
+
+### 10. FAQ
+- Section label: "Common questions"
+- Accordion-style Q&A (one open at a time):
+  - Is my data private?
+  - What does the $20/month get me?
+  - Can I use this without Google?
+  - What if I break something?
+  - Do I need to know how to code?
+  - Does it work on Mac and Windows?
+
+### 11. Footer
+- Brand icon (light/dark) + "DestinClaude" wordmark linking to top
+- GitHub link with inline SVG icon, "Built by Destin" link
+- Open Source badge + MIT License text
+- Floating "back to top" button (appears after scrolling past 400px)
 
 ## Visual Design
 
+### Light Mode (default)
 - **Background:** Warm cream (`#faf6f1`) with subtle warm radial gradients
 - **Surface colors:** Cards white (`#ffffff`), hover `#fef9f4`
 - **Text:** Primary `#2d2418`, secondary `#6b5d4f`, dim `#9a8d7f`
 - **Accent:** Burnt orange `#e07840` for links, borders, highlights, badges
-- **Code blocks:** Warm beige (`#f0e8de`) with dark text
-- **Typography:** DM Sans for prose (400/500/600/700), JetBrains Mono for code and labels
+- **Code blocks:** Warm beige (`var(--bg-surface)`) with dark text
+
+### Dark Mode
+- **Background:** Deep brown (`#1a1612`)
+- **Surface colors:** Cards `#2a2420`, hover `#332c26`
+- **Text:** Primary `#f0e8dd`, secondary `#b8a898`, dim `#7a6e62`
+- **Accent:** Warm orange `#e8945c`
+- Toggled via button in nav; respects `prefers-color-scheme`; persists in `localStorage` (`dc-theme`)
+
+### Shared
+- **Typography:** DM Sans for prose (400/500/600/700), JetBrains Mono for code and labels, Cascadia Code for brand icon
 - **Borders:** Subtle `rgba(45, 36, 24, 0.1)`, accent borders `rgba(224, 120, 64, 0.3)`
 - **Card glow:** `0 0 40px rgba(224, 120, 64, 0.12)` on all bordered cards
-- **Animations:** Staggered fade-up on page load (hero elements)
+- **Animations:** Hero uses staggered fade-up on load; all other sections use IntersectionObserver scroll-triggered reveal (`.reveal` class)
 - **Responsive:** Breakpoint at 768px — all grids collapse to single column
+- **Accessibility:** `:focus-visible` outlines (not blanket `outline: none`); integration tags are `<button>` elements with `tabindex`; tab panels have `aria-controls`/`aria-labelledby`
+
+### OS Detection
+- Install tab auto-selects macOS by default; switches to Windows only if `navigator.userAgent` matches `/Win/i`
 
 ## Hosting Configuration
 
@@ -112,10 +173,13 @@ Single self-contained `docs/index.html`. CSS inline, fonts loaded from Google Fo
 
 ## Planned Updates
 
-*None — all previously planned items have been implemented.*
+- **Self-host integration icons** — Bundle integration tag icons as local SVGs instead of loading from Wikipedia/SimpleIcons CDN (#12 from mockup)
+- **OG image** — Create and host `og-image.png` for social sharing previews
+- **Promote mockup to live** — Replace `index.html` with `index-mockup.html` once all changes are reviewed
 
 ## Changelog
 
+- **v1.4 (2026-03-18):** Major landing page redesign (mockup in `docs/index-mockup.html`). Added: sticky navigation bar with section links; dark mode toggle (CSS variables, `prefers-color-scheme`, `localStorage`); brand icons (`icon-light.svg` + `icon-dark.svg`) — terminal-inspired `> DC` motif with flat-cut chevron, Cascadia Code font, accent cursor block; "How It Works" 3-step flow (Install → Chat → It just works); hero tagline + CTA button; animated demo terminal section showing a journaling session; FAQ accordion (6 questions); polished footer with icon, GitHub SVG, back-to-top button; scroll-triggered animations via IntersectionObserver; OS auto-detection for install tabs (defaults to macOS); accessibility fixes (`:focus-visible`, `<button>` integration tags, ARIA attributes); Open Graph + Twitter Card meta tags; adaptive demo terminal (light/dark mode). Spec updated with Brand Icons subsection, new sections 0 (Nav), 1.5 (How It Works), 9 (Demo), 10 (FAQ), 11 (Footer). Visual Design split into Light/Dark/Shared subsections.
 - **v1.3 (2026-03-18):** Documented implemented Integrations section (18 services with icons, expandable descriptions, "More coming soon" pill). Updated hero title from "Claudifest Destin-y" to "DestinClaude". Updated prerequisites: GitHub changed to Required, Google changed to "Google or Apple", added PAID/FREE badges, name-first card layout with right-aligned links. Added section numbering for Integrations (new section 7), renumbered Documentation to 8 and Footer to 9.
 - **v1.2 (2026-03-17):** Added Planned Updates section with integrations icons feature request (from inbox 2026-03-17).
 - **v1.1 (2026-03-17):** Updated to reflect warm cream/orange color scheme, added sections 2 (What Is This?), 3 (Before You Begin), 5 (Step 2: Talk to Claude). Removed tagline from hero, added title box with subtitle. Updated all color values.
