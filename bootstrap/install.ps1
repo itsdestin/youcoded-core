@@ -130,6 +130,38 @@ if (Test-Path $toolkitDir) {
     Write-Host "  Toolkit cloned" -ForegroundColor Green
 }
 
+# --- Ensure Developer Mode is enabled (required for symlinks) ---
+$devModeKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
+$devModeEnabled = $false
+try {
+    $val = Get-ItemProperty -Path $devModeKey -Name AllowDevelopmentWithoutDevLicense -ErrorAction Stop
+    if ($val.AllowDevelopmentWithoutDevLicense -eq 1) { $devModeEnabled = $true }
+} catch {}
+
+if ($devModeEnabled) {
+    Write-Host "  Developer Mode enabled" -ForegroundColor Green
+} else {
+    Write-Host "  Enabling Developer Mode (required for symlinks)..." -ForegroundColor Yellow
+    Write-Host "  You may see a permission prompt — please approve it." -ForegroundColor Yellow
+    try {
+        $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        if ($isAdmin) {
+            New-ItemProperty -Path $devModeKey -Name AllowDevelopmentWithoutDevLicense -Value 1 -PropertyType DWORD -Force -ErrorAction Stop | Out-Null
+        } else {
+            Start-Process powershell -Verb RunAs -Wait -ArgumentList "-Command", "New-ItemProperty -Path '$devModeKey' -Name AllowDevelopmentWithoutDevLicense -Value 1 -PropertyType DWORD -Force | Out-Null" -ErrorAction Stop
+        }
+        # Verify it took effect
+        $val = Get-ItemProperty -Path $devModeKey -Name AllowDevelopmentWithoutDevLicense -ErrorAction Stop
+        if ($val.AllowDevelopmentWithoutDevLicense -eq 1) {
+            Write-Host "  Developer Mode enabled" -ForegroundColor Green
+        } else {
+            throw "Value not set"
+        }
+    } catch {
+        Write-Host "  Could not enable Developer Mode — symlinks may fall back to copies." -ForegroundColor Yellow
+    }
+}
+
 # --- Register /setup command and wizard skill ---
 Write-Host "  Registering setup wizard..." -ForegroundColor Yellow
 $commandsDir = Join-Path $HOME ".claude\commands"
