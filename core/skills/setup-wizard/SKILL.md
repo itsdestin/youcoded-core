@@ -1200,6 +1200,11 @@ Summarize: "Everything is personalized for you — your name, preferences, and s
 
 Run a health check on everything that was installed.
 
+> **Comfort-level adaptation:**
+> - **Beginner:** Celebrate warmly. If any check fails, explain what it means and what went wrong in plain language before offering to fix it.
+> - **Intermediate:** No change.
+> - **Power user:** Show results as a compact pass/fail table with no narration. Only provide detail for items that fail.
+
 ### Step 1: Core checks
 
 - [ ] `git --version` returns successfully
@@ -1211,7 +1216,7 @@ Run a health check on everything that was installed.
 - [ ] Hooks are registered in `~/.claude/settings.json` under the `hooks` key
 - [ ] `statusLine` is configured in `~/.claude/settings.json` (separate from hooks)
 - [ ] `~/.claude/statusline.sh` exists and resolves (not a broken symlink)
-- [ ] All 14 marketplace plugins present in `~/.claude/settings.json` `enabledPlugins`
+- [ ] All 14 marketplace plugin keys present in `~/.claude/settings.json` `enabledPlugins` (keys may be `true` or `false` — both count as present; beginners will have `learning-output-style` set to `false`)
 
 ### Step 2: Life checks (if installed)
 
