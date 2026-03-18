@@ -164,6 +164,64 @@ Proceed to **Phase 0C: Abbreviated Dependency Check**.
 
 ---
 
+## Phase 0B: Drive Restore
+
+### Step 1: Install rclone if missing
+
+Follow the exact same rclone installation steps as **Phase 4 → Life Dependencies → rclone** — same explanation, same platform commands, same verification (`rclone --version`).
+
+### Step 2: Configure Google Drive
+
+Follow the exact same Google Drive authentication steps as **Phase 4 → Life Dependencies → Google Drive authentication** — same walkthrough, same `rclone config create gdrive drive` command, same verification (`rclone lsd gdrive:`).
+
+If `gdrive:` is already listed in `rclone listremotes`, skip setup and go straight to Step 3.
+
+### Step 3: Ask for Drive root
+
+Ask: "Where does DestinClaude store files on your Google Drive? This is the top-level folder name. (default: Claude)"
+
+Store the answer as `DRIVE_ROOT`. Use `Claude` if the user presses Enter without answering.
+
+### Step 4: Pull data from Drive
+
+Pull in this order. Tell the user what's happening at each step.
+
+**Encyclopedia files:**
+
+```bash
+mkdir -p ~/.claude/encyclopedia
+rclone sync "gdrive:$DRIVE_ROOT/The Journal/System/" ~/.claude/encyclopedia/ 2>/dev/null \
+  && echo "  Encyclopedia synced." \
+  || echo "  WARNING: Encyclopedia sync failed. Run manually: rclone sync 'gdrive:$DRIVE_ROOT/The Journal/System/' ~/.claude/encyclopedia/"
+```
+
+**Personal data** (memory, CLAUDE.md, toolkit config):
+
+```bash
+rclone sync "gdrive:$DRIVE_ROOT/Backup/personal/" ~/.claude/ --update 2>/dev/null \
+  && echo "  Personal data synced." \
+  || echo "  WARNING: Personal data sync failed. Run manually: rclone sync 'gdrive:$DRIVE_ROOT/Backup/personal/' ~/.claude/ --update"
+```
+
+**Conversation transcripts:**
+
+```bash
+mkdir -p ~/.claude/projects
+rclone copy "gdrive:$DRIVE_ROOT/Backup/conversations/" ~/.claude/projects/ --size-only 2>/dev/null \
+  && echo "  Transcripts synced." \
+  || echo "  WARNING: Transcript sync failed. Run manually: rclone copy 'gdrive:$DRIVE_ROOT/Backup/conversations/' ~/.claude/projects/ --size-only"
+```
+
+If any step fails and the user wants to skip it, that's fine — tell them the manual command to run later.
+
+### Step 5: Confirm and continue
+
+Tell the user: "Your data is restored from Google Drive. Now let me confirm all the tools it needs are installed on this machine."
+
+Proceed to **Phase 0C: Abbreviated Dependency Check**.
+
+---
+
 ## Phase 1: Environment Inventory
 
 Before installing anything, understand what's already on the user's system.
