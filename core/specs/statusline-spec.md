@@ -1,8 +1,8 @@
 # Statusline & Auto-Title — Spec
 
-**Version:** 1.3
-**Last updated:** 2026-03-17
-**Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`
+**Version:** 1.4
+**Last updated:** 2026-03-18
+**Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`, `core/hooks/announcement-fetch.js`
 (Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
 
 ## Purpose
@@ -30,6 +30,7 @@ A real-time information display system for Claude Code sessions. Three component
 | macOS Keychain fallback for credentials | Claude Max subscribers on macOS store OAuth tokens in Keychain, not `.credentials.json`. Uses `execFileSync('security', ...)` (safe, no shell injection). | `execSync` with string interpolation (rejected: shell injection surface), file-only (rejected: breaks for all macOS Max subscribers) |
 | Prune topic/marker files older than 7 days, at most once per day | Prevents `/tmp/claude-topics/` from accumulating stale files across sessions without running cleanup on every invocation | No cleanup (rejected: unbounded growth), cleanup on every invocation (rejected: unnecessary filesystem churn) |
 | `hookSpecificOutput` JSON for Auto-Title delivery | Ensures the reminder appears in Claude's context as a system-reminder, not as plain hook output that might be ignored | Plain stdout (rejected: not reliably surfaced to Claude), file-based signaling (rejected: Claude doesn't poll files) |
+| Fetch announcements only on session start (no per-render TTL) | Keeps statusline render latency at zero; announcements are not time-critical enough to justify per-render fetching. Cache age of 7 days used as stale threshold to handle offline users. | Per-render fetch (rejected: adds network latency to every tool use), 30-min TTL (rejected: unnecessary complexity for a broadcast-only system) |
 
 ## Current Implementation
 
@@ -56,11 +57,24 @@ A real-time information display system for Claude Code sessions. Three component
   │   └─ macOS fallback: reads from Keychain via `security` CLI
   ├─ Fetches https://api.anthropic.com/api/oauth/usage
   └─ Writes cache, outputs JSON
+
+[Session start] → session-start.sh
+  └─ Launches announcement-fetch.js in the background (nohup, non-blocking)
+
+[Announcement fetch] → announcement-fetch.js
+  ├─ Fetches https://raw.githubusercontent.com/itsdestin/destinclaude/master/announcements.txt
+  ├─ Parses message + optional YYYY-MM-DD expiry prefix (zero-padded only)
+  └─ Writes ~/.claude/.announcement-cache.json atomically (tmp → rename)
+
+**Announcements subsystem:**
+- `session-start.sh` launches `announcement-fetch.js` in the background on every session start
+- `announcement-fetch.js` fetches the raw GitHub file, parses message + optional expiry, writes `~/.claude/.announcement-cache.json` atomically
+- `statusline.sh` reads the cache on every render via a single `node -e` call; displays a bold yellow `★ message` fragment right-aligned on line 1 if the message is present, not expired, and cache is < 7 days old
 ```
 
 ### Output Format (up to 5 lines)
 
-1. **Session name** (bold white) — only shown if session has a name
+1. **Session name / sync status** (bold white / colored) + optional right-aligned **announcement** (bold yellow `★ message`) — announcement only shown if cache is present, not expired, and not stale (< 7 days)
 2. **Sync status** — colored green/yellow/red based on prefix (OK/WARN/ERR)
 3. **Model + Context** — dim model name, colored context remaining percentage
 4. **Rate limits** — 5h and 7d utilization with reset times, colored by severity (only if data available)
@@ -74,6 +88,7 @@ A real-time information display system for Claude Code sessions. Three component
 | `/tmp/claude-topics/marker-{sid}` | Throttle timestamp | Pruned after 7 days |
 | `/tmp/claude-topics/.prune-marker` | Last-prune timestamp | Persistent |
 | `~/.claude/.usage-cache.json` | Cached API usage response | Overwritten every 5 min |
+| `~/.claude/.announcement-cache.json` | Written by announcement-fetch.js; read by statusline.sh on every render | Overwritten on each session start |
 | `~/.claude/.sync-status` | Written by git-sync.sh | Updated on each backup |
 | `~/.claude/toolkit-state/update-status.json` | Toolkit version check result | Written by session-start.sh |
 | `~/.claude/statusline.log` | Stderr from statusline Node.js calls | Appended; for debugging |
@@ -88,7 +103,7 @@ A real-time information display system for Claude Code sessions. Three component
 
 ## Dependencies
 
-- Depends on: git-sync.sh (writes `.sync-status`), session-start.sh (writes `update-status.json`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json` or macOS Keychain), Claude Code session JSON (stdin)
+- Depends on: git-sync.sh (writes `.sync-status`), session-start.sh (writes `update-status.json`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json` or macOS Keychain), Claude Code session JSON (stdin), announcement-fetch.js (writes `.announcement-cache.json`), Node.js 18+ (`fetch` built-in required for announcement-fetch.js)
 - Depended on by: CLAUDE.md Auto-Title instructions (define Claude's behavior when it sees the reminder)
 
 ## Known Bugs / Issues
@@ -112,3 +127,4 @@ A real-time information display system for Claude Code sessions. Three component
 | 2026-03-15 | 1.1 | Fixed stale sync-to-drive.sh references to git-sync.sh | Revised | — | |
 | 2026-03-16 | 1.2 | Fixed 37% miss rate and Write tool errors: switched to Bash echo, added adaptive throttle | Update | — | |
 | 2026-03-17 | 1.3 | Session name display, rate limit display, printf %b, symlink resolution, macOS Keychain fallback, sha256sum cross-platform, process.argv for Node paths | Update | — | |
+| 2026-03-18 | 1.4 | Announcements subsystem: session-start background fetch + statusline right-aligned display | Update | — | |
