@@ -79,6 +79,7 @@ Local (~/.claude/)
 | Hook | Event | Matcher | Purpose | State Files |
 |------|-------|---------|---------|-------------|
 | `write-guard.sh` | PreToolUse | `Write\|Edit` | Block writes when another active session owns the file | Reads `.write-registry.json` |
+| `tool-router.sh` | PreToolUse | `mcp__claude_ai_Gmail__\|mcp__claude_ai_Google_Calendar__` | Block Claude.ai native Gmail/Calendar MCP tools; redirect to GWS CLI equivalents | None |
 | `git-sync.sh` | PostToolUse | `Write\|Edit` | Commit to Git, debounced push, Drive archive, update write registry | Writes `.write-registry.json`, `.push-marker`, `.sync-status` |
 | `title-update.sh` | PostToolUse | `.*` | Prompt Claude to set session topic (10-min throttle) | Reads/writes `/tmp/claude-topics/marker-{sid}` |
 | `session-start.sh` | SessionStart | `startup` | Git pull, encyclopedia cache sync, inbox check | None (reads remote state) |
@@ -97,6 +98,7 @@ Local (~/.claude/)
 
 **During:**
 - Every Write|Edit → `write-guard.sh` (PreToolUse) checks for conflicts → `git-sync.sh` (PostToolUse) commits + debounced push
+- Claude.ai Gmail/Calendar MCP calls → `tool-router.sh` (PreToolUse) blocks and redirects to GWS CLI
 - Every tool use → `title-update.sh` (PostToolUse) throttled topic reminder
 - Skills load their SKILL.md (includes system rules footer)
 - On-demand docs (system.md, skills.md, work.md) read when relevant

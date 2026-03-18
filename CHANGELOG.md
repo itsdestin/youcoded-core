@@ -8,6 +8,9 @@ All notable changes to DestinClaude will be documented in this file.
 - Sanitized SQL inputs in iMessage MCP server — proper LIKE wildcard escaping, input validation, and centralized sanitize function to prevent injection via sqlite3 CLI
 - Topic files moved from world-writable `/tmp/` to `~/.claude/topics/` to prevent symlink attacks
 
+### Features
+- **Tool router hook** — PreToolUse hook blocks Claude.ai native Gmail/Calendar MCP tools and redirects to GWS CLI equivalents
+
 ### Fixes
 - **Installer:** Command symlink now points to `core/commands/setup-wizard.md` (was pointing to nonexistent `commands/setup.md`)
 - **Installer:** Non-terminal fallback shows proper "Download complete!" banner box instead of bare text

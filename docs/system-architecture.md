@@ -33,6 +33,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `statusline.sh` | Statusline | Renders sync status, model info, context remaining, toolkit version |
 | `git-sync.sh` | PostToolUse | Commits and syncs changes after file modifications |
 | `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
+| `tool-router.sh` | PreToolUse | Blocks Claude.ai Gmail/Calendar MCP tools, redirects to GWS CLI |
 | `contribution-detector.sh` | SessionStart | Detects local toolkit improvements, suggests contributing upstream |
 | `title-update.sh` | PostToolUse | Updates conversation title based on context |
 | `todo-capture.sh` | PostToolUse | Captures TODO items from conversation |
@@ -99,7 +100,7 @@ Memory files use YAML frontmatter and markdown content. The index (`MEMORY.md`) 
 
 | Command | Purpose |
 |---------|---------|
-| `/setup` | Interactive setup wizard — installs layers, resolves conflicts, personalizes |
+| `/setup-wizard` | Interactive setup wizard — installs layers, resolves conflicts, personalizes |
 | `/update` | Version management — fetches tags, shows changelog, merges updates |
 | `/contribute` | Contribution flow — diffs changes, filters private content, creates PR |
 | `/toolkit-uninstall` | Clean removal — restores backups, removes toolkit files |
