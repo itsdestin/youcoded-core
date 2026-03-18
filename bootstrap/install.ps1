@@ -1,4 +1,4 @@
-# DestinClaude Bootstrap Installer — Windows
+﻿# DestinClaude Bootstrap Installer - Windows
 # Downloads prerequisites and clones the toolkit so Claude Code can finish setup.
 
 Write-Host "===================================" -ForegroundColor Cyan
@@ -162,7 +162,7 @@ try {
 if ($symlinkOk) {
     Write-Host "  Setup wizard registered" -ForegroundColor Green
 } else {
-    Write-Host "  Setup wizard registered (copied — enable Developer Mode for symlinks)" -ForegroundColor Green
+    Write-Host "  Setup wizard registered (copied - enable Developer Mode for symlinks)" -ForegroundColor Green
 }
 
 Write-Host ""
