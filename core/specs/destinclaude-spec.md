@@ -78,8 +78,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 | Core | setup-wizard | setup, toolkit, contribute, toolkit-uninstall, update, health | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
 | Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, google-drive, journaling-assistant | — | sync-encyclopedia | — |
 | Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages, windows-control (Windows) |
-| Elections Notebook | elections-notebook | — | — | — |
-| JLBC Fiscal Note | jlbc-fiscal-note | — | — | — |
+| Modules | (optional domain-specific add-ons) | — | — | — |
 
 ### 4. Dependencies by Layer
 
