@@ -889,6 +889,11 @@ Summarize: "All the tools you need are installed. Now let's personalize everythi
 
 Fill in template variables, install selected layers, and configure CLAUDE.md.
 
+> **Comfort-level adaptation:**
+> - **Beginner:** Keep all explanatory framing for template variable questions (the "by 'root' I just mean..." style). When asking about `GIT_REMOTE` and `PERSONAL_SYNC_BACKEND`, keep the full tutorial offers and plain-language explanations.
+> - **Intermediate:** No change (this is the current behavior).
+> - **Power user:** Strip all explanatory framing from template variable questions — ask them rapid-fire with just the variable name and default. Skip the GitHub/sync tutorial offers (just ask the raw question). Example: "Google Drive root folder? (default: Claude)" instead of the multi-line explanation.
+
 ### Step 1: Collect template variables
 
 Read `<toolkit_root>/core/templates/template-variables.json`. For each variable:
@@ -1082,7 +1087,7 @@ Read the existing `~/.claude/settings.json`, then merge the following entries in
 }
 ```
 
-**Important:** These plugins are downloaded automatically by Claude Code on first use — no manual install step needed. If a plugin is already present in `enabledPlugins`, skip it (don't overwrite the existing value).
+**Important:** These plugins are downloaded automatically by Claude Code on first use — no manual install step needed. If a plugin is already present in `enabledPlugins` (key exists, regardless of whether value is `true` or `false`), skip it — don't overwrite the existing value. This is critical for the output style plugins, which were already set by Phase 0.5 based on the user's comfort level. (Phase 0.5 handles the re-run/re-choice case by overwriting before Phase 5f runs.)
 
 After registering, tell the user: "I've registered 14 recommended plugins. They'll download automatically the first time you use them."
 
