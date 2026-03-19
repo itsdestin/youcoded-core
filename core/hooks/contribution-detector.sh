@@ -44,7 +44,7 @@ fi
 # --- Check if we're in a git repo with tags ---
 cd "$TOOLKIT_ROOT"
 git rev-parse --git-dir &>/dev/null || exit 0
-git tag -l "$INSTALLED_TAG" &>/dev/null || exit 0
+git tag -l "$INSTALLED_TAG" | grep -q . || exit 0
 
 # --- Get changed files since installed tag ---
 CHANGED_FILES=$(git diff --name-only "$INSTALLED_TAG"..HEAD -- core/ life/ productivity/ modules/ 2>/dev/null) || exit 0
