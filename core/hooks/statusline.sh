@@ -119,7 +119,7 @@ fi
 
 # Append warning suffix to sync display if there are warnings
 if [[ -n "$WARN_PARTS" ]]; then
-    SYNC_DISPLAY="${SYNC_DISPLAY}  ${YELLOW}⚠ ${WARN_PARTS}${RESET}"
+    SYNC_DISPLAY="${SYNC_DISPLAY}  ${DIM}|${RESET}  ${YELLOW}⚠ ${WARN_PARTS}${RESET}"
 fi
 
 # --- Lines 1-2: Session name / sync status + announcement ---
