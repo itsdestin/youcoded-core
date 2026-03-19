@@ -6,11 +6,12 @@ set -euo pipefail
 
 # Read file path from stdin JSON
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+FILE_PATH=$(echo "$INPUT" | node -e "
+  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+    try{const j=JSON.parse(d);const p=j.tool_input&&j.tool_input.file_path||j.file_path||'';
+    console.log(p.split(String.fromCharCode(92)).join('/'))}catch{console.log('')}
+  })" 2>/dev/null)
 [[ -z "$FILE_PATH" ]] && exit 0
-
-# Normalize path separators
-FILE_PATH="${FILE_PATH//\\//}"
 
 # Config
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
@@ -133,15 +134,21 @@ if [[ "$SHOULD_PUSH" == "true" ]]; then
 
         # Drive archive (best-effort, claude config repo only)
         if [[ "$REPO_DIR" == "$CLAUDE_DIR" ]]; then
+            # Read DRIVE_ROOT from config
+            _DRIVE_ROOT="Claude"
+            if command -v node &>/dev/null && [[ -f "$CLAUDE_DIR/toolkit-state/config.json" ]]; then
+                _DR=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.DRIVE_ROOT)console.log(c.DRIVE_ROOT)}catch{}" "$CLAUDE_DIR/toolkit-state/config.json" 2>/dev/null)
+                [[ -n "$_DR" ]] && _DRIVE_ROOT="$_DR"
+            fi
             TIMESTAMP_FOLDER=$(date +"(%m-%d-%Y @ %I%M%P)")
-            ARCHIVE_BASE="gdrive:Claude/Backup/$TIMESTAMP_FOLDER"
+            ARCHIVE_BASE="gdrive:$_DRIVE_ROOT/Backup/$TIMESTAMP_FOLDER"
             {
                 rclone copy "$CLAUDE_DIR/specs/" "$ARCHIVE_BASE/specs/" 2>/dev/null
                 rclone copy "$CLAUDE_DIR/skills/" "$ARCHIVE_BASE/skills/" \
                     --exclude "node_modules/**" --exclude "__pycache__/**" --exclude "*.exe" --exclude "*.db" 2>/dev/null
                 rclone copyto "$CLAUDE_DIR/CLAUDE.md" "$ARCHIVE_BASE/claude-md/CLAUDE.md" 2>/dev/null
                 # Transcripts go to stable path (not inside timestamped folder) for restore.sh
-                rclone copy "$HOME/.claude/projects/" "gdrive:Claude/Backup/conversations/" \
+                rclone copy "$HOME/.claude/projects/" "gdrive:$_DRIVE_ROOT/Backup/conversations/" \
                     --include "*.jsonl" --size-only 2>/dev/null
             } || true  # Best-effort: don't fail if rclone errors
         fi

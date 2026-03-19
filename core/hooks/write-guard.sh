@@ -8,10 +8,11 @@ REGISTRY="$HOME/.claude/.write-registry.json"
 
 # Read tool input from stdin
 STDIN_JSON=$(cat)
-FILE_PATH=$(echo "$STDIN_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log(j.tool_input?.file_path||'')}catch{console.log('')}})" 2>/dev/null)
-
-# Normalize backslashes to forward slashes
-FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
+FILE_PATH=$(echo "$STDIN_JSON" | node -e "
+  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+    try{const j=JSON.parse(d);const p=j.tool_input&&j.tool_input.file_path||'';
+    console.log(p.split(String.fromCharCode(92)).join('/'))}catch{console.log('')}
+  })" 2>/dev/null)
 
 # If FILE_PATH is empty, allow (not a file write)
 if [ -z "$FILE_PATH" ]; then
@@ -71,10 +72,13 @@ if [ -z "$ENTRY" ]; then
     exit 0
 fi
 
-# Parse registry entry
-REG_PID=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).pid)}catch{console.log('')}})" 2>/dev/null)
-REG_TS=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).timestamp)}catch{console.log('')}})" 2>/dev/null)
-REG_HASH=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).content_hash)}catch{console.log('')}})" 2>/dev/null)
+# Parse registry entry (single node call for all fields)
+IFS=$'\x1f' read -r REG_PID REG_TS REG_HASH <<< "$(echo "$ENTRY" | node -e "
+  const SEP='\x1f';
+  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+    try{const j=JSON.parse(d);console.log((j.pid||'')+SEP+(j.timestamp||'')+SEP+(j.content_hash||''))}
+    catch{console.log(SEP+SEP)}
+  });" 2>/dev/null)" 
 
 # Same-session check — if we're the last writer, allow
 if [ "$REG_PID" = "$PPID" ]; then

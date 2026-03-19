@@ -8,11 +8,12 @@ set -euo pipefail
 
 # --- Parse stdin JSON ---
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+FILE_PATH=$(echo "$INPUT" | node -e "
+  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+    try{const j=JSON.parse(d);const p=j.tool_input&&j.tool_input.file_path||j.file_path||'';
+    console.log(p.split(String.fromCharCode(92)).join('/'))}catch{console.log('')}
+  })" 2>/dev/null)
 [[ -z "$FILE_PATH" ]] && exit 0
-
-# Normalize path separators (Windows backslashes to forward slashes)
-FILE_PATH="${FILE_PATH//\\//}"
 
 # --- Path check: only sync personal data files ---
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"

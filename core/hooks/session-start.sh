@@ -32,6 +32,13 @@ if [[ -n "$TOOLKIT_ROOT" && -f "$TOOLKIT_ROOT/VERSION" && ! -f "$CONFIG_FILE" ]]
     echo "{\"toolkit_root\": \"$TOOLKIT_ROOT\"}" > "$CONFIG_FILE"
 fi
 
+# --- Read DRIVE_ROOT from config (used for encyclopedia sync and backup paths) ---
+DRIVE_ROOT="Claude"
+if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
+    _DR=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.DRIVE_ROOT)console.log(c.DRIVE_ROOT)}catch{}" "$CONFIG_FILE" 2>/dev/null)
+    [[ -n "$_DR" ]] && DRIVE_ROOT="$_DR"
+fi
+
 # --- Extract MCP server config from .claude.json (before git pull, so local changes get committed) ---
 if [[ -f "$CLAUDE_JSON" ]] && command -v node &>/dev/null; then
     EXTRACTED=$(node -e "
@@ -81,7 +88,7 @@ fi
 if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
     _REFRESHED=0
     # Canonical list of toolkit-owned hooks — ONLY these get overwritten
-    for _h in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
+    for _h in checklist-reminder.sh contribution-detector.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
         if [[ -f "$TOOLKIT_ROOT/core/hooks/$_h" ]]; then
             if [[ ! -f "$CLAUDE_DIR/hooks/$_h" ]] || ! diff -q "$CLAUDE_DIR/hooks/$_h" "$TOOLKIT_ROOT/core/hooks/$_h" >/dev/null 2>&1; then
                 cp -f "$TOOLKIT_ROOT/core/hooks/$_h" "$CLAUDE_DIR/hooks/$_h" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
@@ -113,14 +120,6 @@ if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
             fi
         done
     fi
-    # Git pre-push hook (prevents VERSION/tag divergence)
-    if [[ -f "$TOOLKIT_ROOT/scripts/pre-push" && -d "$TOOLKIT_ROOT/.git/hooks" ]]; then
-        if [[ ! -f "$TOOLKIT_ROOT/.git/hooks/pre-push" ]] || ! diff -q "$TOOLKIT_ROOT/.git/hooks/pre-push" "$TOOLKIT_ROOT/scripts/pre-push" >/dev/null 2>&1; then
-            cp -f "$TOOLKIT_ROOT/scripts/pre-push" "$TOOLKIT_ROOT/.git/hooks/pre-push" 2>/dev/null
-            chmod +x "$TOOLKIT_ROOT/.git/hooks/pre-push" 2>/dev/null
-            _REFRESHED=$((_REFRESHED + 1))
-        fi
-    fi
     # Flag known orphan files from pre-v1.1.5 installs (never auto-delete)
     _ORPHANS=""
     [[ -f "$CLAUDE_DIR/hooks/statusline.sh" ]] && _ORPHANS="~/.claude/hooks/statusline.sh"
@@ -140,7 +139,7 @@ fi
 # --- Encyclopedia cache sync ---
 mkdir -p "$ENCYCLOPEDIA_DIR"
 if command -v rclone &>/dev/null; then
-    rclone sync "gdrive:Claude/The Journal/System/" "$ENCYCLOPEDIA_DIR/" 2>/dev/null || \
+    rclone sync "gdrive:$DRIVE_ROOT/The Journal/System/" "$ENCYCLOPEDIA_DIR/" 2>/dev/null || \
         echo '{"hookSpecificOutput": "Warning: Encyclopedia cache sync failed. Skills will use stale cache."}' >&2
 fi
 
