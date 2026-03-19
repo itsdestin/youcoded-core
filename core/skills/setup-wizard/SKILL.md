@@ -1012,7 +1012,7 @@ mkdir -p ~/.claude/hooks
 
 # Core hooks (always — skip any the user chose to "keep yours" in Phase 2)
 # NOTE: statusline.sh is NOT a hook — it's configured separately via settings.json "statusLine"
-for hook in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
+for hook in checklist-reminder.sh done-sound.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
 done
 
