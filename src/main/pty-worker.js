@@ -4,13 +4,20 @@
 // Communicates with the Electron main process via IPC (process.send).
 
 const pty = require('node-pty');
+const which = require('which');
 
 let ptyProcess = null;
 
 process.on('message', (msg) => {
   switch (msg.type) {
     case 'spawn': {
-      const shell = msg.command || 'claude';
+      // Resolve full path — node-pty on Windows needs it (no shell lookup)
+      let shell;
+      try {
+        shell = which.sync(msg.command || 'claude');
+      } catch {
+        shell = msg.command || 'claude';
+      }
       const args = msg.args || [];
       ptyProcess = pty.spawn(shell, args, {
         name: 'xterm-256color',
