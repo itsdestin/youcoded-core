@@ -71,15 +71,15 @@ A real-time information display system for Claude Code sessions. Four components
 **Announcements subsystem:**
 - `session-start.sh` launches `announcement-fetch.js` in the background on every session start
 - `announcement-fetch.js` fetches the raw GitHub file, parses message + optional expiry, writes `~/.claude/.announcement-cache.json` atomically
-- `statusline.sh` reads the cache on every render via a single `node -e` call; displays a bold yellow `★ message` fragment right-aligned on line 1 if the message is present, not expired, and cache is < 7 days old
+- `statusline.sh` reads the cache on every render via a single `node -e` call; displays a bold yellow `★ message` fragment inline on the toolkit version line (line 5) if the message is present, not expired, and cache is < 7 days old
 
 ### Output Format (up to 5 lines)
 
-1. **Session name** (bold white) + optional right-aligned **announcement** (bold yellow `★ message`) — if no `session_id` present, falls back to showing sync status on line 1 instead. When `session_id` exists but no session name or topic file, defaults to **"New Session"**.
+1. **Session name** (bold white) — if no `session_id` present, falls back to showing sync status on line 1 instead. When `session_id` exists but no session name or topic file, defaults to **"New Session"**.
 2. **Sync status + warnings** — sync status colored green/yellow/red based on prefix (OK/WARN/ERR), followed by optional severity-tagged warnings from `~/.claude/.sync-warnings` (written by `session-start.sh`). Red warnings use `DANGER:` prefix, yellow warnings use `WARN:` prefix. A dim `/sync for info` hint is appended when warnings are present. Warning types: `OFFLINE` (red), `PERSONAL:NOT_CONFIGURED` (red), `PERSONAL:STALE` (yellow), `SKILLS:*` (red), `PROJECTS:*` (red).
 3. **Model + Context** — dim model name, colored context remaining percentage
 4. **Rate limits** — 5h and 7d utilization with reset times, each independently colored by its own utilization (green <50%, yellow 50-79%, red ≥80%)
-5. **Toolkit version** — dim when current; yellow with dim `| Run /update` hint when update available
+5. **Toolkit version + announcement** — dim version when current; yellow with dim `| Run /update` hint when update available. Optional bold yellow `★ message` announcement appended inline after a dim `|` separator.
 
 ### File Locations
 
@@ -135,4 +135,4 @@ A real-time information display system for Claude Code sessions. Four components
 | 2026-03-18 | 1.5 | Aligned spec with v1.1.1 security fix: all `/tmp/claude-topics/` references updated to `~/.claude/topics/`. Updated mandate, design decision rationale, data flow, and file locations table. Updated component count to four (added announcement-fetch.js). | Update | Destin | |
 | 2026-03-18 | 1.6 | Fixed copy-based install breakage: replaced symlink-only sibling discovery with config-based `toolkit_root` lookup + symlink fallback. Added utility scripts to setup wizard install list. Added hook refresh step and post-update verification to `/update` command. | Update | Destin | |
 | 2026-03-19 | 1.7 | Documented sync warnings subsystem (`.sync-warnings` file, DANGER/WARN severity prefixes, warning types, `/sync for info` hint). Documented "New Session" default fallback behavior. Documented independent rate limit coloring. Added `.sync-warnings` to file locations table. Fixed changelog version ordering (1.4/1.5 were swapped). | Update | Destin | |
-| 2026-03-19 | 1.8 | Announcement right-alignment: added negative-pad guard for narrow terminals. Update available line now includes dim `\| Run /update` hint. | Update | Destin | |
+| 2026-03-19 | 1.8 | Moved announcement from right-aligned line 1 fragment to inline on toolkit version line (line 5). Removed terminal width detection code (unreliable in hook subprocess — `tput cols` returns default 80, `$COLUMNS` unset, `stty` fails). Update available line now includes dim `\| Run /update` hint. | Update | Destin | |

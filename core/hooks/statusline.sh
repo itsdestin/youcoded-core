@@ -5,6 +5,7 @@
 # Line 3: Model + context remaining
 # Line 4: Rate limit info (from usage-fetch.js)
 # Line 5: Toolkit version (if available)
+# Line 6: Announcement (if active, from .announcement-cache.json)
 
 STATUS_FILE="$HOME/.claude/.sync-status"
 
@@ -47,7 +48,7 @@ RED='\033[31m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-# --- Sync status (computed first, used for both display and announcement alignment) ---
+# --- Sync status (computed first) ---
 SYNC=""
 if [ -f "$STATUS_FILE" ]; then
     SYNC=$(cat "$STATUS_FILE" 2>/dev/null)
@@ -61,47 +62,6 @@ elif [[ "$SYNC" == ERR:* ]]; then
     SYNC_DISPLAY="${RED}${SYNC}${RESET}"
 else
     SYNC_DISPLAY="${DIM}No Sync Status${RESET}"
-fi
-
-# --- Announcement fragment (right-aligned on line 1) ---
-COLS=${COLUMNS:-$(tput cols 2>/dev/null)}
-COLS=${COLS:-80}
-CACHE_FILE="$HOME/.claude/.announcement-cache.json"
-
-if [[ -n "$SESSION_NAME" ]]; then
-    LEFT_ANSI_CONTENT="${BOLD}${WHITE}${SESSION_NAME}${RESET}"
-    LEFT_PLAIN="$SESSION_NAME"
-else
-    LEFT_ANSI_CONTENT="$SYNC_DISPLAY"
-    LEFT_PLAIN=$(printf '%b' "$SYNC_DISPLAY" | sed $'s/\033\\[[0-9;]*[A-Za-z]//g')
-fi
-
-ANNOUNCEMENT_FRAGMENT=""
-if [[ -f "$CACHE_FILE" ]] && command -v node &>/dev/null; then
-    ANNOUNCEMENT_FRAGMENT=$(node -e "
-const fs = require('fs');
-const cols = parseInt(process.argv[2], 10) || 80;
-const leftPlain = process.argv[3] || '';
-try {
-    const cache = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
-    if (!cache.message) process.exit(0);
-    const STALE_MS = 7 * 24 * 60 * 60 * 1000;
-    if ((Date.now() - new Date(cache.fetched_at).getTime()) >= STALE_MS) process.exit(0);
-    const d = new Date();
-    const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    if (cache.expires && cache.expires < today) process.exit(0);
-    const PREFIX = '\u2605 ';
-    const MIN_PAD = 2;
-    const available = cols - leftPlain.length;
-    if (available < PREFIX.length + MIN_PAD + 1) process.exit(0);
-    const maxMsgLen = available - PREFIX.length - MIN_PAD;
-    let msg = cache.message;
-    if (msg.length > maxMsgLen) msg = msg.slice(0, maxMsgLen - 1) + '\u2026';
-    const pad = available - PREFIX.length - msg.length;
-    if (pad < 0) process.exit(0);
-    process.stdout.write(' '.repeat(pad) + '\x1b[1;33m' + PREFIX + msg + '\x1b[0m');
-} catch (_) {}
-" "$CACHE_FILE" "$COLS" "$LEFT_PLAIN" 2>/dev/null) || ANNOUNCEMENT_FRAGMENT=""
 fi
 
 # --- Sync warnings (from session-start health check) ---
@@ -126,9 +86,11 @@ if [[ -n "$WARN_PARTS" ]]; then
     SYNC_DISPLAY="${SYNC_DISPLAY}  ${DIM}|${RESET}  ${WARN_PARTS}  ${DIM}/sync for info${RESET}"
 fi
 
-# --- Lines 1-2: Session name / sync status + announcement ---
-printf '%b\n' "${LEFT_ANSI_CONTENT}${ANNOUNCEMENT_FRAGMENT}"
+# --- Lines 1-2: Session name / sync status ---
 if [[ -n "$SESSION_NAME" ]]; then
+    printf '%b\n' "${BOLD}${WHITE}${SESSION_NAME}${RESET}"
+    printf '%b\n' "$SYNC_DISPLAY"
+else
     printf '%b\n' "$SYNC_DISPLAY"
 fi
 
@@ -210,7 +172,25 @@ if [[ -f "$USAGE_FETCH" ]] && command -v node &>/dev/null; then
     fi
 fi
 
-# --- Line 5: Toolkit version ---
+# --- Line 5: Toolkit version + announcement ---
+CACHE_FILE="$HOME/.claude/.announcement-cache.json"
+ANNOUNCEMENT_FRAGMENT=""
+if [[ -f "$CACHE_FILE" ]] && command -v node &>/dev/null; then
+    ANNOUNCEMENT_FRAGMENT=$(node -e "
+const fs = require('fs');
+try {
+    const cache = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+    if (!cache.message) process.exit(0);
+    const STALE_MS = 7 * 24 * 60 * 60 * 1000;
+    if ((Date.now() - new Date(cache.fetched_at).getTime()) >= STALE_MS) process.exit(0);
+    const d = new Date();
+    const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (cache.expires && cache.expires < today) process.exit(0);
+    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;33m\u2605 ' + cache.message + '\x1b[0m');
+} catch (_) {}
+" "$CACHE_FILE" 2>/dev/null) || ANNOUNCEMENT_FRAGMENT=""
+fi
+
 UPDATE_FILE="$HOME/.claude/toolkit-state/update-status.json"
 if [[ -f "$UPDATE_FILE" ]] && command -v node &>/dev/null; then
     TOOLKIT_INFO=$(node -e "
@@ -224,9 +204,9 @@ if [[ -f "$UPDATE_FILE" ]] && command -v node &>/dev/null; then
     if [[ -n "$TOOLKIT_INFO" ]]; then
         IFS=$'\t' read -r TK_VER TK_UPD <<< "$TOOLKIT_INFO"
         if [[ "$TK_UPD" == "1" ]]; then
-            printf '%b\n' "${YELLOW}DestinClaude v${TK_VER} (Update Available)${RESET}  ${DIM}| Run /update${RESET}"
+            printf '%b\n' "${YELLOW}DestinClaude v${TK_VER} (Update Available)${RESET}  ${DIM}| Run /update${RESET}  ${ANNOUNCEMENT_FRAGMENT}"
         else
-            printf '%b\n' "${DIM}DestinClaude v${TK_VER}${RESET}"
+            printf '%b\n' "${DIM}DestinClaude v${TK_VER}${RESET}  ${ANNOUNCEMENT_FRAGMENT}"
         fi
     fi
 fi
