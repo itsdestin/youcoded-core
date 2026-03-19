@@ -4,16 +4,16 @@ All notable changes to DestinClaude will be documented in this file.
 
 ## v1.3.0 (2026-03-19)
 
-_(fill in release notes)_
-
-## Unreleased
-
 ### Features
+- **Convention-based skill discovery** — Skills in `skills/` are now auto-discovered via symlinks, replacing manual registration
+- **Auto-detect personal sync backend + iCloud support** — Personal sync now auto-detects the configured backend (Google Drive, iCloud, or none) instead of hardcoding Google Drive
+- **Announcements system** — Maintainer can set broadcast announcements displayed inline with the toolkit version on the statusline
 - **Done-sound notification hook** — New `done-sound.sh` hook plays an audio notification when Claude finishes a task (Stop event). Cross-platform: uses `afplay` on macOS, `paplay`/`aplay` on Linux, and PowerShell `System.Media.SoundPlayer` on Windows. Originally contributed via PR #4 (personality) and PR #5 (done-sound), integrated with cross-platform support.
 - **Release script + pre-push safety** — New `scripts/release.sh` automates version bumps (VERSION + plugin.json + CHANGELOG header), commit, tag, and push. New `scripts/pre-push` hook blocks pushes when VERSION and the latest git tag are out of sync, preventing the v1.1.5 missing-tag class of error.
 - **Sync warning severity levels** — Statusline sync warnings now use severity-tagged prefixes: red `DANGER:` for critical issues (offline, no sync configured, unsynced skills/projects) and yellow `WARN:` for advisory issues (stale personal sync). Sync status renamed from "OK: Changes Synced" to "OK: System Changes Synced".
 
 ### Fixes
+- **Announcement positioning** — Moved announcement display inline with toolkit version line instead of separate line
 - **Default session name** — Statusline now shows "New Session" when a session exists but has no name or topic file yet (before first tool use), instead of falling through to sync status on line 1.
 - **Cross-platform reliability** — Replaced GNU-only `sort -V` with node-based semver comparison in session-start.sh and release.sh. Fixed `sed -i` portability in release.sh and setup wizard (temp file + mv instead of in-place). Fixed `head -n -1` (GNU-only) with `sed '$d'` in todo-capture.sh. Fixed `date +%P` (GNU-only) with portable `%p` in git-sync.sh.
 
