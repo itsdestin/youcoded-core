@@ -2,6 +2,10 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## v1.3.0 (2026-03-19)
+
+_(fill in release notes)_
+
 ## Unreleased
 
 ### Features
