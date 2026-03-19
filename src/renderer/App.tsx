@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TerminalView from './components/TerminalView';
 
 export default function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<any[]>([]);
+  const sessionCounter = useRef(0);
 
   useEffect(() => {
     window.claude.on.sessionCreated((info) => {
@@ -20,11 +21,18 @@ export default function App() {
     window.claude.on.hookEvent((event) => {
       console.log('[Hook Event]', event.type, event);
     });
+
+    return () => {
+      window.claude.removeAllListeners('session:created');
+      window.claude.removeAllListeners('session:destroyed');
+      window.claude.removeAllListeners('hook:event');
+    };
   }, []);
 
   const createSession = async () => {
+    sessionCounter.current += 1;
     await window.claude.session.create({
-      name: 'session-' + (sessions.length + 1),
+      name: 'session-' + sessionCounter.current,
       cwd: 'C:\\Users\\desti',
       skipPermissions: false,
     });
@@ -65,7 +73,7 @@ export default function App() {
             <div className="h-10 flex items-center px-3 text-sm text-gray-400 border-b border-gray-800 mb-2">
               {sessions.find((s) => s.id === sessionId)?.name || 'Session'}
             </div>
-            <TerminalView sessionId={sessionId} />
+            <TerminalView key={sessionId} sessionId={sessionId} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">

@@ -5,7 +5,7 @@ import '@xterm/xterm/css/xterm.css';
 import { usePtyOutput } from '../hooks/useIpc';
 
 interface Props {
-  sessionId: string | null;
+  sessionId: string;
 }
 
 export default function TerminalView({ sessionId }: Props) {
@@ -38,9 +38,7 @@ export default function TerminalView({ sessionId }: Props) {
 
     // Send user keyboard input to PTY
     terminal.onData((data) => {
-      if (sessionId) {
-        window.claude.session.sendInput(sessionId, data);
-      }
+      window.claude.session.sendInput(sessionId, data);
     });
 
     // Resize handler
