@@ -47,6 +47,20 @@ RED='\033[31m'
 DIM='\033[2m'
 RESET='\033[0m'
 
+# --- Git repo/branch detection ---
+GIT_INFO=""
+if command -v git &>/dev/null; then
+    _BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || _BRANCH=""
+    if [[ -n "$_BRANCH" ]]; then
+        _REPO=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null) || _REPO=""
+        if [[ -n "$_REPO" ]]; then
+            GIT_INFO="${_REPO}/${_BRANCH}"
+        else
+            GIT_INFO="${_BRANCH}"
+        fi
+    fi
+fi
+
 # --- Sync status (computed first) ---
 SYNC=""
 if [ -f "$STATUS_FILE" ]; then
@@ -102,7 +116,11 @@ else
     CTX_COLOR="$GREEN"
 fi
 
-printf '%b\n' "${DIM}${MODEL}${RESET}  ${DIM}|${RESET}  ${CTX_COLOR}Context Remaining: ${REMAINING}%${RESET}"
+MODEL_LINE="${DIM}${MODEL}${RESET}"
+CYAN='\033[36m'
+[[ -n "$GIT_INFO" ]] && MODEL_LINE="${MODEL_LINE}  ${DIM}|${RESET}  ${CYAN}{${GIT_INFO}}${RESET}"
+MODEL_LINE="${MODEL_LINE}  ${DIM}|${RESET}  ${CTX_COLOR}Context Remaining: ${REMAINING}%${RESET}"
+printf '%b\n' "$MODEL_LINE"
 
 # --- Line 4: Rate limit info (via usage-fetch.js) ---
 # Find hooks directory: config-based lookup (works with copies on Windows), symlink fallback
