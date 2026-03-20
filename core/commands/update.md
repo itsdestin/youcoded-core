@@ -50,45 +50,38 @@ Check for and install updates to the DestinClaude toolkit.
    - Never auto-delete anything — flag orphan/stale files and ask the user for permission before removing
    - If a file in `~/.claude/hooks/` doesn't exist in the toolkit repo, it may be user-created — leave it alone
 
-   Read `~/.claude/toolkit-state/config.json` to get `toolkit_root`. Detect whether symlinks work on this platform:
+   Read `~/.claude/toolkit-state/config.json` to get `toolkit_root`. On Windows, set `export MSYS=winsymlinks:nativestrict` before creating symlinks.
+
+   Re-create symlinks for all toolkit-owned files (this is idempotent — re-symlinking an existing symlink just refreshes it):
 
    ```bash
-   TEST_LINK="$HOME/.claude/hooks/.symlink-test"
-   ln -sf "$TOOLKIT_ROOT/VERSION" "$TEST_LINK" 2>/dev/null
-   if [ -e "$TEST_LINK" ]; then
-       LINK_CMD="ln -sf"
-       rm -f "$TEST_LINK"
-   else
-       LINK_CMD="cp -f"
-       rm -f "$TEST_LINK" 2>/dev/null
-   fi
-   ```
+   # On Windows, ensure real symlinks
+   [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && export MSYS=winsymlinks:nativestrict
 
-   Then refresh toolkit-owned hook files and utility scripts:
-
-   ```bash
    # Core hooks (canonical list — ONLY these get overwritten)
-   for hook in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
-     $LINK_CMD "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
+   for hook in checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
+     ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
    done
 
    # Utility scripts called by hooks
    for util in announcement-fetch.js usage-fetch.js; do
-     $LINK_CMD "$TOOLKIT_ROOT/core/hooks/$util" ~/.claude/hooks/$util
+     ln -sf "$TOOLKIT_ROOT/core/hooks/$util" ~/.claude/hooks/$util
    done
 
    # Statusline script (lives at ~/.claude/, not in hooks/)
-   $LINK_CMD "$TOOLKIT_ROOT/core/hooks/statusline.sh" ~/.claude/statusline.sh
+   ln -sf "$TOOLKIT_ROOT/core/hooks/statusline.sh" ~/.claude/statusline.sh
 
    # Core commands
    for cmd in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md; do
-     [ -f "$TOOLKIT_ROOT/core/commands/$cmd" ] && $LINK_CMD "$TOOLKIT_ROOT/core/commands/$cmd" ~/.claude/commands/$cmd
+     [ -f "$TOOLKIT_ROOT/core/commands/$cmd" ] && ln -sf "$TOOLKIT_ROOT/core/commands/$cmd" ~/.claude/commands/$cmd
    done
+
+   # Skills — re-symlink all toolkit-managed skills
+   ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
+   # Layer-specific skills based on installed_layers in config
    ```
 
-   If using `cp -f` (copy fallback), tell the user: "Updated hooks via copy (symlinks not available). Everything works the same."
-
-   If using `ln -sf`, tell the user: "Refreshed all hooks and scripts."
+   Tell the user: "Refreshed all symlinks (hooks, commands, skills, statusline)."
 
    **Also refresh any layer-specific hooks** based on `installed_layers` in config:
    - If `"life"` is installed and `$TOOLKIT_ROOT/life/hooks/` exists, refresh those too
@@ -163,37 +156,43 @@ Check for and install updates to the DestinClaude toolkit.
     For each expected hook file, compare the installed version against the repo version:
 
     ```bash
-    STALE=""
-    for f in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
-      if [ -f ~/.claude/hooks/$f ] && [ -f "$TOOLKIT_ROOT/core/hooks/$f" ]; then
-        if ! diff -q ~/.claude/hooks/$f "$TOOLKIT_ROOT/core/hooks/$f" >/dev/null 2>&1; then
-          STALE="$STALE $f"
-        fi
-      elif [ ! -f ~/.claude/hooks/$f ]; then
-        STALE="$STALE $f(missing)"
+    ISSUES=""
+    for f in checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
+      if [ ! -e ~/.claude/hooks/$f ]; then
+        ISSUES="$ISSUES $f(missing)"
+      elif [ ! -L ~/.claude/hooks/$f ]; then
+        ISSUES="$ISSUES $f(copy, not symlink)"
       fi
     done
-    # Also check utility scripts
+    # Utility scripts
     for f in announcement-fetch.js usage-fetch.js; do
-      if [ -f ~/.claude/hooks/$f ] && [ -f "$TOOLKIT_ROOT/core/hooks/$f" ]; then
-        if ! diff -q ~/.claude/hooks/$f "$TOOLKIT_ROOT/core/hooks/$f" >/dev/null 2>&1; then
-          STALE="$STALE $f"
-        fi
-      elif [ ! -f ~/.claude/hooks/$f ]; then
-        STALE="$STALE $f(missing)"
+      if [ ! -e ~/.claude/hooks/$f ]; then
+        ISSUES="$ISSUES $f(missing)"
+      elif [ ! -L ~/.claude/hooks/$f ]; then
+        ISSUES="$ISSUES $f(copy, not symlink)"
       fi
     done
     # Statusline
-    if [ -f ~/.claude/statusline.sh ] && [ -f "$TOOLKIT_ROOT/core/hooks/statusline.sh" ]; then
-      if ! diff -q ~/.claude/statusline.sh "$TOOLKIT_ROOT/core/hooks/statusline.sh" >/dev/null 2>&1; then
-        STALE="$STALE statusline.sh"
-      fi
-    elif [ ! -f ~/.claude/statusline.sh ]; then
-      STALE="$STALE statusline.sh(missing)"
+    if [ ! -e ~/.claude/statusline.sh ]; then
+      ISSUES="$ISSUES statusline.sh(missing)"
+    elif [ ! -L ~/.claude/statusline.sh ]; then
+      ISSUES="$ISSUES statusline.sh(copy, not symlink)"
     fi
+    # Skills
+    for skill_dir in ~/.claude/skills/*/; do
+      skill_name=$(basename "$skill_dir")
+      for layer in core life productivity; do
+        if [ -d "$TOOLKIT_ROOT/$layer/skills/$skill_name" ]; then
+          if [ ! -L "$skill_dir" ] && [ ! -L "${skill_dir%/}" ]; then
+            ISSUES="$ISSUES $skill_name(copy, not symlink)"
+          fi
+          break
+        fi
+      done
+    done
     ```
 
-    If `$STALE` is non-empty, show the stale/missing files and offer to re-copy them. This is the most common failure mode — if this check passes, everything else usually works.
+    If `$ISSUES` is non-empty, show the problematic files and offer to re-create them as symlinks. On Windows, ensure `export MSYS=winsymlinks:nativestrict` before running `ln -sf`. This is the most common failure mode — if this check passes, everything else usually works.
 
     ### 15b: Settings.json hook registrations
 
@@ -305,7 +304,7 @@ Check for and install updates to the DestinClaude toolkit.
 
     If the user reports a problem, or if any check in 15a-15c failed:
 
-    1. **Stale files:** Re-copy from repo. If that fails, check if `toolkit_root` in config.json is correct.
+    1. **Copy instead of symlink:** Re-create as symlink with `ln -sf`. On Windows, ensure `export MSYS=winsymlinks:nativestrict` first and Developer Mode is enabled. If that fails, check if `toolkit_root` in config.json is correct.
     2. **Missing settings.json entries:** Merge the missing hook registrations or statusline config.
     3. **Script not found:** Check if the toolkit root path is correct. If `config.json` has a stale path (e.g., from a previous machine), update it.
     4. **Node.js not found:** Some features (rate limits, announcements, version check) require Node.js. Check `command -v node` and suggest installing it if missing.

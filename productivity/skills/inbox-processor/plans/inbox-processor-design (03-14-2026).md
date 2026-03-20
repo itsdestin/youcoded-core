@@ -6,7 +6,7 @@
 
 ## Problem
 
-the user has realizations, remembers facts/stories, and learns about events throughout the day but doesn't always have access to Claude Code. The current Mid-Day Notes system (a .docx file on Google Drive) requires desktop access to update and only gets processed during nightly journal sessions — which may not happen for days or weeks. Information is lost or forgotten before it can be incorporated into the encyclopedia system.
+Destin has realizations, remembers facts/stories, and learns about events throughout the day but doesn't always have access to Claude Code. The current Mid-Day Notes system (a .docx file on Google Drive) requires desktop access to update and only gets processed during nightly journal sessions — which may not happen for days or weeks. Information is lost or forgotten before it can be incorporated into the encyclopedia system.
 
 ## Solution
 
@@ -34,22 +34,22 @@ If the Claude Inbox project is empty, the skill exits silently — no output, no
 |------|--------|
 | 1 | Pull all incomplete tasks from Claude Inbox project (via Todoist REST API v1), ordered by creation date (oldest first) |
 | 2 | For each task, read the title, description, and any comments (which may contain file attachments) |
-| 3 | For images/screenshots: download attachment URLs from task comments, describe content, extract text, facts, dates, and actionable information. For unsupported or unprocessable files (corrupt, too large, non-image/non-PDF): note the attachment exists but skip extraction, and include a notice in the summary so the user can handle it manually. |
+| 3 | For images/screenshots: download attachment URLs from task comments, describe content, extract text, facts, dates, and actionable information. For unsupported or unprocessable files (corrupt, too large, non-image/non-PDF): note the attachment exists but skip extraction, and include a notice in the summary so Destin can handle it manually. |
 | 4 | Classify each note and determine routing (see Routing Table below) |
 | 5 | Execute autonomous actions; present ambiguous items for user input |
 | 6 | Complete all processed tasks in Todoist |
 | 7 | Present summary of actions taken and any pending decisions |
 
-**Re-presentation guard:** If ambiguous notes were presented to the user in a prior session but they didn't address them (e.g., was focused on something else), Claude adds a Todoist comment to the task with the text `[presented: YYYY-MM-DD]`. On subsequent runs within the same calendar day, tasks with a `[presented: <today>]` comment are skipped. The next calendar day, the note is surfaced again. This uses Todoist's own comment system as persistence — no local state files needed.
+**Re-presentation guard:** If ambiguous notes were presented to Destin in a prior session but he didn't address them (e.g., was focused on something else), Claude adds a Todoist comment to the task with the text `[presented: YYYY-MM-DD]`. On subsequent runs within the same calendar day, tasks with a `[presented: <today>]` comment are skipped. The next calendar day, the note is surfaced again. This uses Todoist's own comment system as persistence — no local state files needed.
 
 ### 3. Routing Table
 
-| Note type | the useration | Autonomy | Examples |
+| Note type | Destination | Autonomy | Examples |
 |-----------|-------------|----------|----------|
-| Events, appointments, concerts | Google Calendar via gws | Autonomous if date/time/event are clear; ask if ambiguous (which calendar, what time, etc.) | "Concert at the venue Saturday 8pm" |
+| Events, appointments, concerts | Google Calendar via gws | Autonomous if date/time/event are clear; ask if ambiguous (which calendar, what time, etc.) | "Concert at Crescent Ballroom Saturday 8pm" |
 | Tasks, to-dos, reminders | Todoist (appropriate project, not Claude Inbox) | Autonomous | "Need to call dentist Monday" |
-| Facts, preferences, people info | Encyclopedia-update (approval gate per CLAUDE.md) | Ask first | "Partner's favorite restaurant is now Postino" |
-| Reflections, realizations, journal-worthy content | Open Threads & Goals (new thread flagged for journal discussion) | Ask first | "Been thinking about whether the degree program is worth finishing" |
+| Facts, preferences, people info | Encyclopedia-update (approval gate per CLAUDE.md) | Ask first | "Bri's favorite restaurant is now Postino" |
+| Reflections, realizations, journal-worthy content | Open Threads & Goals (new thread flagged for journal discussion) | Ask first | "Been thinking about whether the MPP program is worth finishing" |
 
 **Classification heuristic — autonomous vs. ask:**
 - **Autonomous:** The note has a single clear action with no ambiguity about destination, timing, or interpretation. All relevant parameters (date, time, event name, project, etc.) are present or trivially inferrable.

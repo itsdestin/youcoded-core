@@ -35,12 +35,12 @@ Update the description to reflect the resolve model:
 name: inbox-processor
 description: >
   Checks a dedicated Todoist project ("Claude's Inbox") for unprocessed notes captured
-  from the user's phone. Actively resolves items — answering questions, making small changes,
+  from Destin's phone. Actively resolves items — answering questions, making small changes,
   applying feedback, creating tasks, deleting noise — rather than just classifying and
   presenting. Uses Todoist MCP tools. Meta-feedback is applied first, then all items are
   presented in a resolution table for approval before execution. Rants are queued for
   end-of-session journaling. Use this skill when the session-start hook detects inbox items,
-  or when the user says "check my inbox", "process my notes", or "what's in my inbox".
+  or when Destin says "check my inbox", "process my notes", or "what's in my inbox".
 ---
 ```
 
@@ -78,7 +78,7 @@ Classify every entry into the 10 categories. Extract meta-feedback items regardl
 Present proposed meta-feedback changes with:
 - Which files/specs/memories would change
 - What the change would be
-- Wait for the user's approval
+- Wait for Destin's approval
 - Apply changes
 - Note: if no meta-feedback items exist, skip this phase silently
 
@@ -95,7 +95,7 @@ For each remaining item in priority order:
 8. Noise — flag for deletion
 9. Rants/reflections — flag for end-of-session journaling (always listed last in the resolution table; their execution — queuing via comment — happens after all other items are executed in Phase 6)
 
-Include the calendar mapping table from v1 (Work Events, Social Events, Appointments, Partner's Schedule, School Events, Family, default → Appointments).
+Include the calendar mapping table from v1 (Work Events, Social Events, Appointments, Bri's Schedule, School Events, Family, default → Appointments).
 
 - [ ] **Step 9: Write Phase 5 — Present Resolution Table**
 

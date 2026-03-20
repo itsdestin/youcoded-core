@@ -158,7 +158,16 @@ if ($devModeEnabled) {
             throw "Value not set"
         }
     } catch {
-        Write-Host "  Could not enable Developer Mode — symlinks may fall back to copies." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  ERROR: Could not enable Developer Mode." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "  Developer Mode is required for symlinks, which DestinClaude" -ForegroundColor Red
+        Write-Host "  depends on. Please enable it manually:" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "    Settings > System > For Developers > Developer Mode" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Then re-run this installer."
+        exit 1
     }
 }
 
@@ -180,21 +189,21 @@ if (Test-Path $oldCommandDst) { Remove-Item $oldCommandDst -Force }
 if (Test-Path $commandDst) { Remove-Item $commandDst -Force }
 if (Test-Path $skillDst) { Remove-Item $skillDst -Recurse -Force }
 
-# Try symlinks first, fall back to copy
-$symlinkOk = $true
+# Create symlinks (required — no copy fallback)
 try {
     New-Item -ItemType SymbolicLink -Path $commandDst -Target $commandSrc -Force -ErrorAction Stop | Out-Null
     New-Item -ItemType SymbolicLink -Path $skillDst -Target $skillSrc -Force -ErrorAction Stop | Out-Null
-} catch {
-    $symlinkOk = $false
-    Copy-Item $commandSrc $commandDst -Force
-    Copy-Item $skillSrc $skillDst -Recurse -Force
-}
-
-if ($symlinkOk) {
     Write-Host "  Setup wizard registered" -ForegroundColor Green
-} else {
-    Write-Host "  Setup wizard registered (copied - enable Developer Mode for symlinks)" -ForegroundColor Green
+} catch {
+    Write-Host ""
+    Write-Host "  ERROR: Symlink creation failed." -ForegroundColor Red
+    Write-Host "  Developer Mode must be enabled for symlinks to work." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Please enable Developer Mode:" -ForegroundColor Yellow
+    Write-Host "    Settings > System > For Developers > Developer Mode" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Then re-run this installer."
+    exit 1
 }
 
 Write-Host ""

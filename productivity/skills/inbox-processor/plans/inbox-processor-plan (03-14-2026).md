@@ -43,18 +43,18 @@
 name: inbox-processor
 description: >
   Checks a dedicated Todoist project ("Claude's Inbox") for unprocessed notes captured
-  from the user's phone. Routes notes to the appropriate system: calendar events via gws,
+  from Destin's phone. Routes notes to the appropriate system: calendar events via gws,
   Todoist tasks to other projects, encyclopedia facts via encyclopedia-update, and
   journal-worthy reflections to Open Threads & Goals. Autonomous for obvious actions,
   asks for ambiguous ones. Use this skill when the session-start hook detects inbox items,
-  or when the user says "check my inbox", "process my notes", or "what's in my inbox".
+  or when Destin says "check my inbox", "process my notes", or "what's in my inbox".
 ---
 
 # Inbox Processor
 
 ## Purpose
 
-This skill processes notes captured in a dedicated Todoist project ("Claude's Inbox") and routes them to the appropriate system. The user captures thoughts, events, facts, and screenshots on their phone throughout the day via Todoist. This skill reads those notes each session and acts on them.
+This skill processes notes captured in a dedicated Todoist project ("Claude's Inbox") and routes them to the appropriate system. Destin captures thoughts, events, facts, and screenshots on his phone throughout the day via Todoist. This skill reads those notes each session and acts on them.
 
 ## API Reference
 
@@ -114,7 +114,7 @@ curl -s "https://api.todoist.com/api/v1/comments?task_id=<TASK_ID>" \
   -H "Authorization: Bearer $TODOIST_TOKEN"
 ```
 
-If a comment contains `[presented: <today's date>]`, skip this task. It was already shown to the user today and they didn't act on it.
+If a comment contains `[presented: <today's date>]`, skip this task. It was already shown to Destin today and he didn't act on it.
 
 ### Step 4: Process Attachments
 
@@ -132,7 +132,7 @@ curl -s -o /tmp/inbox-attachment.<ext> "<file_url>"
 
 Now that all entries have been read (per Step 2b), classify each note using this routing table. Consider cross-entry context — later notes may supersede earlier ones, and multiple notes may describe a single event or fact:
 
-| Note type | the useration | Autonomy |
+| Note type | Destination | Autonomy |
 |-----------|-------------|----------|
 | Events, appointments, concerts | Google Calendar via `gws calendar events create` | Autonomous if date/time/event are clear; ask if ambiguous |
 | Tasks, to-dos, reminders | Todoist task in appropriate project | Autonomous |
@@ -142,14 +142,14 @@ Now that all entries have been read (per Step 2b), classify each note using this
 **Autonomous classification (act without asking):**
 - The note has a single clear action with no ambiguity
 - All relevant parameters (date, time, event name, project) are present or trivially inferrable
-- Examples: "Concert at the venue Saturday 8pm", "Need to call dentist Monday"
+- Examples: "Concert at Crescent Ballroom Saturday 8pm", "Need to call dentist Monday"
 
 **Ask first:**
 - Note could route multiple ways
 - Contains personal/substantive content
 - Touches encyclopedia data
 - Has missing parameters requiring judgment
-- Examples: "Partner's favorite restaurant is now Postino", "Been thinking about whether the degree program is worth finishing"
+- Examples: "Bri's favorite restaurant is now Postino", "Been thinking about whether the MPP program is worth finishing"
 
 ### Step 6: Execute Actions
 
@@ -163,7 +163,7 @@ Use `gws calendar list-calendars` to identify the right calendar if needed. Cale
 - Work events → Work Events calendar
 - Social/concerts/friends → Social Events calendar
 - Appointments (dentist, doctor) → Appointments calendar
-- Partner's stuff → Partner's Schedule calendar
+- Bri's stuff → Bri's Schedule calendar
 - School → School Events calendar
 - Family → Family calendar
 - Default → Appointments calendar
@@ -177,14 +177,14 @@ curl -s -X POST "https://api.todoist.com/api/v1/tasks" \
 ```
 
 **Encyclopedia facts:**
-Invoke the `encyclopedia-update` skill with the specific facts to route. The approval gate per CLAUDE.md applies — present proposed changes and wait for the user's approval.
+Invoke the `encyclopedia-update` skill with the specific facts to route. The approval gate per CLAUDE.md applies — present proposed changes and wait for Destin's approval.
 
 **Open Threads & Goals:**
 Read the current Open Threads & Goals file, add a new thread with source attribution:
 ```
 | <Thread description> | Inbox note, YYYY-MM-DD | YYYY-MM-DD | YYYY-MM-DD | Open — needs context |
 ```
-Present the proposed addition for the user's approval before writing (per CLAUDE.md modular files update policy).
+Present the proposed addition for Destin's approval before writing (per CLAUDE.md modular files update policy).
 
 ### Step 7: Complete Processed Tasks
 
@@ -196,7 +196,7 @@ curl -s -X POST "https://api.todoist.com/api/v1/tasks/<TASK_ID>/close" \
 
 ### Step 8: Mark Ambiguous Tasks as Presented
 
-For ambiguous tasks that were shown to the user but not resolved (they moved on to something else), add a comment:
+For ambiguous tasks that were shown to Destin but not resolved (he moved on to something else), add a comment:
 
 ```bash
 curl -s -X POST "https://api.todoist.com/api/v1/comments" \
@@ -209,7 +209,7 @@ curl -s -X POST "https://api.todoist.com/api/v1/comments" \
 
 After all processing, present a brief summary:
 - Actions taken autonomously (calendar events created, tasks moved)
-- Items that need the user's input (encyclopedia facts, reflections, ambiguous items)
+- Items that need Destin's input (encyclopedia facts, reflections, ambiguous items)
 - Any skipped attachments or errors
 
 ---
@@ -339,7 +339,7 @@ Add a second entry to the `SessionStart` array (after the session-start entry):
   "hooks": [
     {
       "type": "command",
-      "command": "bash $HOME/.claude/hooks/check-inbox.sh"
+      "command": "bash C:/Users/desti/.claude/hooks/check-inbox.sh"
     }
   ]
 }
@@ -421,10 +421,10 @@ Delete the entire Step 9 section (archive and clear Mid-Day Notes, ~lines 293-32
 
 - [ ] **Step 5: Add a closing confirmation line after encyclopedia update**
 
-After removing Step 9, the session closing confirmation ("confirm to the user that the entry, encyclopedia system, and mid-day notes are all handled") is gone. Add a brief closing line at the end of Step 8 (encyclopedia update invocation) or wherever the daily entry flow ends:
+After removing Step 9, the session closing confirmation ("confirm to Destin that the entry, encyclopedia system, and mid-day notes are all handled") is gone. Add a brief closing line at the end of Step 8 (encyclopedia update invocation) or wherever the daily entry flow ends:
 
 ```
-After the encyclopedia update completes, confirm to the user that the entry and encyclopedia system are handled. Do not add affirmations or "great session" language — keep it neutral and brief.
+After the encyclopedia update completes, confirm to Destin that the entry and encyclopedia system are handled. Do not add affirmations or "great session" language — keep it neutral and brief.
 ```
 
 - [ ] **Step 6: Edit the Step 1b intro paragraph (line 49)**
@@ -466,7 +466,7 @@ Read back the modified sections to confirm they flow naturally without Mid-Day N
 Remove these mandates:
 - "(2026-03-13) Mid-Day Notes: archive before clearing."
 - "(2026-03-13) Mid-Day Notes: do not archive or clear if empty/missing."
-- "(2026-03-13) Mid-day notes categories must not be shown to the user."
+- "(2026-03-13) Mid-day notes categories must not be shown to Destin."
 
 - [ ] **Step 3: Update the Purpose section**
 
@@ -489,7 +489,7 @@ Update the Current Implementation summary to remove references to Mid-Day Notes 
 Bump the `Version` field from `1.1` to `1.2`. Add a changelog entry to the Change Log table:
 
 ```
-| 2026-03-14 | 1.2 | Removed Mid-Day Notes system (Steps 1b, 2-4 weaving, 7 calendar candidates, 9). Mid-Day Notes replaced by inbox-processor skill routing to Open Threads & Goals. Removed python-docx dependency. Removed 3 Mid-Day Notes mandates and 2 design decisions. | Deprecation | the user |
+| 2026-03-14 | 1.2 | Removed Mid-Day Notes system (Steps 1b, 2-4 weaving, 7 calendar candidates, 9). Mid-Day Notes replaced by inbox-processor skill routing to Open Threads & Goals. Removed python-docx dependency. Removed 3 Mid-Day Notes mandates and 2 design decisions. | Deprecation | Destin |
 ```
 
 ---
@@ -557,7 +557,7 @@ Remove `python3` with `python-docx` library from the Dependencies section. This 
 Bump the `Version` field from `1.1` to `1.2`. Add a changelog entry to the Change Log table:
 
 ```
-| 2026-03-14 | 1.2 | Removed Mid-Day Notes system (Step 3b). Mid-Day Notes replaced by inbox-processor skill. Removed "Mid-Day Notes authority" mandate. Removed python-docx dependency. Removed Mid-Day Notes design decision. | Deprecation | the user |
+| 2026-03-14 | 1.2 | Removed Mid-Day Notes system (Step 3b). Mid-Day Notes replaced by inbox-processor skill. Removed "Mid-Day Notes authority" mandate. Removed python-docx dependency. Removed Mid-Day Notes design decision. | Deprecation | Destin |
 ```
 
 ---
@@ -652,7 +652,7 @@ fi
 curl -s -X POST "https://api.todoist.com/api/v1/tasks" \
   -H "Authorization: Bearer $TODOIST_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"content\": \"Test inbox note — concert at the venue Saturday 8pm\", \"project_id\": \"$PROJECT_ID\"}"
+  -d "{\"content\": \"Test inbox note — concert at Crescent Ballroom Saturday 8pm\", \"project_id\": \"$PROJECT_ID\"}"
 ```
 
 - [ ] **Step 3: Run the hook again**

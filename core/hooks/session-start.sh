@@ -3,6 +3,8 @@
 set -euo pipefail
 
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
+# Clean up session-scoped detection markers from previous sessions
+rm -f "$CLAUDE_DIR"/.unsynced-warned-* 2>/dev/null
 ENCYCLOPEDIA_DIR="$CLAUDE_DIR/encyclopedia"
 CONFIG_FILE="$CLAUDE_DIR/toolkit-state/config.json"
 MCP_CONFIG="$CLAUDE_DIR/mcp-servers/mcp-config.json"
@@ -77,62 +79,23 @@ if git remote get-url origin &>/dev/null; then
     fi
 fi
 
-# --- Auto-refresh stale hooks from toolkit repo ---
-# On copy-based installs (Windows, or when symlinks fail), hooks in ~/.claude/hooks/
-# don't update when the toolkit repo is updated. This block refreshes any stale
-# toolkit-owned copies so new features reach users without manual intervention.
-# SAFETY: Only overwrites files that have a matching source in the toolkit repo.
-# Never touches user-created files. Flags orphans for Claude to ask about — never
-# auto-deletes anything that might contain user data.
-# Uses TOOLKIT_ROOT resolved at script start (config.json + fallback).
+# --- Verify symlinks (detect broken or copy-based installs) ---
+# All toolkit components should be symlinks. If any are regular files (copies from
+# a pre-v1.4 install), flag them for repair via /health or /setup-wizard.
 if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
-    _REFRESHED=0
-    # Canonical list of toolkit-owned hooks — ONLY these get overwritten
-    for _h in checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
-        if [[ -f "$TOOLKIT_ROOT/core/hooks/$_h" ]]; then
-            if [[ ! -f "$CLAUDE_DIR/hooks/$_h" ]] || ! diff -q "$CLAUDE_DIR/hooks/$_h" "$TOOLKIT_ROOT/core/hooks/$_h" >/dev/null 2>&1; then
-                cp -f "$TOOLKIT_ROOT/core/hooks/$_h" "$CLAUDE_DIR/hooks/$_h" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
-            fi
+    _BROKEN=""
+    # Check a representative sample of toolkit files
+    for _check in "$CLAUDE_DIR/hooks/session-start.sh" "$CLAUDE_DIR/statusline.sh" "$CLAUDE_DIR/commands/update.md"; do
+        if [[ -f "$_check" && ! -L "$_check" ]]; then
+            _BROKEN="$_BROKEN $(basename "$_check")"
         fi
     done
-    # Toolkit-owned utility scripts
-    for _u in announcement-fetch.js usage-fetch.js; do
-        if [[ -f "$TOOLKIT_ROOT/core/hooks/$_u" ]]; then
-            if [[ ! -f "$CLAUDE_DIR/hooks/$_u" ]] || ! diff -q "$CLAUDE_DIR/hooks/$_u" "$TOOLKIT_ROOT/core/hooks/$_u" >/dev/null 2>&1; then
-                cp -f "$TOOLKIT_ROOT/core/hooks/$_u" "$CLAUDE_DIR/hooks/$_u" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
-            fi
-        fi
-    done
-    # Statusline (lives at ~/.claude/statusline.sh, not in hooks/)
-    if [[ -f "$TOOLKIT_ROOT/core/hooks/statusline.sh" ]]; then
-        if [[ ! -f "$HOME/.claude/statusline.sh" ]] || ! diff -q "$HOME/.claude/statusline.sh" "$TOOLKIT_ROOT/core/hooks/statusline.sh" >/dev/null 2>&1; then
-            cp -f "$TOOLKIT_ROOT/core/hooks/statusline.sh" "$HOME/.claude/statusline.sh" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
-        fi
-    fi
-    # Toolkit-owned commands (install missing OR refresh stale)
-    if [[ -d "$TOOLKIT_ROOT/core/commands" ]]; then
-        mkdir -p "$CLAUDE_DIR/commands"
-        for _c in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md; do
-            if [[ -f "$TOOLKIT_ROOT/core/commands/$_c" ]]; then
-                if [[ ! -f "$CLAUDE_DIR/commands/$_c" ]] || ! diff -q "$CLAUDE_DIR/commands/$_c" "$TOOLKIT_ROOT/core/commands/$_c" >/dev/null 2>&1; then
-                    cp -f "$TOOLKIT_ROOT/core/commands/$_c" "$CLAUDE_DIR/commands/$_c" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
-                fi
-            fi
-        done
+    if [[ -n "$_BROKEN" ]]; then
+        echo "{\"hookSpecificOutput\": \"Some toolkit files are copies instead of symlinks:$_BROKEN. Run /health to repair — symlinks are required for updates to work correctly.\"}" >&2
     fi
     # Flag known orphan files from pre-v1.1.5 installs (never auto-delete)
-    _ORPHANS=""
-    [[ -f "$CLAUDE_DIR/hooks/statusline.sh" ]] && _ORPHANS="~/.claude/hooks/statusline.sh"
-    _MSG=""
-    if [[ $_REFRESHED -gt 0 ]]; then
-        _MSG="Refreshed $_REFRESHED stale hook(s)/script(s) from toolkit repo."
-    fi
-    if [[ -n "$_ORPHANS" ]]; then
-        _MSG="$_MSG Found orphan file(s) that may be safe to remove: $_ORPHANS — ask the user before deleting."
-    fi
-    if [[ -n "$_MSG" ]]; then
-        _MSG=$(echo "$_MSG" | sed 's/^ //')
-        echo "{\"hookSpecificOutput\": \"$_MSG\"}" >&2
+    if [[ -f "$CLAUDE_DIR/hooks/statusline.sh" && ! -L "$CLAUDE_DIR/hooks/statusline.sh" ]]; then
+        echo "{\"hookSpecificOutput\": \"Found orphan file ~/.claude/hooks/statusline.sh (stale copy — statusline lives at ~/.claude/statusline.sh). Ask the user before deleting.\"}" >&2
     fi
 fi
 
@@ -289,10 +252,26 @@ if [[ -n "$_UNBACKEDUP_SKILLS" ]]; then
     echo "SKILLS:$_UNBACKEDUP_SKILLS" >> "$WARNINGS_FILE"
 fi
 
-# 3. Unsynced projects (just check if the file exists and is non-empty — detection is in git-sync.sh)
+# 3. Unsynced projects (dedup, filter blanks, filter ignored/registered paths from registry)
 if [[ -s "$CLAUDE_DIR/.unsynced-projects" ]]; then
-    _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null | wc -l | tr -d ' ')
-    echo "PROJECTS:$_UP_COUNT" >> "$WARNINGS_FILE"
+    _REGISTRY="$CLAUDE_DIR/tracked-projects.json"
+    if [[ -f "$_REGISTRY" ]] && command -v node &>/dev/null; then
+        _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null | grep -c '.' 2>/dev/null | tr -d ' ')
+        if [[ "$_UP_COUNT" -gt 0 ]]; then
+            _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" | grep '.' | node -e '
+                const fs=require("fs"),rl=require("readline");
+                try{const reg=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+                const skip=new Set([...(reg.ignored||[]),...(reg.projects||[]).map(p=>p.path)]);
+                const iface=rl.createInterface({input:process.stdin});let c=0;
+                iface.on("line",l=>{const t=l.trim();if(t&&!skip.has(t))c++});
+                iface.on("close",()=>console.log(c))}catch{const i=require("readline").createInterface({input:process.stdin});let c=0;
+                i.on("line",l=>{if(l.trim())c++});i.on("close",()=>console.log(c))}
+            ' "$_REGISTRY" 2>/dev/null | tr -d ' ')
+        fi
+    else
+        _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null | grep -c '.' 2>/dev/null | tr -d ' ')
+    fi
+    [[ "$_UP_COUNT" -gt 0 ]] && echo "PROJECTS:$_UP_COUNT" >> "$WARNINGS_FILE"
 fi
 
 # Remove warnings file if empty (no warnings = no statusline clutter)
@@ -303,6 +282,15 @@ if [[ -n "$TOOLKIT_ROOT" && -f "$TOOLKIT_ROOT/VERSION" ]]; then
     STATE_DIR="$CLAUDE_DIR/toolkit-state"
     mkdir -p "$STATE_DIR"
     CURRENT=$(cat "$TOOLKIT_ROOT/VERSION" 2>/dev/null | tr -d '[:space:]')
+    # Fallback: if VERSION file is stale/missing, use git describe for the real version
+    if [[ -z "$CURRENT" ]] || ! (cd "$TOOLKIT_ROOT" && git describe --tags --exact-match "HEAD" 2>/dev/null | grep -q "v${CURRENT}$"); then
+        _GIT_VER=$(cd "$TOOLKIT_ROOT" && git describe --tags --abbrev=0 HEAD 2>/dev/null) || _GIT_VER=""
+        if [[ -n "$_GIT_VER" ]]; then
+            CURRENT="${_GIT_VER#v}"
+            # Self-heal: update the VERSION file so future reads are correct
+            echo "$CURRENT" > "$TOOLKIT_ROOT/VERSION" 2>/dev/null || true
+        fi
+    fi
     CURRENT_TAG="v${CURRENT}"
 
     # Fetch tags silently (fail silently if offline)

@@ -967,20 +967,23 @@ Claude Code auto-discovers skills from `~/.claude/skills/`, commands from `~/.cl
 
 **Important:** `enabledPlugins` in `settings.json` only works for marketplace plugins (`"name@marketplace": true`). It does NOT support local path-based registration. Always use symlinks for local toolkit components.
 
-**Windows symlink fallback:** On Windows, `ln -sf` requires Developer Mode. The bootstrap installer (`install.ps1`) enables Developer Mode automatically during installation, so symlinks should work for most users. However, if the user declined the elevation prompt or ran the bash installer without Developer Mode, symlinks will fail silently. After each `ln -sf` call, check if the symlink resolves (`[ -e target ]`). If it doesn't, fall back to copying instead (`cp -R` for directories, `cp` for files). When using copy fallback, inform the user: "Symlinks aren't available on your system — using copies instead. Everything works the same, but if you update the toolkit you'll need to re-run `/setup-wizard` to refresh these copies."
+**Windows symlinks:** On Windows, symlinks require Developer Mode (enabled by the bootstrap installer) and Git Bash must have `MSYS=winsymlinks:nativestrict` set. Before creating symlinks on Windows, run `export MSYS=winsymlinks:nativestrict` to ensure `ln -sf` creates real Windows symlinks instead of copies. If symlink creation fails, do NOT fall back to copying — instead, tell the user: "Symlink creation failed. Developer Mode must be enabled (Settings > System > For Developers) and you must be using Git Bash. Please fix this and re-run /setup-wizard." Copy-based installs are no longer supported because they cause file drift that breaks updates.
 
 #### 5a: Symlink skills
 
 For each selected layer, symlink every skill directory into `~/.claude/skills/`:
 
 ```bash
+# On Windows, ensure real symlinks (not MSYS copies)
+[[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && export MSYS=winsymlinks:nativestrict
+
 mkdir -p ~/.claude/skills
 
 # Core skills (always)
 ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
 
 # Life skills (if Life layer selected)
-for skill in encyclopedia-compile encyclopedia-interviewer encyclopedia-librarian encyclopedia-update google-drive journaling-assistant; do
+for skill in encyclopedia-compile encyclopedia-interviewer encyclopedia-librarian encyclopedia-update fork-file google-drive journaling-assistant; do
   ln -sf "$TOOLKIT_ROOT/life/skills/$skill" ~/.claude/skills/$skill
 done
 
@@ -1274,11 +1277,12 @@ Run a health check on everything that was installed.
 - [ ] Toolkit root directory exists and contains `VERSION`
 - [ ] `~/.claude/CLAUDE.md` exists and contains toolkit sections
 - [ ] Hook scripts in `core/hooks/` are present and executable
-- [ ] All expected symlinks in `~/.claude/skills/` resolve (not broken)
-- [ ] All expected symlinks in `~/.claude/commands/` resolve (not broken)
+- [ ] All expected entries in `~/.claude/skills/` are real symlinks (not copies) and resolve
+- [ ] All expected entries in `~/.claude/commands/` are real symlinks (not copies) and resolve
+- [ ] All expected entries in `~/.claude/hooks/` are real symlinks (not copies) and resolve
 - [ ] Hooks are registered in `~/.claude/settings.json` under the `hooks` key
 - [ ] `statusLine` is configured in `~/.claude/settings.json` (separate from hooks)
-- [ ] `~/.claude/statusline.sh` exists and resolves (not a broken symlink)
+- [ ] `~/.claude/statusline.sh` is a real symlink (not a copy) and resolves
 - [ ] All 14 marketplace plugin keys present in `~/.claude/settings.json` `enabledPlugins` (keys may be `true` or `false` — both count as present; beginners will have `learning-output-style` set to `false`)
 
 ### Step 2: Life checks (if installed)
