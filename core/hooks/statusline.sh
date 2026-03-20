@@ -4,8 +4,7 @@
 # Line 2: Sync status (from .sync-status file)
 # Line 3: Model + context remaining
 # Line 4: Rate limit info (from usage-fetch.js)
-# Line 5: Toolkit version (if available)
-# Line 6: Announcement (if active, from .announcement-cache.json)
+# Line 5: Toolkit version + announcement (if active)
 
 STATUS_FILE="$HOME/.claude/.sync-status"
 
@@ -186,7 +185,7 @@ try {
     const d = new Date();
     const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     if (cache.expires && cache.expires < today) process.exit(0);
-    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;93m\u2605 ' + cache.message + '\x1b[0m');
+    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;38;5;226m\u2605 ' + cache.message + '\x1b[0m');
 } catch (_) {}
 " "$CACHE_FILE" 2>/dev/null) || ANNOUNCEMENT_FRAGMENT=""
 fi
