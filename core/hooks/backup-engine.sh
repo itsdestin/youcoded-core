@@ -58,6 +58,34 @@ read_config() {
     fi
 }
 
+# --- Config key migration (D10) ---
+migrate_config_keys() {
+    [[ ! -f "$CONFIG_FILE" ]] && return
+    node -e "
+        const fs = require('fs');
+        const config = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
+        let changed = false;
+
+        // PERSONAL_SYNC_BACKEND → primary_backend
+        if (config.PERSONAL_SYNC_BACKEND && !config.primary_backend) {
+            config.primary_backend = config.PERSONAL_SYNC_BACKEND;
+            delete config.PERSONAL_SYNC_BACKEND;
+            changed = true;
+        }
+
+        // PERSONAL_SYNC_REPO → primary_backend_repo (if primary was github)
+        if (config.PERSONAL_SYNC_REPO && !config.primary_backend_repo) {
+            config.primary_backend_repo = config.PERSONAL_SYNC_REPO;
+            delete config.PERSONAL_SYNC_REPO;
+            changed = true;
+        }
+
+        if (changed) {
+            fs.writeFileSync('$CONFIG_FILE', JSON.stringify(config, null, 2));
+        }
+    " 2>/dev/null
+}
+
 # --- Resolve TOOLKIT_ROOT ---
 TOOLKIT_ROOT=$(read_config "toolkit_root" "")
 if [[ -z "$TOOLKIT_ROOT" ]]; then
@@ -76,6 +104,9 @@ fi
 # Set manifest and schema paths
 [[ -n "$TOOLKIT_ROOT" ]] && MANIFEST_FILE="$TOOLKIT_ROOT/plugin-manifest.json"
 [[ -n "$TOOLKIT_ROOT" ]] && SCHEMA_FILE="$TOOLKIT_ROOT/backup-schema.json"
+
+# Run config migration on startup
+migrate_config_keys
 
 # --- Read backend config ---
 PRIMARY_BACKEND=$(read_config "primary_backend" "none")
