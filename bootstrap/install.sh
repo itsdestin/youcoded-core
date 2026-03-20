@@ -21,24 +21,42 @@ case "$(uname -s)" in
 esac
 
 if [[ "$OS" == "windows" ]]; then
-    # Check if Developer Mode is enabled (required for symlinks on Windows)
+    # Developer Mode is required for symlinks on Windows — no fallback to copies.
     DEV_MODE=$(reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense 2>/dev/null | grep -o "0x1" || true)
     if [[ -z "$DEV_MODE" ]]; then
-        echo "On Windows without Developer Mode, symlinks won't work."
-        echo "The PowerShell installer can enable Developer Mode automatically:"
-        echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
+        echo "  Developer Mode is required but not enabled."
+        echo "  Attempting to enable it now (you may see a permission prompt)..."
         echo ""
-        echo "If you continue here, the toolkit will use file copies instead"
-        echo "of symlinks (updates require re-running /setup-wizard)."
+        if powershell.exe -Command "Start-Process powershell -ArgumentList '-Command','Set-ItemProperty -Path HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock -Name AllowDevelopmentWithoutDevLicense -Value 1 -Type DWord' -Verb RunAs -Wait" 2>/dev/null; then
+            # Verify it worked
+            DEV_MODE=$(reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense 2>/dev/null | grep -o "0x1" || true)
+            if [[ -z "$DEV_MODE" ]]; then
+                # Also check via PowerShell (reg query can miss it on some systems)
+                DEV_MODE=$(powershell.exe -Command "(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Name 'AllowDevelopmentWithoutDevLicense' -ErrorAction SilentlyContinue).AllowDevelopmentWithoutDevLicense" 2>/dev/null | tr -d '\r')
+                [[ "$DEV_MODE" != "1" ]] && DEV_MODE=""
+            fi
+        fi
+        if [[ -z "$DEV_MODE" ]]; then
+            echo ""
+            echo "  ERROR: Could not enable Developer Mode."
+            echo ""
+            echo "  Developer Mode is required for symlinks, which DestinClaude"
+            echo "  depends on. Please enable it manually:"
+            echo ""
+            echo "    Settings > System > For Developers > Developer Mode"
+            echo ""
+            echo "  Or use the PowerShell installer which handles this automatically:"
+            echo "    powershell -ExecutionPolicy Bypass -File install.ps1"
+            echo ""
+            exit 1
+        fi
+        echo "  Developer Mode enabled"
     else
-        echo "On Windows? The PowerShell installer is also available:"
-        echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
-        echo ""
-        echo "Or continue here in Git Bash — symlinks will work fine."
+        echo "  Developer Mode enabled"
     fi
-    read -p "Continue in bash? (y/N) " -n 1 -r < /dev/tty
-    echo ""
-    [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
+
+    # MSYS/Git Bash requires this env var to create real Windows symlinks
+    export MSYS=winsymlinks:nativestrict
 fi
 
 # --- Check for Homebrew (macOS only) ---
@@ -204,10 +222,17 @@ if [ "$SETUP_OK" = true ]; then
     echo "  Setup wizard registered"
 else
     echo ""
-    echo "  Symlink creation failed. Falling back to copy..."
-    cp "$TOOLKIT_DIR/core/commands/setup-wizard.md" "$HOME/.claude/commands/setup-wizard.md"
-    cp -R "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
-    echo "  Setup wizard registered (copied)"
+    echo "  ERROR: Symlink creation failed."
+    if [[ "$OS" == "windows" ]]; then
+        echo "  On Windows, ensure Developer Mode is enabled and you're"
+        echo "  running Git Bash (not cmd.exe or PowerShell)."
+        echo ""
+        echo "  Or use the PowerShell installer instead:"
+        echo "    powershell -ExecutionPolicy Bypass -File install.ps1"
+    else
+        echo "  Check filesystem permissions and try again."
+    fi
+    exit 1
 fi
 
 echo ""

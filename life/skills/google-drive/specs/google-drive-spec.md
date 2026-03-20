@@ -55,5 +55,5 @@ No custom scripts, no build step, no external dependencies beyond rclone.
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
-| 2026-03-13 | 1.0 | Initial spec | New | the user |
-| 2026-03-15 | 1.1 | Updated hook references (sync-to-drive/sync-from-drive → git-sync.sh), updated encyclopedia dependency descriptions for local cache migration | Implementation | the user |
+| 2026-03-13 | 1.0 | Initial spec | New | Destin |
+| 2026-03-15 | 1.1 | Updated hook references (sync-to-drive/sync-from-drive → git-sync.sh), updated encyclopedia dependency descriptions for local cache migration | Implementation | Destin |
