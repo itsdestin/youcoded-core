@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "categories": {
+    "memory": {
+      "description": "User memory files per project",
+      "canonical_path": "memory/{project-key}/",
+      "local_path": "~/.claude/projects/{project-key}/memory/"
+    },
+    "claude_md": {
+      "description": "User's customized system instructions",
+      "canonical_path": "claude-md/CLAUDE.md",
+      "local_path": "~/.claude/CLAUDE.md"
+    },
+    "keybindings": {
+      "description": "Keyboard shortcut customizations",
+      "canonical_path": "config/keybindings.json",
+      "local_path": "~/.claude/keybindings.json"
+    },
+    "user_choices": {
+      "description": "User-choice subset of toolkit config",
+      "canonical_path": "config/user-choices.json",
+      "local_path": "~/.claude/toolkit-state/config.json",
+      "merge_strategy": "user_choice_keys_only"
+    },
+    "conversations": {
+      "description": "Conversation history transcripts",
+      "canonical_path": "conversations/{project-key}/",
+      "local_path": "~/.claude/projects/{project-key}/"
+    },
+    "encyclopedia": {
+      "description": "Encyclopedia system files",
+      "canonical_path": "encyclopedia/",
+      "local_path": "~/.claude/encyclopedia/"
+    },
+    "journal": {
+      "description": "Journal entries",
+      "canonical_path": "journal/entries/",
+      "local_path": "gdrive:{DRIVE_ROOT}/The Journal/"
+    },
+    "extensions_skills": {
+      "description": "User-created skills not in plugin manifest",
+      "canonical_path": "extensions/skills/{name}/",
+      "local_path": "~/.claude/skills/{name}/"
+    },
+    "extensions_hooks": {
+      "description": "User-created hooks not in plugin manifest",
+      "canonical_path": "extensions/hooks/",
+      "local_path": "~/.claude/hooks/"
+    }
+  },
+  "user_choice_keys": [
+    "comfort_level",
+    "installed_layers",
+    "DRIVE_ROOT",
+    "primary_backend",
+    "primary_backend_repo",
+    "secondary_backend",
+    "secondary_backend_repo",
+    "backup_registry",
+    "user_extensions"
+  ],
+  "structural_keys": [
+    "toolkit_root",
+    "platform",
+    "setup_completed"
+  ],
+  "high_value_categories": [
+    "memory",
+    "claude_md",
+    "extensions_skills"
+  ],
+  "exclusions": {
+    "secrets": ["*.env", "*token*", "*secret*", "*credential*"],
+    "ephemeral": ["sessions/", "tasks/", "shell-snapshots/", "*.lock"],
+    "generated": ["settings.json", "settings.local.json", ".claude.json"],
+    "build_artifacts": ["node_modules/", "__pycache__/", ".venv/"]
+  }
+}
