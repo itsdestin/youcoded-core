@@ -54,8 +54,11 @@ sed "s/\"version\": \"$CURRENT\"/\"version\": \"$VERSION\"/" plugin.json > plugi
 TODAY=$(date +%Y-%m-%d)
 awk -v ver="$VERSION" -v today="$TODAY" 'BEGIN{done=0} /^## / && !done {printf "## v%s (%s)\n\n_(fill in release notes)_\n\n", ver, today; done=1} {print}' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
-# 4. Commit, tag, push
-git add VERSION plugin.json CHANGELOG.md
+# 4. Generate updated manifest
+bash "$REPO_ROOT/scripts/generate-manifest.sh"
+
+# 5. Commit, tag, push
+git add VERSION plugin.json CHANGELOG.md plugin-manifest.json
 git commit -m "release: v$VERSION"
 git tag "v$VERSION"
 git push origin master --tags
