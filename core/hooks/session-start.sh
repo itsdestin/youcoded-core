@@ -198,6 +198,11 @@ if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
     fi
 fi
 
+# Remove orphaned scripts from old backup system
+[[ -f "$CLAUDE_DIR/hooks/drive-archive.sh" ]] && rm -f "$CLAUDE_DIR/hooks/drive-archive.sh"
+[[ -f "$CLAUDE_DIR/hooks/git-sync.sh" ]] && rm -f "$CLAUDE_DIR/hooks/git-sync.sh"
+[[ -f "$CLAUDE_DIR/hooks/personal-sync.sh" ]] && rm -f "$CLAUDE_DIR/hooks/personal-sync.sh"
+
 # --- Encyclopedia cache sync ---
 mkdir -p "$ENCYCLOPEDIA_DIR"
 if command -v rclone &>/dev/null; then

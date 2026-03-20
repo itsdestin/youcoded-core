@@ -782,8 +782,14 @@ mkdir -p ~/.claude/hooks
 
 # Core hooks (always — skip any the user chose to "keep yours" in Phase 2)
 # NOTE: statusline.sh is NOT a hook — it's configured separately via settings.json "statusLine"
-for hook in checklist-reminder.sh done-sound.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
+for hook in backup-engine.sh checklist-reminder.sh done-sound.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
+done
+
+# Backend drivers for backup-engine (backends/ subdirectory)
+mkdir -p ~/.claude/hooks/backends
+for driver in "$TOOLKIT_ROOT"/core/hooks/backends/*.sh; do
+  ln -sf "$driver" ~/.claude/hooks/backends/$(basename "$driver")
 done
 
 # Utility scripts called by hooks (must be findable as siblings)
@@ -832,11 +838,9 @@ Hooks must also be registered in `~/.claude/settings.json` under the `hooks` key
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/git-sync.sh" }]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/personal-sync.sh" }]
+        "hooks": [
+          { "type": "command", "command": "bash ~/.claude/hooks/backup-engine.sh" }
+        ]
       },
       {
         "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/title-update.sh" }]
