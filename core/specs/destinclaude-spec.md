@@ -1,6 +1,6 @@
 # DestinClaude Toolkit — Spec
 
-**Version:** 2.4
+**Version:** 2.5
 **Last updated:** 2026-03-20
 **Feature location:** `~/.claude/plugins/destinclaude/` (toolkit root)
 
@@ -121,7 +121,7 @@ The toolkit ships CLAUDE.md fragment templates in `core/templates/claude-md-frag
 
 **`/toolkit` command** — Full reference card showing all installed features, trigger phrases, hooks, and commands. Always includes an "AVAILABLE (not installed)" section listing layers/modules the user doesn't have, with descriptions. When a user asks about a feature from an uninstalled layer, Claude explains which layer it belongs to and offers `/setup-wizard`.
 
-**Periodic `/toolkit` reminder** — The session-start hook counts sessions and shows `Tip: Type /toolkit to see all your features and useful phrases.` every ~20 sessions. Tracked in `~/.claude/toolkit-state/toolkit-reminder.json`.
+**DestinTip** — Adaptive toolkit hint system. At session start, selects up to 4 tips from a catalog (`core/data/destintip-catalog.json`) based on comfort level, usage history, and rotation. Injects them into Claude's system prompt via `additionalContext`. Claude weaves `★ DestinTip` hints naturally into conversation when relevant. Replaces the old periodic `/toolkit` reminder. See `core/specs/destintip-spec.md`.
 
 **Error guidance tips** — CLAUDE.md fragment that instructs Claude to occasionally show a `★ Tip` block when errors occur, reassuring non-technical users that Claude can likely fix the problem if they say "go ahead and fix it" or "propose some solutions." Throttled to ~once per 5 errors, suppressed for technical users.
 
@@ -182,6 +182,7 @@ Copy-based installs caused persistent, hard-to-diagnose file drift: installed co
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-20 | 2.5 | Replaced periodic `/toolkit` reminder with DestinTip — adaptive hint system using catalog-based tip selection, comfort-level filtering, and session rotation. See `core/specs/destintip-spec.md`. | Update |
 | 2026-03-20 | 2.4 | Eliminated copy-based installs. Symlinks are now required — no fallback. Bootstrap installers (bash + PowerShell) require Developer Mode on Windows and fail with clear error if unavailable. Bash installer sets `MSYS=winsymlinks:nativestrict` for real Windows symlinks. Setup wizard copy fallback removed. `/update` verifies symlinks instead of diffing copies. `session-start.sh` copy-refresh replaced with symlink verification. Added skills to `/update` refresh scope. Major bump: architectural change to install model. | Update |
 | 2026-03-18 | 2.3 | Fixed hook distribution pipeline: `/update` now refreshes hooks + utility scripts, sibling discovery uses config-based `toolkit_root` with symlink fallback, utility scripts added to install list, post-update verification with visual statusline check added. Documented utility scripts as a component type. | Update |
 | 2026-03-18 | 2.2 | Added auto-tag workflow Design Decision. Two-workflow release chain: `auto-tag.yml` (version bump → tag) + `release.yml` (tag → GitHub Release). | Update |
