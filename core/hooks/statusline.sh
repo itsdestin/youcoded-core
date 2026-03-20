@@ -185,7 +185,7 @@ try {
     const d = new Date();
     const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     if (cache.expires && cache.expires < today) process.exit(0);
-    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;38;5;226m\u2605 ' + cache.message + '\x1b[0m');
+    process.stdout.write('| \x1b[1;33m\u2605 ' + cache.message + '\x1b[0m');
 } catch (_) {}
 " "$CACHE_FILE" 2>/dev/null) || ANNOUNCEMENT_FRAGMENT=""
 fi
@@ -203,9 +203,12 @@ if [[ -f "$UPDATE_FILE" ]] && command -v node &>/dev/null; then
     if [[ -n "$TOOLKIT_INFO" ]]; then
         IFS=$'\t' read -r TK_VER TK_UPD <<< "$TOOLKIT_INFO"
         if [[ "$TK_UPD" == "1" ]]; then
-            printf '%b\n' "${YELLOW}DestinClaude v${TK_VER} (Update Available)${RESET}  ${DIM}| Run /update${RESET}  ${ANNOUNCEMENT_FRAGMENT}"
+            printf '%b' "${YELLOW}DestinClaude v${TK_VER} (Update Available)${RESET}  ${DIM}| Run /update${RESET}  "
         else
-            printf '%b\n' "${DIM}DestinClaude v${TK_VER}${RESET}  ${ANNOUNCEMENT_FRAGMENT}"
+            printf '%b' "${DIM}DestinClaude v${TK_VER}${RESET}  "
         fi
+        # Announcement fragment contains raw ANSI bytes from node — use %s
+        # (literal string) not %b (escape-interpreting) to avoid reinterpretation
+        printf '%s\n' "$ANNOUNCEMENT_FRAGMENT"
     fi
 fi
