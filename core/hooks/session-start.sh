@@ -32,6 +32,63 @@ if [[ -n "$TOOLKIT_ROOT" && -f "$TOOLKIT_ROOT/VERSION" && ! -f "$CONFIG_FILE" ]]
     echo "{\"toolkit_root\": \"$TOOLKIT_ROOT\"}" > "$CONFIG_FILE"
 fi
 
+# --- Log helper (session-start doesn't have log_msg) ---
+_log_backup() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [session-start] $1" >> "$CLAUDE_DIR/backup.log"
+}
+
+# --- Toolkit integrity check (D4) ---
+verify_toolkit_integrity() {
+    local TR="$1"
+    [[ -z "$TR" ]] && return 1
+
+    # Fast checks
+    [[ ! -d "$TR" ]] && return 1
+    [[ ! -f "$TR/VERSION" ]] && return 1
+    [[ ! -f "$TR/plugin.json" ]] && return 1
+    [[ ! -d "$TR/.git" ]] && return 1
+
+    # Check installed layers
+    local LAYERS
+    LAYERS=$(node -e "
+        try {
+            const c = require('$CLAUDE_DIR/toolkit-state/config.json');
+            console.log((c.installed_layers || ['core']).join(' '));
+        } catch(e) { console.log('core'); }
+    " 2>/dev/null)
+
+    for LAYER in $LAYERS; do
+        [[ ! -d "$TR/$LAYER" ]] && return 1
+    done
+
+    return 0
+}
+
+# Run integrity check
+if [[ -n "$TOOLKIT_ROOT" ]] && ! verify_toolkit_integrity "$TOOLKIT_ROOT"; then
+    _log_backup "Toolkit integrity check failed — attempting auto-recovery"
+
+    # Determine repo URL
+    REPO_URL="https://github.com/destinclaude/destinclaude.git"
+
+    if [[ -d "$TOOLKIT_ROOT/.git" ]]; then
+        # Partial — try git pull
+        cd "$TOOLKIT_ROOT" && git pull origin master 2>/dev/null && cd - >/dev/null
+    else
+        # Missing — clone fresh
+        rm -rf "$TOOLKIT_ROOT" 2>/dev/null
+        git clone "$REPO_URL" "$TOOLKIT_ROOT" 2>/dev/null
+    fi
+
+    if verify_toolkit_integrity "$TOOLKIT_ROOT"; then
+        _log_backup "Toolkit auto-recovered successfully"
+        echo '{"hookSpecificOutput": "Your DestinClaude toolkit was missing or damaged and has been automatically restored. All your personal data is untouched."}' >&2
+    else
+        _log_backup "ERROR: Toolkit auto-recovery failed"
+        echo '{"hookSpecificOutput": "Warning: Your DestinClaude toolkit could not be restored automatically. Run /setup-wizard when you are back online."}' >&2
+    fi
+fi
+
 # --- Read DRIVE_ROOT from config (used for encyclopedia sync and backup paths) ---
 DRIVE_ROOT="Claude"
 if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
