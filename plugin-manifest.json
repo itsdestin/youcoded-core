@@ -1,0 +1,59 @@
+{
+  "version": "1.3.1",
+  "generated_at": "2026-03-20T09:56:17.920Z",
+  "owned_files": {
+    "skills": [
+      "setup-wizard",
+      "encyclopedia-compile",
+      "encyclopedia-interviewer",
+      "encyclopedia-librarian",
+      "encyclopedia-update",
+      "fork-file",
+      "google-drive",
+      "journaling-assistant",
+      "inbox-processor",
+      "skill-creator"
+    ],
+    "hooks": [
+      "checklist-reminder.sh",
+      "contribution-detector.sh",
+      "done-sound.sh",
+      "git-sync.sh",
+      "personal-sync.sh",
+      "session-start.sh",
+      "statusline.sh",
+      "title-update.sh",
+      "todo-capture.sh",
+      "tool-router.sh",
+      "write-guard.sh",
+      "sync-encyclopedia.sh"
+    ],
+    "commands": [
+      "contribute.md",
+      "health.md",
+      "setup-wizard.md",
+      "toolkit-uninstall.md",
+      "toolkit.md",
+      "update.md"
+    ],
+    "utility_scripts": [
+      "announcement-fetch.js",
+      "usage-fetch.js"
+    ],
+    "specs": [
+      "backup-system-spec.md",
+      "destinclaude-spec.md",
+      "INDEX.md",
+      "landing-page-spec.md",
+      "memory-system-spec.md",
+      "personal-sync-spec.md",
+      "specs-system-spec.md",
+      "statusline-spec.md",
+      "system-architecture-spec.md",
+      "write-guard-spec.md"
+    ],
+    "templates": [
+      "claude-md-fragments/*"
+    ]
+  }
+}
