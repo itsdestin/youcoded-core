@@ -7,6 +7,9 @@
     "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:main\"",
     "dev:main": "tsc -p tsconfig.json && cp src/main/pty-worker.js dist/main/pty-worker.js && electron .",
     "dev:renderer": "vite src/renderer",
+    "dev:leaderboard": "cd server/leaderboard && npm run dev",
+    "dev:relay": "cd server/relay && npm run dev",
+    "dev:all": "concurrently \"npm run dev:leaderboard\" \"npm run dev:relay\" \"npm run dev\"",
     "build": "tsc && cp src/main/pty-worker.js dist/main/pty-worker.js && vite build src/renderer && electron-builder",
     "test": "vitest"
   },
