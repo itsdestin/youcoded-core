@@ -1,5 +1,5 @@
 import type { Room } from './room-manager.js';
-import { dropPiece, checkWin, checkDraw, createBoard } from '../../../shared/connect-four.js';
+import { dropPiece, checkWin, checkDraw, createBoard } from './connect-four.js';
 
 interface MoveResult {
   success: boolean;

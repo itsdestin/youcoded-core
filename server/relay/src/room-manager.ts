@@ -1,4 +1,4 @@
-import { createBoard, Board } from '../../../shared/connect-four';
+import { createBoard, Board } from './connect-four.js';
 
 export interface Room {
   code: string;

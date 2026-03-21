@@ -4,6 +4,7 @@ import { SessionManager } from './session-manager';
 import { HookRelay } from './hook-relay';
 import { registerIpcHandlers } from './ipc-handlers';
 import { IPC } from '../shared/types';
+import { startGameServers, stopGameServers } from './game-servers';
 
 let mainWindow: BrowserWindow | null = null;
 const sessionManager = new SessionManager();
@@ -51,10 +52,15 @@ app.whenReady().then(async () => {
     console.error('Failed to start hook relay:', e);
   }
 
+  // Start Connect 4 game servers (leaderboard + relay)
+  const projectRoot = path.join(__dirname, '..', '..');
+  startGameServers(projectRoot);
+
   createWindow();
 });
 
 app.on('window-all-closed', () => {
+  stopGameServers();
   sessionManager.destroyAll();
   hookRelay.stop();
   app.quit();
