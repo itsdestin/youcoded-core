@@ -53,4 +53,8 @@ export const IPC = {
   SESSION_DESTROYED: 'session:destroyed',
   PTY_OUTPUT: 'pty:output',
   HOOK_EVENT: 'hook:event',
+  SESSION_RENAMED: 'session:renamed',
+  DIALOG_OPEN_FILE: 'dialog:open-file',
+  DIALOG_OPEN_FOLDER: 'dialog:open-folder',
+  CLIPBOARD_SAVE_IMAGE: 'clipboard:save-image',
 } as const;

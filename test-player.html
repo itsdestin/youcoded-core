@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Connect 4 — Test Player 2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; padding: 24px; }
+    h1 { font-size: 18px; margin-bottom: 16px; }
+    .section { margin-bottom: 16px; padding: 12px; background: #1e293b; border-radius: 8px; }
+    .section h2 { font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    input { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 6px 10px; color: #e2e8f0; font-size: 14px; width: 150px; }
+    button { background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+    button:hover { background: #4338ca; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .status.ok { color: #22c55e; }
+    .status.err { color: #ef4444; }
+    .log { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px; font-size: 12px; font-family: monospace; max-height: 200px; overflow-y: auto; margin-top: 8px; white-space: pre-wrap; }
+    .board { display: inline-grid; grid-template-columns: repeat(7, 40px); gap: 3px; background: #1d4ed8; padding: 6px; border-radius: 8px; margin-top: 8px; }
+    .cell { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+    .cell.empty { background: #0f172a; }
+    .cell.red { background: #dc2626; }
+    .cell.yellow { background: #eab308; }
+    .cell:hover { opacity: 0.8; }
+    .turn { font-size: 14px; margin-top: 8px; font-weight: bold; }
+    .controls { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .chat-input { display: flex; gap: 6px; margin-top: 8px; }
+    .chat-input input { flex: 1; }
+    .messages { font-size: 12px; max-height: 100px; overflow-y: auto; margin-top: 6px; }
+    .messages div { padding: 2px 0; }
+  </style>
+</head>
+<body>
+  <h1>Connect 4 — Player 2 Test Client</h1>
+
+  <div class="section">
+    <h2>1. Register</h2>
+    <div class="controls">
+      <input id="username" placeholder="Username" value="TestPlayer2">
+      <input id="password" placeholder="Password" value="test123" type="password">
+      <button onclick="doRegister()">Register</button>
+    </div>
+    <div id="regStatus" class="status"></div>
+  </div>
+
+  <div class="section">
+    <h2>2. Join Game</h2>
+    <div class="controls">
+      <input id="roomCode" placeholder="Room code" style="text-transform:uppercase; letter-spacing:2px;">
+      <button onclick="doJoin()" id="joinBtn" disabled>Join</button>
+    </div>
+    <div id="joinStatus" class="status"></div>
+  </div>
+
+  <div class="section">
+    <h2>3. Game</h2>
+    <div id="turnInfo" class="turn"></div>
+    <div id="board"></div>
+    <div class="chat-input">
+      <input id="chatMsg" placeholder="Chat message..." onkeydown="if(event.key==='Enter')doChat()">
+      <button onclick="doChat()">Send</button>
+    </div>
+    <div id="messages" class="messages"></div>
+  </div>
+
+  <div class="section">
+    <h2>Log</h2>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    const RELAY = 'ws://localhost:3002';
+    const API = 'http://localhost:3001';
+    let ws = null;
+    let myColor = null;
+    let board = [];
+    let myTurn = false;
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      el.textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(id, msg, ok) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    async function doRegister() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if (!username || !password) return;
+
+      try {
+        const res = await fetch(API + '/players', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        if (res.status === 201) {
+          setStatus('regStatus', 'Registered! Connecting to relay...', true);
+        } else if (res.status === 409) {
+          setStatus('regStatus', 'Username exists, logging in...', true);
+        } else {
+          setStatus('regStatus', 'Registration failed: ' + res.status, false);
+          return;
+        }
+      } catch (e) {
+        setStatus('regStatus', 'Cannot reach server: ' + e.message, false);
+        return;
+      }
+
+      ws = new WebSocket(RELAY);
+      ws.onopen = () => {
+        log('WebSocket connected');
+        ws.send(JSON.stringify({ type: 'authenticate', username, password }));
+      };
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        log('recv ' + msg.type);
+        handleMessage(msg);
+      };
+      ws.onclose = () => log('WebSocket closed');
+      ws.onerror = () => log('WebSocket error');
+    }
+
+    function handleMessage(msg) {
+      switch (msg.type) {
+        case 'authenticated':
+          if (msg.success) {
+            setStatus('regStatus', 'Connected and authenticated!', true);
+            document.getElementById('joinBtn').disabled = false;
+          } else {
+            setStatus('regStatus', 'Auth failed, wrong password?', false);
+          }
+          break;
+        case 'game:start':
+          myColor = msg.you;
+          board = msg.board;
+          setStatus('joinStatus', 'Game started! You are ' + myColor, true);
+          renderBoard();
+          updateTurn(msg.you === 'red');
+          break;
+        case 'game:state':
+          board = msg.board;
+          myTurn = msg.turn === myColor;
+          renderBoard();
+          updateTurn(myTurn);
+          break;
+        case 'game:over': {
+          const result = msg.winner === 'draw' ? 'Draw!' :
+            msg.winner === myColor ? 'You win!' : 'You lose!';
+          document.getElementById('turnInfo').textContent = result;
+          renderBoard();
+          break;
+        }
+        case 'chat:message':
+          addChat(msg.from, msg.text);
+          break;
+        case 'opponent:disconnected':
+          setStatus('joinStatus', 'Opponent disconnected!', false);
+          break;
+        case 'error':
+          log('ERROR: ' + msg.message);
+          break;
+      }
+    }
+
+    function doJoin() {
+      const code = document.getElementById('roomCode').value.trim().toUpperCase();
+      if (!code || !ws) return;
+      ws.send(JSON.stringify({ type: 'join', code }));
+      setStatus('joinStatus', 'Joining ' + code + '...', true);
+    }
+
+    function doMove(col) {
+      if (!myTurn || !ws) return;
+      ws.send(JSON.stringify({ type: 'move', column: col }));
+    }
+
+    function doChat() {
+      const input = document.getElementById('chatMsg');
+      const text = input.value.trim();
+      if (!text || !ws) return;
+      ws.send(JSON.stringify({ type: 'chat', text }));
+      addChat('You', text);
+      input.value = '';
+    }
+
+    function addChat(from, text) {
+      const el = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.textContent = from + ': ' + text;
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function updateTurn(isMyTurn) {
+      myTurn = isMyTurn;
+      document.getElementById('turnInfo').textContent = isMyTurn ?
+        'Your turn (' + myColor + ')' :
+        "Opponent's turn";
+    }
+
+    function renderBoard() {
+      const container = document.getElementById('board');
+      // Clear board safely
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      container.className = 'board';
+      for (let row = 5; row >= 0; row--) {
+        for (let col = 0; col < 7; col++) {
+          const cell = document.createElement('div');
+          const val = board[col] ? board[col][row] : 0;
+          cell.className = 'cell ' + (val === 0 ? 'empty' : val === 1 ? 'red' : 'yellow');
+          cell.addEventListener('click', () => doMove(col));
+          container.appendChild(cell);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -8,6 +8,22 @@ interface Props {
   onSelect: (input: string, label: string) => void;
 }
 
+// Classify button intent from label text
+function buttonIntent(label: string): 'accept' | 'reject' | 'neutral' {
+  const l = label.toLowerCase();
+  if (/^(yes|allow|accept|trust|approve)\b/.test(l)) return 'accept';
+  if (/always allow/.test(l)) return 'accept';
+  if (/^(no|deny|reject|decline|skip|cancel|abort)\b/.test(l)) return 'reject';
+  if (/don.t trust/.test(l)) return 'reject';
+  return 'neutral';
+}
+
+const intentStyles = {
+  accept: 'bg-[#2E7D32] hover:bg-[#388E3C] text-white',
+  reject: 'bg-[#DD4444] hover:bg-[#E55555] text-white',
+  neutral: 'bg-gray-300 hover:bg-gray-200 text-gray-950',
+};
+
 export default function PromptCard({ prompt, sessionId, onSelect }: Props) {
   const [preview, setPreview] = useState<string>('');
 
@@ -55,7 +71,7 @@ export default function PromptCard({ prompt, sessionId, onSelect }: Props) {
               <button
                 key={btn.label}
                 onClick={() => onSelect(btn.input, btn.label)}
-                className="px-3 py-1.5 text-xs font-medium rounded-md bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${intentStyles[buttonIntent(btn.label)]}`}
               >
                 {btn.label}
               </button>

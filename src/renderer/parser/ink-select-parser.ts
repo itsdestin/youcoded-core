@@ -37,7 +37,10 @@ export function parseInkSelect(screenText: string): ParsedMenu | null {
   const lines = clean.split('\n');
 
   // Find the line with the ❯ selector
-  const selectorIdx = lines.findLastIndex((l) => /^\s*❯/.test(l));
+  let selectorIdx = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^\s*❯/.test(lines[i])) { selectorIdx = i; break; }
+  }
   if (selectorIdx < 0) return null;
 
   // Collect the full menu region: walk up and down from the selector

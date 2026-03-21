@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ToolCallState } from '../../shared/types';
+import BrailleSpinner from './BrailleSpinner';
 
 const TOOL_LABELS: Record<string, string> = {
   Read: 'Read File',
@@ -55,7 +56,7 @@ export default function ToolCard({ tool }: Props) {
       >
         {/* Status indicator */}
         {tool.status === 'running' && (
-          <span className="w-4 h-4 shrink-0 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+          <BrailleSpinner size="sm" />
         )}
         {tool.status === 'complete' && (
           <svg className="w-4 h-4 shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

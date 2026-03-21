@@ -1,59 +1,102 @@
 import React from 'react';
+import { ChatIcon, TerminalIcon } from './Icons';
+import SessionSelector from './SessionSelector';
+
+interface SessionEntry {
+  id: string;
+  name: string;
+  cwd: string;
+  permissionMode: string;
+}
 
 interface Props {
-  sessionName: string;
-  cwd: string;
+  sessions: SessionEntry[];
+  activeSessionId: string | null;
+  onSelectSession: (id: string) => void;
+  onCreateSession: (cwd: string, dangerous: boolean) => void;
+  onCloseSession: (id: string) => void;
   viewMode: 'chat' | 'terminal';
   onToggleView: (mode: 'chat' | 'terminal') => void;
   gamePanelOpen: boolean;
   onToggleGamePanel: () => void;
   gameConnected: boolean;
+  permissionMode: string;
 }
 
-export default function HeaderBar({ sessionName, cwd, viewMode, onToggleView, gamePanelOpen, onToggleGamePanel, gameConnected }: Props) {
+export default function HeaderBar({
+  sessions, activeSessionId, onSelectSession, onCreateSession,
+  viewMode, onToggleView,
+  gamePanelOpen, onToggleGamePanel, gameConnected,
+  permissionMode,
+}: Props) {
+  const isDangerous = permissionMode === 'bypassPermissions';
+
   return (
     <div className="flex items-center h-10 px-3 border-b border-gray-800 shrink-0">
-      <div className="flex-1 min-w-0">
-        <span className="text-sm text-gray-400 font-medium">{sessionName}</span>
-        <span className="text-xs text-gray-600 ml-2 truncate">{cwd}</span>
-      </div>
-      <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
-        <button
-          onClick={() => onToggleView('chat')}
-          className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
-            viewMode === 'chat'
-              ? 'bg-indigo-600 text-white'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          Chat
-        </button>
-        <button
-          onClick={() => onToggleView('terminal')}
-          className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
-            viewMode === 'terminal'
-              ? 'bg-indigo-600 text-white'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          Terminal
-        </button>
-      </div>
-      {/* Game toggle */}
-      <button
-        onClick={onToggleGamePanel}
-        className={`ml-2 px-2 py-1 text-xs rounded font-medium transition-colors flex items-center gap-1 ${
-          gamePanelOpen
-            ? 'bg-indigo-600 text-white'
-            : 'text-gray-400 hover:text-gray-300'
-        }`}
-        title="Connect 4"
-      >
-        <span className="text-sm">🎮</span>
-        {gameConnected && (
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+      {/* Left — permission badge */}
+      <div className="flex-1 flex items-center">
+        {isDangerous ? (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#DD4444]/20 text-[#DD4444] border border-[#DD4444]/30">
+            DANGEROUS
+          </span>
+        ) : (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#4CAF50]/15 text-[#4CAF50] border border-[#4CAF50]/25">
+            SAFE
+          </span>
         )}
-      </button>
+      </div>
+
+      {/* Center — session selector */}
+      <SessionSelector
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={onSelectSession}
+        onCreateSession={onCreateSession}
+      />
+
+      {/* Right — view toggles */}
+      <div className="flex-1 flex items-center justify-end gap-1">
+        <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
+          <button
+            onClick={() => onToggleView('chat')}
+            className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+              viewMode === 'chat'
+                ? 'bg-gray-300 text-gray-950'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+            title="Chat"
+          >
+            <ChatIcon className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">Chat</span>
+          </button>
+          <button
+            onClick={() => onToggleView('terminal')}
+            className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+              viewMode === 'terminal'
+                ? 'bg-gray-300 text-gray-950'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+            title="Terminal"
+          >
+            <TerminalIcon className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">Terminal</span>
+          </button>
+        </div>
+        <button
+          onClick={onToggleGamePanel}
+          className={`px-2 py-1 text-xs rounded font-medium transition-colors flex items-center gap-1 ${
+            gamePanelOpen
+              ? 'bg-gray-300 text-gray-950'
+              : 'text-gray-400 hover:text-gray-300'
+          }`}
+          title="Connect 4"
+        >
+          <span className="text-sm">🎮</span>
+          {gameConnected && (
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -18,6 +18,7 @@ export interface SessionChatState {
   toolCalls: Map<string, ToolCallState>;
   toolGroups: Map<string, ToolGroupState>;
   isThinking: boolean;
+  streamingText: string;
   /** ID of the current tool group (tools are appended here until next message) */
   currentGroupId: string | null;
 }
@@ -28,6 +29,7 @@ export function createSessionChatState(): SessionChatState {
     toolCalls: new Map(),
     toolGroups: new Map(),
     isThinking: false,
+    streamingText: '',
     currentGroupId: null,
   };
 }
@@ -65,6 +67,11 @@ export type ChatAction =
       sessionId: string;
       lastAssistantMessage: string;
       timestamp: number;
+    }
+  | {
+      type: 'UPDATE_STREAMING';
+      sessionId: string;
+      text: string;
     }
   | {
       type: 'SHOW_PROMPT';

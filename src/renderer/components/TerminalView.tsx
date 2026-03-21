@@ -26,9 +26,9 @@ export default function TerminalView({ sessionId, visible }: Props) {
       fontSize: 14,
       fontFamily: "'Cascadia Code', 'Fira Code', monospace",
       theme: {
-        background: '#0d1117',
-        foreground: '#e6edf3',
-        cursor: '#e6edf3',
+        background: '#0A0A0A',
+        foreground: '#E0E0E0',
+        cursor: '#E0E0E0',
         selectionBackground: '#264f78',
       },
     });
@@ -126,7 +126,7 @@ export default function TerminalView({ sessionId, visible }: Props) {
         left: 0,
         right: 0,
         bottom: 0,
-        background: '#0d1117',
+        background: '#0A0A0A',
         borderRadius: 8,
         overflow: 'hidden',
         display: visible ? 'block' : 'none',

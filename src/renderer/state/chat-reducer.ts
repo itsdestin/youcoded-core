@@ -130,8 +130,18 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...session,
         timeline: [...session.timeline, { kind: 'assistant', message }],
         isThinking: false,
-        currentGroupId: null, // Next tools start a fresh group
+        streamingText: '',
+        currentGroupId: null,
       });
+      return next;
+    }
+
+    case 'UPDATE_STREAMING': {
+      const session = next.get(action.sessionId);
+      if (!session || !session.isThinking) return state;
+      // Only update if text actually changed
+      if (session.streamingText === action.text) return state;
+      next.set(action.sessionId, { ...session, streamingText: action.text });
       return next;
     }
 

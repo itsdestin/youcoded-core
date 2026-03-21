@@ -4,4 +4,3 @@ dist/
 release/
 *.tsbuildinfo
 src/renderer/dist/
-server/leaderboard/data/

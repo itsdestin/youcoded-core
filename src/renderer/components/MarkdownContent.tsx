@@ -56,7 +56,7 @@ export default function MarkdownContent({ content }: Props) {
           const isInline = !className;
           if (isInline) {
             return (
-              <code className="bg-gray-800 rounded px-1.5 py-0.5 text-sm text-indigo-300" {...props}>
+              <code className="bg-gray-800 rounded px-1.5 py-0.5 text-sm text-gray-300" {...props}>
                 {children}
               </code>
             );
@@ -73,7 +73,7 @@ export default function MarkdownContent({ content }: Props) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-400 hover:text-indigo-300 underline"
+              className="text-[#66AAFF] hover:text-[#88CCFF] underline"
               {...props}
             >
               {children}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ToolCallState, ToolGroupState } from '../../shared/types';
 import ToolCard from './ToolCard';
+import BrailleSpinner from './BrailleSpinner';
 
 interface Props {
   group: ToolGroupState;
@@ -43,7 +44,7 @@ export default function ToolGroup({ group, toolCalls }: Props) {
           className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-800/50 transition-colors"
         >
           {runningCount > 0 ? (
-            <span className="w-4 h-4 shrink-0 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+            <BrailleSpinner size="sm" />
           ) : (
             <svg className="w-4 h-4 shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
