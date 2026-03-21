@@ -11,83 +11,107 @@ beforeEach(() => {
   api = new GitHubAPI('test-token', 'owner/repo');
 });
 
-describe('readFile', () => {
-  it('returns parsed JSON content when file exists', async () => {
+describe('createIssue', () => {
+  it('creates an issue and returns it', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        content: btoa(JSON.stringify({ hello: 'world' })),
-        sha: 'abc123',
-      }),
+      json: async () => ({ number: 42, title: 'test', body: '{}', state: 'open', user: { login: 'alice' }, updated_at: '2024-01-01' }),
     });
-    const result = await api.readFile('test.json');
-    expect(result).toEqual({ data: { hello: 'world' }, sha: 'abc123' });
-  });
-
-  it('returns null when file does not exist (404)', async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
-    const result = await api.readFile('missing.json');
-    expect(result).toBeNull();
-  });
-});
-
-describe('writeFile', () => {
-  it('creates a new file when no sha provided', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ content: { sha: 'new-sha' } }),
-    });
-    const result = await api.writeFile('new.json', { data: true }, 'create file');
-    expect(result).toEqual({ sha: 'new-sha' });
+    const result = await api.createIssue('test', '{}');
+    expect(result).not.toBeNull();
+    expect(result!.number).toBe(42);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/contents/new.json'),
-      expect.objectContaining({ method: 'PUT' }),
+      expect.stringContaining('/issues'),
+      expect.objectContaining({ method: 'POST' }),
     );
   });
 
-  it('updates a file when sha provided', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ content: { sha: 'updated-sha' } }),
-    });
-    const result = await api.writeFile('existing.json', { data: true }, 'update file', 'old-sha');
-    expect(result).toEqual({ sha: 'updated-sha' });
-  });
-
-  it('returns null on conflict (409)', async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 409 });
-    const result = await api.writeFile('conflict.json', { data: true }, 'update', 'stale-sha');
+  it('returns null on failure', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
+    const result = await api.createIssue('test', '{}');
     expect(result).toBeNull();
   });
 });
 
-describe('deleteFile', () => {
-  it('deletes a file with sha', async () => {
+describe('updateIssue', () => {
+  it('updates an issue body', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
-    await api.deleteFile('old.json', 'abc123', 'cleanup');
+    const result = await api.updateIssue(42, { body: 'new body' });
+    expect(result).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/contents/old.json'),
-      expect.objectContaining({ method: 'DELETE' }),
+      expect.stringContaining('/issues/42'),
+      expect.objectContaining({ method: 'PATCH' }),
     );
+  });
+
+  it('returns false on failure', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
+    const result = await api.updateIssue(42, { body: 'x' });
+    expect(result).toBe(false);
   });
 });
 
-describe('listFiles', () => {
-  it('returns array of filenames in a directory', async () => {
+describe('searchIssues', () => {
+  it('returns issues matching title prefix', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => [
-        { name: 'ABCDEF.json', type: 'file' },
-        { name: 'GHIJKL.json', type: 'file' },
+        { number: 1, title: '[C4:Game] ABCDEF', body: '{}', state: 'open', user: { login: 'alice' }, updated_at: '' },
+        { number: 2, title: '[C4:Game] GHIJKL', body: '{}', state: 'open', user: { login: 'bob' }, updated_at: '' },
+        { number: 3, title: '[C4:Presence] alice', body: '{}', state: 'open', user: { login: 'alice' }, updated_at: '' },
       ],
     });
-    const result = await api.listFiles('games');
-    expect(result).toEqual(['ABCDEF.json', 'GHIJKL.json']);
+    const result = await api.searchIssues('[C4:Game]');
+    expect(result.length).toBe(2);
   });
 
-  it('returns empty array for missing directory', async () => {
+  it('returns empty array on failure', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
-    const result = await api.listFiles('nonexistent');
+    const result = await api.searchIssues('[C4:Game]');
     expect(result).toEqual([]);
+  });
+});
+
+describe('addComment', () => {
+  it('adds a comment and returns it', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 99, body: '{"action":"move"}', user: { login: 'alice' }, created_at: '' }),
+    });
+    const result = await api.addComment(42, '{"action":"move"}');
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe(99);
+  });
+});
+
+describe('getComments', () => {
+  it('returns comments for an issue', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        { id: 1, body: '{"action":"join"}', user: { login: 'bob' }, created_at: '' },
+        { id: 2, body: '{"action":"move","column":3}', user: { login: 'alice' }, created_at: '' },
+      ],
+    });
+    const result = await api.getComments(42);
+    expect(result.length).toBe(2);
+  });
+});
+
+describe('getIssue', () => {
+  it('returns a specific issue', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ number: 42, title: 'test', body: '{}', state: 'open', user: { login: 'alice' }, updated_at: '' }),
+    });
+    const result = await api.getIssue(42);
+    expect(result).not.toBeNull();
+    expect(result!.number).toBe(42);
+  });
+
+  it('returns null for missing issue', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+    const result = await api.getIssue(999);
+    expect(result).toBeNull();
   });
 });

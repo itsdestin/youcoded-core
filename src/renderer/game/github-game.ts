@@ -1,4 +1,4 @@
-import type { GitHubAPI } from './github-api';
+import { GitHubAPI, Issue, Comment } from './github-api';
 import { createBoard, dropPiece, checkWin, checkDraw } from './connect-four';
 
 // ---------------------------------------------------------------------------
@@ -18,18 +18,20 @@ export interface GameFile {
   rematchVotes?: string[];
 }
 
-interface PresenceEntry {
+// Comment actions (event-sourced game state)
+interface GameAction {
+  action: 'join' | 'move' | 'chat' | 'leave' | 'rematch';
   username: string;
-  status: 'idle' | 'in-game';
+  column?: number;
+  text?: string;
   timestamp: number;
 }
 
-interface LeaderboardEntry {
-  username: string;
-  wins: number;
-  losses: number;
-  draws: number;
-}
+// Title prefixes for issue types
+const PREFIX_GAME = '[C4:Game]';
+const PREFIX_PRESENCE = '[C4:Presence]';
+const PREFIX_STATS = '[C4:Stats]';
+const PREFIX_CHALLENGE = '[C4:Challenge]';
 
 // ---------------------------------------------------------------------------
 // Code generation
@@ -46,12 +48,113 @@ function generateCode(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseIssueBody<T>(issue: Issue): T | null {
+  try {
+    return JSON.parse(issue.body) as T;
+  } catch {
+    return null;
+  }
+}
+
+function parseComment(comment: Comment): GameAction | null {
+  try {
+    return JSON.parse(comment.body) as GameAction;
+  } catch {
+    return null;
+  }
+}
+
+/** Replay game actions on top of initial state to get current state. */
+function replayGame(initial: GameFile, actions: GameAction[]): GameFile {
+  let game = { ...initial, chat: [...initial.chat] };
+
+  for (const action of actions) {
+    switch (action.action) {
+      case 'join':
+        if (game.status === 'waiting' && !game.yellow && action.username !== game.red) {
+          game = { ...game, yellow: action.username, status: 'playing' };
+        }
+        break;
+
+      case 'move':
+        if (game.status === 'playing' && action.column !== undefined) {
+          const currentPlayer = game.turn === 'red' ? game.red : game.yellow;
+          if (action.username !== currentPlayer) break;
+
+          const playerNum = game.turn === 'red' ? 1 : 2;
+          const result = dropPiece(game.board, action.column, playerNum);
+          if (!result) break;
+
+          const winLine = checkWin(result.board, { col: action.column, row: result.row });
+          const isDraw = !winLine && checkDraw(result.board);
+
+          if (winLine) {
+            game = { ...game, board: result.board, status: 'finished', winner: game.turn, winLine: winLine as [number, number][] };
+          } else if (isDraw) {
+            game = { ...game, board: result.board, status: 'finished', winner: 'draw' };
+          } else {
+            game = { ...game, board: result.board, turn: game.turn === 'red' ? 'yellow' : 'red' };
+          }
+        }
+        break;
+
+      case 'chat':
+        if (action.text) {
+          game = { ...game, chat: [...game.chat, { from: action.username, text: action.text, timestamp: action.timestamp }] };
+        }
+        break;
+
+      case 'leave':
+        if (game.status === 'playing') {
+          const opponentColor: 'red' | 'yellow' = game.red === action.username ? 'yellow' : 'red';
+          game = { ...game, status: 'finished', winner: opponentColor };
+        }
+        break;
+
+      case 'rematch': {
+        const votes = game.rematchVotes ?? [];
+        if (!votes.includes(action.username)) {
+          const newVotes = [...votes, action.username];
+          const bothVoted = game.yellow && newVotes.includes(game.red) && newVotes.includes(game.yellow);
+          if (bothVoted) {
+            game = {
+              ...game,
+              red: game.yellow!,
+              yellow: game.red,
+              board: createBoard(),
+              turn: 'red',
+              status: 'playing',
+              winner: undefined,
+              winLine: undefined,
+              rematchVotes: [],
+            };
+          } else {
+            game = { ...game, rematchVotes: newVotes };
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  return game;
+}
+
+// ---------------------------------------------------------------------------
 // GameOps
 // ---------------------------------------------------------------------------
 
 export class GameOps {
   private api: GitHubAPI;
   private username: string;
+  // Cache issue numbers to avoid repeated searches
+  private presenceIssueNumber: number | null = null;
+  private statsIssueNumber: number | null = null;
+  private gameIssueCache = new Map<string, number>(); // code -> issue number
+  private commentCountCache = new Map<number, number>(); // issue number -> last known comment count
 
   constructor(api: GitHubAPI, username: string) {
     this.api = api;
@@ -64,7 +167,7 @@ export class GameOps {
 
   async createGame(): Promise<string> {
     const code = generateCode();
-    const game: GameFile = {
+    const initial: GameFile = {
       code,
       red: this.username,
       yellow: null,
@@ -73,302 +176,229 @@ export class GameOps {
       status: 'waiting',
       chat: [],
     };
-    await this.api.writeFile(`games/${code}.json`, game, `create game ${code}`);
+    const issue = await this.api.createIssue(
+      `${PREFIX_GAME} ${code}`,
+      JSON.stringify(initial),
+    );
+    if (issue) {
+      this.gameIssueCache.set(code, issue.number);
+      this.commentCountCache.set(issue.number, 0);
+    }
     return code;
   }
 
   async joinGame(code: string): Promise<{ ok: boolean; error?: string }> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) {
-      return { ok: false, error: 'Game not found' };
-    }
-    const game: GameFile = result.data;
-    if (game.status !== 'waiting') {
-      return { ok: false, error: 'Game is not waiting for a player' };
-    }
-    if (game.yellow !== null) {
-      return { ok: false, error: 'Game is already full' };
-    }
-    const updated: GameFile = { ...game, yellow: this.username, status: 'playing' };
-    const writeResult = await this.api.writeFile(
-      `games/${code}.json`,
-      updated,
-      `join game ${code}`,
-      result.sha,
-    );
-    if (!writeResult) {
-      return { ok: false, error: 'Write conflict — please retry' };
-    }
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return { ok: false, error: 'Game not found' };
+
+    const game = await this.getGameState(issueNum);
+    if (!game) return { ok: false, error: 'Game not found' };
+    if (game.status !== 'waiting') return { ok: false, error: 'Game is not waiting for a player' };
+    if (game.yellow !== null) return { ok: false, error: 'Game is already full' };
+    if (game.red === this.username) return { ok: false, error: 'Cannot join your own game' };
+
+    const action: GameAction = { action: 'join', username: this.username, timestamp: Date.now() };
+    const comment = await this.api.addComment(issueNum, JSON.stringify(action));
+    if (!comment) return { ok: false, error: 'Failed to join game' };
+
+    this.incrementCommentCount(issueNum);
     return { ok: true };
   }
 
   async readGame(code: string): Promise<GameFile | null> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) return null;
-    return result.data as GameFile;
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return null;
+    return this.getGameState(issueNum);
   }
 
-  async makeMove(
-    code: string,
-    column: number,
-  ): Promise<{ ok: boolean; gameState?: GameFile; error?: string }> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) {
-      return { ok: false, error: 'Game not found' };
-    }
-    const game: GameFile = result.data;
+  async makeMove(code: string, column: number): Promise<{ ok: boolean; gameState?: GameFile; error?: string }> {
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return { ok: false, error: 'Game not found' };
 
-    if (game.status !== 'playing') {
-      return { ok: false, error: 'Game is not in playing state' };
-    }
+    const game = await this.getGameState(issueNum);
+    if (!game) return { ok: false, error: 'Game not found' };
+    if (game.status !== 'playing') return { ok: false, error: 'Game is not in playing state' };
 
-    // Verify it is this player's turn
     const myColor = game.red === this.username ? 'red' : 'yellow';
-    if (game.turn !== myColor) {
-      return { ok: false, error: 'Not your turn' };
-    }
+    if (game.turn !== myColor) return { ok: false, error: 'Not your turn' };
 
+    // Validate move locally before posting
     const playerNum = myColor === 'red' ? 1 : 2;
     const dropResult = dropPiece(game.board, column, playerNum);
-    if (!dropResult) {
-      return { ok: false, error: 'Invalid move — column is full or out of range' };
-    }
+    if (!dropResult) return { ok: false, error: 'Invalid move' };
 
-    const { board: newBoard, row } = dropResult;
-    const winLine = checkWin(newBoard, { col: column, row });
-    const isDraw = !winLine && checkDraw(newBoard);
+    const action: GameAction = { action: 'move', username: this.username, column, timestamp: Date.now() };
+    const comment = await this.api.addComment(issueNum, JSON.stringify(action));
+    if (!comment) return { ok: false, error: 'Failed to post move' };
 
-    let updated: GameFile;
-    if (winLine) {
-      updated = {
-        ...game,
-        board: newBoard,
-        status: 'finished',
-        winner: myColor,
-        winLine: winLine as [number, number][],
-      };
-    } else if (isDraw) {
-      updated = {
-        ...game,
-        board: newBoard,
-        status: 'finished',
-        winner: 'draw',
-      };
-    } else {
-      updated = {
-        ...game,
-        board: newBoard,
-        turn: myColor === 'red' ? 'yellow' : 'red',
-      };
-    }
+    this.incrementCommentCount(issueNum);
 
-    const writeResult = await this.api.writeFile(
-      `games/${code}.json`,
-      updated,
-      `move ${code} col ${column}`,
-      result.sha,
-    );
-    if (!writeResult) {
-      return { ok: false, error: 'Write conflict — please retry' };
-    }
+    // Compute new state locally
+    const newGame = replayGame(game, [parseComment({ ...comment, body: JSON.stringify(action) } as any)!]);
 
-    // Update leaderboard on game end
-    if (updated.status === 'finished' && game.yellow) {
-      if (updated.winner === 'draw') {
+    // Update stats on game end
+    if (newGame.status === 'finished' && game.yellow) {
+      if (newGame.winner === 'draw') {
         await this.recordResult(game.red, game.yellow, true);
-      } else {
-        const winner = updated.winner === 'red' ? game.red : game.yellow;
-        const loser = updated.winner === 'red' ? game.yellow : game.red;
+      } else if (newGame.winner) {
+        const winner = newGame.winner === 'red' ? game.red : game.yellow;
+        const loser = newGame.winner === 'red' ? game.yellow : game.red;
         await this.recordResult(winner, loser, false);
       }
     }
 
-    return { ok: true, gameState: updated };
+    return { ok: true, gameState: newGame };
   }
 
   async sendChat(code: string, text: string): Promise<boolean> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) return false;
-    const game: GameFile = result.data;
-    const updated: GameFile = {
-      ...game,
-      chat: [...game.chat, { from: this.username, text, timestamp: Date.now() }],
-    };
-    const writeResult = await this.api.writeFile(
-      `games/${code}.json`,
-      updated,
-      `chat ${code}`,
-      result.sha,
-    );
-    return writeResult !== null;
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return false;
+
+    const action: GameAction = { action: 'chat', username: this.username, text, timestamp: Date.now() };
+    const comment = await this.api.addComment(issueNum, JSON.stringify(action));
+    if (comment) this.incrementCommentCount(issueNum);
+    return comment !== null;
   }
 
   async leaveGame(code: string): Promise<void> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) return;
-    const game: GameFile = result.data;
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return;
+
+    const game = await this.getGameState(issueNum);
+    if (!game) return;
 
     if (game.status === 'playing' && game.yellow) {
-      // Determine opponent (the one who wins by forfeit)
-      const opponentColor: 'red' | 'yellow' = game.red === this.username ? 'yellow' : 'red';
-      const opponentName = opponentColor === 'red' ? game.red : game.yellow;
-      const myName = this.username;
+      const action: GameAction = { action: 'leave', username: this.username, timestamp: Date.now() };
+      await this.api.addComment(issueNum, JSON.stringify(action));
 
-      const updated: GameFile = {
-        ...game,
-        status: 'finished',
-        winner: opponentColor,
-      };
-
-      const writeResult = await this.api.writeFile(
-        `games/${code}.json`,
-        updated,
-        `forfeit ${code}`,
-        result.sha,
-      );
-
-      if (writeResult) {
-        await this.recordResult(opponentName, myName, false);
-        await this.api.deleteFile(`games/${code}.json`, writeResult.sha, `delete game ${code}`);
-        return;
-      }
+      const opponent = game.red === this.username ? game.yellow : game.red;
+      await this.recordResult(opponent, this.username, false);
     }
 
-    await this.api.deleteFile(`games/${code}.json`, result.sha, `delete game ${code}`);
+    this.gameIssueCache.delete(code);
+    this.commentCountCache.delete(issueNum);
   }
 
-  async requestRematch(
-    code: string,
-  ): Promise<{ ready: boolean; gameState?: GameFile }> {
-    const result = await this.api.readFile(`games/${code}.json`);
-    if (!result) return { ready: false };
-    const game: GameFile = result.data;
+  async requestRematch(code: string): Promise<{ ready: boolean; gameState?: GameFile }> {
+    const issueNum = await this.findGameIssue(code);
+    if (!issueNum) return { ready: false };
+
+    const game = await this.getGameState(issueNum);
+    if (!game) return { ready: false };
 
     const votes = game.rematchVotes ?? [];
-    if (votes.includes(this.username)) {
-      // Already voted
-      return { ready: false, gameState: game };
-    }
+    if (votes.includes(this.username)) return { ready: false, gameState: game };
 
-    const newVotes = [...votes, this.username];
-    const bothVoted =
-      game.yellow !== null &&
-      newVotes.includes(game.red) &&
-      newVotes.includes(game.yellow);
+    const action: GameAction = { action: 'rematch', username: this.username, timestamp: Date.now() };
+    await this.api.addComment(issueNum, JSON.stringify(action));
+    this.incrementCommentCount(issueNum);
 
-    let updated: GameFile;
-    if (bothVoted) {
-      // Swap colors and reset board
-      updated = {
-        ...game,
-        red: game.yellow!,
-        yellow: game.red,
-        board: createBoard(),
-        turn: 'red',
-        status: 'playing',
-        winner: undefined,
-        winLine: undefined,
-        rematchVotes: [],
-        chat: game.chat,
-      };
-    } else {
-      updated = { ...game, rematchVotes: newVotes };
-    }
-
-    await this.api.writeFile(`games/${code}.json`, updated, `rematch ${code}`, result.sha);
-    return { ready: bothVoted, gameState: updated };
+    const newGame = replayGame(game, [{ ...action }]);
+    return { ready: newGame.status === 'playing', gameState: newGame };
   }
 
   // -------------------------------------------------------------------------
-  // Presence
+  // Presence (each user owns their own issue)
   // -------------------------------------------------------------------------
 
   async updatePresence(status: 'idle' | 'in-game'): Promise<void> {
-    await this._writePresence(status, false);
-  }
+    const body = JSON.stringify({ username: this.username, status, timestamp: Date.now() });
 
-  private async _writePresence(status: 'idle' | 'in-game', isRetry: boolean): Promise<void> {
-    const result = await this.api.readFile('presence.json');
-    const presenceMap: Record<string, PresenceEntry> = result ? { ...result.data } : {};
-    presenceMap[this.username] = {
-      username: this.username,
-      status,
-      timestamp: Date.now(),
-    };
-    const writeResult = await this.api.writeFile(
-      'presence.json',
-      presenceMap,
-      `presence ${this.username}`,
-      result?.sha,
-    );
-    if (!writeResult && !isRetry) {
-      // 409 conflict — retry once
-      await this._writePresence(status, true);
+    if (this.presenceIssueNumber) {
+      // Update existing issue
+      await this.api.updateIssue(this.presenceIssueNumber, { body });
+      return;
+    }
+
+    // Search for existing presence issue
+    const issues = await this.api.searchIssues(`${PREFIX_PRESENCE} ${this.username}`);
+    const mine = issues.find((i) => i.user.login === this.username);
+
+    if (mine) {
+      this.presenceIssueNumber = mine.number;
+      await this.api.updateIssue(mine.number, { body });
+    } else {
+      // Create new presence issue
+      const issue = await this.api.createIssue(`${PREFIX_PRESENCE} ${this.username}`, body);
+      if (issue) this.presenceIssueNumber = issue.number;
     }
   }
 
   async getOnlineUsers(): Promise<{ username: string; status: 'idle' | 'in-game' }[]> {
-    const result = await this.api.readFile('presence.json');
-    if (!result) return [];
-    const presenceMap: Record<string, PresenceEntry> = result.data;
-    const cutoff = Date.now() - 300000; // 5 minutes
-    return Object.values(presenceMap)
-      .filter((entry) => entry.timestamp >= cutoff)
-      .map((entry) => ({ username: entry.username, status: entry.status }));
+    const issues = await this.api.searchIssues(PREFIX_PRESENCE);
+    const cutoff = Date.now() - 300_000; // 5 minutes
+    const users: { username: string; status: 'idle' | 'in-game' }[] = [];
+
+    for (const issue of issues) {
+      const data = parseIssueBody<{ username: string; status: 'idle' | 'in-game'; timestamp: number }>(issue);
+      if (data && data.timestamp >= cutoff) {
+        users.push({ username: data.username, status: data.status });
+      }
+    }
+
+    return users;
   }
 
   // -------------------------------------------------------------------------
-  // Leaderboard
+  // Leaderboard (each user owns their own stats issue)
   // -------------------------------------------------------------------------
 
-  async getLeaderboard(): Promise<
-    { username: string; wins: number; losses: number; draws: number }[]
-  > {
-    const result = await this.api.readFile('leaderboard.json');
-    if (!result) return [];
-    const lb: Record<string, LeaderboardEntry> = result.data;
-    return Object.values(lb).sort((a, b) => b.wins - a.wins);
+  async getLeaderboard(): Promise<{ username: string; wins: number; losses: number; draws: number }[]> {
+    const issues = await this.api.searchIssues(PREFIX_STATS);
+    const entries: { username: string; wins: number; losses: number; draws: number }[] = [];
+
+    for (const issue of issues) {
+      const data = parseIssueBody<{ username: string; wins: number; losses: number; draws: number }>(issue);
+      if (data) entries.push(data);
+    }
+
+    return entries.sort((a, b) => b.wins - a.wins);
   }
 
   async recordResult(winner: string, loser: string, isDraw: boolean): Promise<void> {
-    await this._writeLeaderboard(winner, loser, isDraw, false);
+    // Update my own stats issue (I can only update issues I created)
+    if (this.username === winner || this.username === loser) {
+      await this.updateMyStats(this.username === winner, isDraw);
+    }
   }
 
-  private async _writeLeaderboard(
-    winner: string,
-    loser: string,
-    isDraw: boolean,
-    isRetry: boolean,
-  ): Promise<void> {
-    const result = await this.api.readFile('leaderboard.json');
-    const lb: Record<string, LeaderboardEntry> = result ? { ...result.data } : {};
+  private async updateMyStats(isWinner: boolean, isDraw: boolean): Promise<void> {
+    let issueNum = this.statsIssueNumber;
+    let currentStats = { username: this.username, wins: 0, losses: 0, draws: 0 };
 
-    const defaultEntry = (username: string): LeaderboardEntry => ({
-      username,
-      wins: 0,
-      losses: 0,
-      draws: 0,
-    });
-
-    lb[winner] = lb[winner] ?? defaultEntry(winner);
-    lb[loser] = lb[loser] ?? defaultEntry(loser);
-
-    if (isDraw) {
-      lb[winner].draws += 1;
-      lb[loser].draws += 1;
+    if (!issueNum) {
+      const issues = await this.api.searchIssues(`${PREFIX_STATS} ${this.username}`);
+      const mine = issues.find((i) => i.user.login === this.username);
+      if (mine) {
+        issueNum = mine.number;
+        this.statsIssueNumber = mine.number;
+        const data = parseIssueBody<typeof currentStats>(mine);
+        if (data) currentStats = data;
+      }
     } else {
-      lb[winner].wins += 1;
-      lb[loser].losses += 1;
+      const issue = await this.api.getIssue(issueNum);
+      if (issue) {
+        const data = parseIssueBody<typeof currentStats>(issue);
+        if (data) currentStats = data;
+      }
     }
 
-    const writeResult = await this.api.writeFile(
-      'leaderboard.json',
-      lb,
-      `result ${winner} vs ${loser}`,
-      result?.sha,
-    );
-    if (!writeResult && !isRetry) {
-      await this._writeLeaderboard(winner, loser, isDraw, true);
+    if (isDraw) {
+      currentStats.draws += 1;
+    } else if (isWinner) {
+      currentStats.wins += 1;
+    } else {
+      currentStats.losses += 1;
+    }
+
+    if (issueNum) {
+      await this.api.updateIssue(issueNum, { body: JSON.stringify(currentStats) });
+    } else {
+      const issue = await this.api.createIssue(
+        `${PREFIX_STATS} ${this.username}`,
+        JSON.stringify(currentStats),
+      );
+      if (issue) this.statsIssueNumber = issue.number;
     }
   }
 
@@ -378,53 +408,75 @@ export class GameOps {
 
   async challengePlayer(target: string): Promise<string> {
     const code = await this.createGame();
-    await this.api.writeFile(
-      `challenges/${target}_${this.username}.json`,
-      { from: this.username, code },
-      `challenge ${target} from ${this.username}`,
+    await this.api.createIssue(
+      `${PREFIX_CHALLENGE} ${target} from ${this.username}`,
+      JSON.stringify({ from: this.username, target, code }),
     );
     return code;
   }
 
   async getMyChallenge(): Promise<{ from: string; code: string } | null> {
-    const files = await this.api.listFiles('challenges');
-    const mine = files.find((f) => f.startsWith(`${this.username}_`));
-    if (!mine) return null;
-    const result = await this.api.readFile(`challenges/${mine}`);
-    if (!result) return null;
-    return result.data as { from: string; code: string };
+    const issues = await this.api.searchIssues(`${PREFIX_CHALLENGE} ${this.username} from `);
+    if (issues.length === 0) return null;
+    const data = parseIssueBody<{ from: string; code: string }>(issues[0]);
+    return data;
   }
 
-  async respondToChallenge(
-    from: string,
-    accept: boolean,
-  ): Promise<{ ok: boolean; gameState?: GameFile }> {
-    const challengePath = `challenges/${this.username}_${from}.json`;
-    const challengeResult = await this.api.readFile(challengePath);
-    if (!challengeResult) {
-      return { ok: false };
-    }
-    const { code } = challengeResult.data as { from: string; code: string };
-
-    // Delete challenge file
-    await this.api.deleteFile(challengePath, challengeResult.sha, `respond challenge from ${from}`);
-
-    if (!accept) {
-      // Decline — also delete the game file
-      const gameResult = await this.api.readFile(`games/${code}.json`);
-      if (gameResult) {
-        await this.api.deleteFile(`games/${code}.json`, gameResult.sha, `decline game ${code}`);
-      }
-      return { ok: true };
+  async respondToChallenge(from: string, accept: boolean): Promise<{ ok: boolean; gameState?: GameFile }> {
+    // Find and close the challenge issue
+    const issues = await this.api.searchIssues(`${PREFIX_CHALLENGE} ${this.username} from ${from}`);
+    for (const issue of issues) {
+      // Only the creator can close — add a comment to mark as responded
+      // The challenger will see the issue is stale
+      await this.api.addComment(issue.number, JSON.stringify({ responded: true, accept }));
+      // Try to close (works if we created it, fails silently otherwise)
+      await this.api.updateIssue(issue.number, { state: 'closed' });
     }
 
-    // Accept — join the game
-    const joinResult = await this.joinGame(code);
-    if (!joinResult.ok) {
-      return { ok: false };
-    }
+    if (!accept) return { ok: true };
 
-    const gameState = await this.readGame(code);
+    // Find the game code from the challenge
+    if (issues.length === 0) return { ok: false };
+    const data = parseIssueBody<{ from: string; code: string }>(issues[0]);
+    if (!data) return { ok: false };
+
+    const joinResult = await this.joinGame(data.code);
+    if (!joinResult.ok) return { ok: false };
+
+    const gameState = await this.readGame(data.code);
     return { ok: true, gameState: gameState ?? undefined };
+  }
+
+  // -------------------------------------------------------------------------
+  // Internal helpers
+  // -------------------------------------------------------------------------
+
+  private async findGameIssue(code: string): Promise<number | null> {
+    const cached = this.gameIssueCache.get(code);
+    if (cached) return cached;
+
+    const issues = await this.api.searchIssues(`${PREFIX_GAME} ${code}`, 'all');
+    if (issues.length === 0) return null;
+
+    this.gameIssueCache.set(code, issues[0].number);
+    return issues[0].number;
+  }
+
+  private async getGameState(issueNumber: number): Promise<GameFile | null> {
+    const issue = await this.api.getIssue(issueNumber);
+    if (!issue) return null;
+
+    const initial = parseIssueBody<GameFile>(issue);
+    if (!initial) return null;
+
+    const comments = await this.api.getComments(issueNumber);
+    const actions = comments.map(parseComment).filter((a): a is GameAction => a !== null);
+
+    return replayGame(initial, actions);
+  }
+
+  private incrementCommentCount(issueNumber: number): void {
+    const current = this.commentCountCache.get(issueNumber) ?? 0;
+    this.commentCountCache.set(issueNumber, current + 1);
   }
 }
