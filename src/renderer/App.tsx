@@ -3,7 +3,9 @@ import TerminalView from './components/TerminalView';
 import ChatView from './components/ChatView';
 import HeaderBar from './components/HeaderBar';
 import InputBar from './components/InputBar';
+import GamePanel from './components/game/GamePanel';
 import { ChatProvider, useChatDispatch, useChatState } from './state/chat-context';
+import { GameProvider, useGameState, useGameDispatch } from './state/game-context';
 import { hookEventToAction } from './state/hook-dispatcher';
 import { usePromptDetector } from './hooks/usePromptDetector';
 
@@ -18,6 +20,8 @@ function AppInner() {
   // Monitor PTY output for Ink select menus (folder trust, permissions, etc.)
   usePromptDetector();
   const dispatch = useChatDispatch();
+  const gameState = useGameState();
+  const gameDispatch = useGameDispatch();
 
   useEffect(() => {
     const createdHandler = window.claude.on.sessionCreated((info) => {
@@ -109,6 +113,9 @@ function AppInner() {
               cwd={currentSession.cwd}
               viewMode={currentViewMode}
               onToggleView={handleToggleView}
+              gamePanelOpen={gameState.panelOpen}
+              onToggleGamePanel={() => gameDispatch({ type: 'TOGGLE_PANEL' })}
+              gameConnected={gameState.connected}
             />
             <div className="flex-1 overflow-hidden relative">
               {sessions.map((s) => (
@@ -134,6 +141,9 @@ function AppInner() {
           </div>
         )}
       </div>
+
+      {/* Game panel (conditional) */}
+      {gameState.panelOpen && <GamePanel />}
     </div>
   );
 }
@@ -144,8 +154,10 @@ function ChatInputBar({ sessionId }: { sessionId: string }) {
 
 export default function App() {
   return (
-    <ChatProvider>
-      <AppInner />
-    </ChatProvider>
+    <GameProvider>
+      <ChatProvider>
+        <AppInner />
+      </ChatProvider>
+    </GameProvider>
   );
 }

@@ -5,9 +5,12 @@ interface Props {
   cwd: string;
   viewMode: 'chat' | 'terminal';
   onToggleView: (mode: 'chat' | 'terminal') => void;
+  gamePanelOpen: boolean;
+  onToggleGamePanel: () => void;
+  gameConnected: boolean;
 }
 
-export default function HeaderBar({ sessionName, cwd, viewMode, onToggleView }: Props) {
+export default function HeaderBar({ sessionName, cwd, viewMode, onToggleView, gamePanelOpen, onToggleGamePanel, gameConnected }: Props) {
   return (
     <div className="flex items-center h-10 px-3 border-b border-gray-800 shrink-0">
       <div className="flex-1 min-w-0">
@@ -36,6 +39,21 @@ export default function HeaderBar({ sessionName, cwd, viewMode, onToggleView }: 
           Terminal
         </button>
       </div>
+      {/* Game toggle */}
+      <button
+        onClick={onToggleGamePanel}
+        className={`ml-2 px-2 py-1 text-xs rounded font-medium transition-colors flex items-center gap-1 ${
+          gamePanelOpen
+            ? 'bg-indigo-600 text-white'
+            : 'text-gray-400 hover:text-gray-300'
+        }`}
+        title="Connect 4"
+      >
+        <span className="text-sm">🎮</span>
+        {gameConnected && (
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+        )}
+      </button>
     </div>
   );
 }
