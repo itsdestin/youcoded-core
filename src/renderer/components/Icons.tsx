@@ -74,6 +74,47 @@ export function GamepadIcon({ className = 'w-4 h-4' }: IconProps) {
   );
 }
 
+/** Compass icon — circle with needle, used for command drawer entry */
+export function CompassIcon({ className = 'w-4 h-4' }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="10" strokeWidth="1.8" />
+      <polygon
+        points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        fill="currentColor"
+        opacity="0.3"
+      />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** App mascot variant — inquisitive expression with wide round eyes */
+export function InquisitiveAppIcon({ className = 'w-6 h-6' }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      {/* Body with round eye cutouts */}
+      <path
+        fillRule="evenodd"
+        d="M9 4 L15 4 A4 4 0 0 1 19 8 L19 12 A4 4 0 0 1 15 16 L9 16 A4 4 0 0 1 5 12 L5 8 A4 4 0 0 1 9 4 Z M9.8 8.2 A2 2 0 1 0 9.8 12.2 A2 2 0 1 0 9.8 8.2 Z M14.2 8.2 A2 2 0 1 0 14.2 12.2 A2 2 0 1 0 14.2 8.2 Z"
+      />
+      {/* Pupils — small dots inside the round eyes */}
+      <circle cx="10.3" cy="10.2" r="0.7" />
+      <circle cx="14.7" cy="10.2" r="0.7" />
+      {/* Left arm */}
+      <path d="M1.8 9 L3.2 9 A0.8 0.8 0 0 1 4 9.8 L4 12.2 A0.8 0.8 0 0 1 3.2 13 L1.8 13 A0.8 0.8 0 0 1 1 12.2 L1 9.8 A0.8 0.8 0 0 1 1.8 9 Z" />
+      {/* Right arm */}
+      <path d="M20.8 9 L22.2 9 A0.8 0.8 0 0 1 23 9.8 L23 12.2 A0.8 0.8 0 0 1 22.2 13 L20.8 13 A0.8 0.8 0 0 1 20 12.2 L20 9.8 A0.8 0.8 0 0 1 20.8 9 Z" />
+      {/* Left leg */}
+      <rect x="7.2" y="17" width="3.5" height="4" rx="1.2" />
+      {/* Right leg */}
+      <rect x="13.3" y="17" width="3.5" height="4" rx="1.2" />
+    </svg>
+  );
+}
+
 /** App mascot — squat character with >< eyes, nub arms, stubby legs */
 export function AppIcon({ className = 'w-6 h-6' }: IconProps) {
   return (

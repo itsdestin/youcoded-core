@@ -1,12 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useChatDispatch } from '../state/chat-context';
 import QuickChips, { QuickChip } from './QuickChips';
-import { AttachIcon } from './Icons';
+import { AttachIcon, CompassIcon } from './Icons';
 import BrailleBurst from './BrailleBurst';
 
 interface Props {
   sessionId: string;
   disabled?: boolean;
+  onOpenDrawer?: (searchMode: boolean) => void;
 }
 
 interface Attachment {
@@ -26,7 +27,7 @@ function fileNameFromPath(p: string): string {
   return p.replace(/\\/g, '/').split('/').pop() || p;
 }
 
-export default function InputBar({ sessionId, disabled }: Props) {
+export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -172,11 +173,27 @@ export default function InputBar({ sessionId, disabled }: Props) {
           >
             <AttachIcon className="w-5 h-5" />
           </BrailleBurst>
+          <BrailleBurst
+            onTrigger={() => onOpenDrawer?.(false)}
+            disabled={disabled}
+            className="shrink-0 text-gray-400 hover:text-gray-200 disabled:opacity-30 transition-colors"
+            title="Browse skills"
+          >
+            <CompassIcon className="w-5 h-5" />
+          </BrailleBurst>
           <input
             ref={inputRef}
             type="text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              // Detect "/" typed as first character — open drawer in search mode
+              if (val === '/' && text === '') {
+                onOpenDrawer?.(true);
+                return;
+              }
+              setText(val);
+            }}
             onPaste={handlePaste}
             placeholder={disabled ? 'Waiting for approval...' : 'Message Claude...'}
             disabled={disabled}
