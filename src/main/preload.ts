@@ -18,6 +18,7 @@ const IPC = {
   CLIPBOARD_SAVE_IMAGE: 'clipboard:save-image',
   STATUS_DATA: 'status:data',
   READ_TRANSCRIPT_META: 'transcript:read-meta',
+  SKILLS_LIST: 'skills:list',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -63,6 +64,9 @@ contextBridge.exposeInMainWorld('claude', {
       ipcRenderer.on(IPC.SESSION_RENAMED, handler);
       return handler;
     },
+  },
+  skills: {
+    list: (): Promise<any[]> => ipcRenderer.invoke(IPC.SKILLS_LIST),
   },
   dialog: {
     openFile: (): Promise<string[]> =>

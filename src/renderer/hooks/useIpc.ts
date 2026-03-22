@@ -11,6 +11,9 @@ declare global {
         sendInput: (sessionId: string, text: string) => void;
         resize: (sessionId: string, cols: number, rows: number) => void;
       };
+      skills: {
+        list: () => Promise<import('../../shared/types').SkillEntry[]>;
+      };
       on: {
         sessionCreated: (cb: (info: any) => void) => (...args: any[]) => void;
         sessionDestroyed: (cb: (id: string) => void) => (...args: any[]) => void;

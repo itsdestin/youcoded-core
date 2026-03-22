@@ -11,6 +11,9 @@ import { hookEventToAction } from './state/hook-dispatcher';
 import { usePromptDetector } from './hooks/usePromptDetector';
 import { useGitHubGame } from './hooks/useGitHubGame';
 import { AppIcon } from './components/Icons';
+import CommandDrawer from './components/CommandDrawer';
+import TrustGate, { useTrustGateActive } from './components/TrustGate';
+import type { SkillEntry } from '../shared/types';
 
 type ViewMode = 'chat' | 'terminal';
 
@@ -33,6 +36,10 @@ function AppInner() {
     model: null, contextPercent: null,
     syncStatus: null, syncWarnings: null,
   });
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerSearchMode, setDrawerSearchMode] = useState(false);
+  const [skills, setSkills] = useState<SkillEntry[]>([]);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -92,6 +99,31 @@ function AppInner() {
     };
   }, [dispatch]);
 
+  // Load skills once on mount
+  useEffect(() => {
+    window.claude.skills.list().then(setSkills).catch(console.error);
+  }, []);
+
+  const handleOpenDrawer = useCallback((searchMode: boolean) => {
+    setDrawerSearchMode(searchMode);
+    setDrawerOpen(true);
+  }, []);
+
+  const handleSelectSkill = useCallback(
+    (skill: SkillEntry) => {
+      if (!sessionId) return;
+      setDrawerOpen(false);
+      dispatch({
+        type: 'USER_PROMPT',
+        sessionId,
+        content: skill.prompt,
+        timestamp: Date.now(),
+      });
+      window.claude.session.sendInput(sessionId, skill.prompt + '\r');
+    },
+    [sessionId, dispatch],
+  );
+
   const createSession = useCallback(async (cwd: string, dangerous: boolean) => {
     await window.claude.session.create({
       name: 'New Session',
@@ -111,6 +143,7 @@ function AppInner() {
   );
 
   const currentSession = sessions.find((s) => s.id === sessionId);
+  const trustGateActive = useTrustGateActive(sessionId);
 
   // Parse announcement
   const announcementText = statusData.announcement?.message || null;
@@ -149,10 +182,18 @@ function AppInner() {
                   />
                 </React.Fragment>
               ))}
+              {trustGateActive && sessionId && <TrustGate sessionId={sessionId} />}
             </div>
             {currentViewMode === 'chat' && (
               <>
-                <ChatInputBar sessionId={sessionId} />
+                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive} />
+                <CommandDrawer
+                  open={drawerOpen}
+                  searchMode={drawerSearchMode}
+                  skills={skills}
+                  onSelect={handleSelectSkill}
+                  onClose={() => setDrawerOpen(false)}
+                />
                 <StatusBar statusData={{
                   usage: statusData.usage,
                   updateStatus: statusData.updateStatus,
@@ -183,8 +224,8 @@ function AppInner() {
   );
 }
 
-function ChatInputBar({ sessionId }: { sessionId: string }) {
-  return <InputBar sessionId={sessionId} />;
+function ChatInputBar({ sessionId, onOpenDrawer, disabled }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean }) {
+  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} />;
 }
 
 export default function App() {

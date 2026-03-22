@@ -40,6 +40,18 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+// --- Command drawer types ---
+
+export interface SkillEntry {
+  id: string;
+  displayName: string;
+  description: string;
+  category: 'personal' | 'work' | 'development' | 'admin' | 'other';
+  prompt: string;
+  source: 'destinclaude' | 'self' | 'plugin';
+  pluginName?: string;
+}
+
 // IPC channel names
 export const IPC = {
   // Renderer -> Main
@@ -48,6 +60,7 @@ export const IPC = {
   SESSION_INPUT: 'session:input',
   SESSION_RESIZE: 'session:resize',
   SESSION_LIST: 'session:list',
+  SKILLS_LIST: 'skills:list',
   // Main -> Renderer
   SESSION_CREATED: 'session:created',
   SESSION_DESTROYED: 'session:destroyed',
