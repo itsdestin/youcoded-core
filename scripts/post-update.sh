@@ -282,7 +282,7 @@ phase_self_check() {
   emit_summary "${checks_passed} checks passed, ${checks_failed} failed"
 
   if [ "$checks_failed" -gt 0 ]; then
-    exit 1
+    return 1
   fi
 }
 
@@ -450,7 +450,7 @@ phase_refresh() {
   emit_summary "${new_count} new, ${refreshed_count} refreshed, ${converted_count} converted, ${failed_count} failed"
 
   if [ "$failed_count" -gt 0 ]; then
-    exit 1
+    return 1
   fi
 }
 
@@ -555,15 +555,416 @@ phase_remove_orphan() {
 }
 
 phase_verify() {
-  emit_summary "verify: not yet implemented"
+  local ok_count=0
+  local warn_count=0
+  local fail_count=0
+
+  # ===========================================================================
+  # Section 1: File Freshness
+  # ===========================================================================
+  emit_section "Verify: File Freshness"
+
+  # Helper: check_file_freshness NAME TARGET
+  # Checks if target exists and whether it is a symlink or a regular file copy.
+  _check_freshness() {
+    local name="$1"
+    local target="$2"
+
+    if [ -L "$target" ]; then
+      emit "OK" "$name" "symlink"
+      ok_count=$((ok_count + 1))
+    elif [ -f "$target" ] || [ -d "$target" ]; then
+      emit "WARN" "$name" "copy, not symlink"
+      warn_count=$((warn_count + 1))
+    else
+      emit "FAIL" "$name" "missing"
+      fail_count=$((fail_count + 1))
+    fi
+  }
+
+  # --- Shell hooks (.sh, excluding statusline.sh) ---
+  local layer file filename
+  for layer in "${INSTALLED_LAYERS[@]}"; do
+    local hooks_dir="$TOOLKIT_ROOT/$layer/hooks"
+    [ -d "$hooks_dir" ] || continue
+    for file in "$hooks_dir"/*.sh; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      [ "$filename" = "statusline.sh" ] && continue
+      _check_freshness "$filename" "$CLAUDE_HOME/hooks/$filename"
+    done
+  done
+
+  # --- JS utilities from core/hooks ---
+  local js_dir="$TOOLKIT_ROOT/core/hooks"
+  if [ -d "$js_dir" ]; then
+    for file in "$js_dir"/*.js; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      _check_freshness "$filename" "$CLAUDE_HOME/hooks/$filename"
+    done
+  fi
+
+  # --- Statusline ---
+  local statusline_src="$TOOLKIT_ROOT/core/hooks/statusline.sh"
+  if [ -f "$statusline_src" ]; then
+    _check_freshness "statusline.sh" "$CLAUDE_HOME/statusline.sh"
+  fi
+
+  # --- Commands (.md from core/commands) ---
+  local commands_dir="$TOOLKIT_ROOT/core/commands"
+  if [ -d "$commands_dir" ]; then
+    for file in "$commands_dir"/*.md; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      _check_freshness "$filename" "$CLAUDE_HOME/commands/$filename"
+    done
+  fi
+
+  # --- Skills (directories from each layer) ---
+  local skill_dir skill_name
+  for layer in "${INSTALLED_LAYERS[@]}"; do
+    local skills_root="$TOOLKIT_ROOT/$layer/skills"
+    [ -d "$skills_root" ] || continue
+    for skill_dir in "$skills_root"/*/; do
+      [ -d "$skill_dir" ] || continue
+      skill_name="$(basename "$skill_dir")"
+      _check_freshness "$skill_name" "$CLAUDE_HOME/skills/$skill_name"
+    done
+  done
+
+  # ===========================================================================
+  # Section 2: Settings Registration
+  # ===========================================================================
+  emit_section "Verify: Settings Registration"
+
+  local settings_file="$CLAUDE_HOME/settings.json"
+  if [ ! -f "$settings_file" ]; then
+    emit "FAIL" "settings.json" "file not found"
+    fail_count=$((fail_count + 1))
+  else
+    local node_settings
+    node_settings="$(to_node_path "$settings_file")"
+
+    # Use node to check all expected hook registrations in one call.
+    # Output: one line per check, format: OK|FAIL <tab> trigger <tab> hookname <tab> detail
+    local node_output
+    node_output="$(node -e "
+      var fs = require('fs');
+      var settings = JSON.parse(fs.readFileSync('${node_settings}', 'utf8'));
+      var hooks = settings.hooks || {};
+
+      // Expected registrations: [trigger, matcher, hookFilename]
+      var expected = [
+        ['SessionStart',      'startup',    'session-start.sh'],
+        ['PreToolUse',        'Write|Edit', 'write-guard.sh'],
+        ['PostToolUse',       'Write|Edit', 'git-sync.sh'],
+        ['PostToolUse',       'Write|Edit', 'personal-sync.sh'],
+        ['PostToolUse',       '.*',         'title-update.sh'],
+        ['UserPromptSubmit',  '.*',         'todo-capture.sh'],
+        ['Stop',              '.*',         'checklist-reminder.sh'],
+        ['Stop',              '.*',         'done-sound.sh']
+      ];
+
+      expected.forEach(function(row) {
+        var trigger = row[0];
+        var expectedMatcher = row[1];
+        var hookFile = row[2];
+        var found = false;
+        var foundMatcher = '';
+
+        var entries = hooks[trigger];
+        if (Array.isArray(entries)) {
+          for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            var hooksArr = entry.hooks || [];
+            for (var j = 0; j < hooksArr.length; j++) {
+              var cmd = hooksArr[j].command || '';
+              if (cmd.indexOf(hookFile) !== -1) {
+                found = true;
+                foundMatcher = entry.matcher || '';
+                break;
+              }
+            }
+            if (found) break;
+          }
+        }
+
+        if (found) {
+          console.log('OK\t' + trigger + '\t' + hookFile + '\tregistered (matcher: ' + foundMatcher + ')');
+        } else {
+          console.log('FAIL\t' + trigger + '\t' + hookFile + '\tnot found');
+        }
+      });
+
+      // Check statusLine
+      var sl = settings.statusLine;
+      if (sl && sl.command) {
+        // Extract the file path referenced in the command and check it exists
+        var parts = sl.command.split(/\\s+/);
+        var slPath = parts[parts.length - 1];
+        // Attempt to resolve — try the raw path first
+        var slExists = false;
+        try { fs.accessSync(slPath); slExists = true; } catch(e) {}
+        if (slExists) {
+          console.log('OK\tstatusLine\tstatusLine\tconfigured and file exists');
+        } else {
+          console.log('WARN\tstatusLine\tstatusLine\tconfigured but file not accessible at ' + slPath);
+        }
+      } else {
+        console.log('FAIL\tstatusLine\tstatusLine\tnot configured in settings.json');
+      }
+    " 2>/dev/null || echo "FAIL	settings.json	node	settings verification script failed")"
+
+    # Parse node output and emit results
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      local status trigger hookname detail
+      status="$(echo "$line" | cut -f1)"
+      trigger="$(echo "$line" | cut -f2)"
+      hookname="$(echo "$line" | cut -f3)"
+      detail="$(echo "$line" | cut -f4)"
+
+      emit "$status" "$trigger" "$hookname $detail"
+      case "$status" in
+        OK)   ok_count=$((ok_count + 1)) ;;
+        WARN) warn_count=$((warn_count + 1)) ;;
+        FAIL) fail_count=$((fail_count + 1)) ;;
+      esac
+    done <<EOF
+$node_output
+EOF
+  fi
+
+  # ===========================================================================
+  # Section 3: Feature Pipeline
+  # ===========================================================================
+  emit_section "Verify: Feature Pipeline"
+
+  # 1. Session Naming
+  if [ -f "$CLAUDE_HOME/hooks/title-update.sh" ] || [ -L "$CLAUDE_HOME/hooks/title-update.sh" ]; then
+    if [ -d "$CLAUDE_HOME/topics" ]; then
+      emit "OK" "Session Naming" "title-update.sh installed, topics/ exists"
+      ok_count=$((ok_count + 1))
+    else
+      emit "WARN" "Session Naming" "title-update.sh installed, topics/ missing (created on first use)"
+      warn_count=$((warn_count + 1))
+    fi
+  else
+    emit "FAIL" "Session Naming" "title-update.sh missing from hooks"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # 2. Sync Status
+  if [ -f "$CLAUDE_HOME/hooks/git-sync.sh" ] || [ -L "$CLAUDE_HOME/hooks/git-sync.sh" ]; then
+    if [ -f "$CLAUDE_HOME/.sync-status" ]; then
+      emit "OK" "Sync Status" "git-sync.sh installed, .sync-status exists"
+      ok_count=$((ok_count + 1))
+    else
+      emit "OK" "Sync Status" "git-sync.sh installed, .sync-status created on first write"
+      ok_count=$((ok_count + 1))
+    fi
+  else
+    emit "FAIL" "Sync Status" "git-sync.sh missing from hooks"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # 3. Announcements
+  if [ -f "$CLAUDE_HOME/hooks/announcement-fetch.js" ] || [ -L "$CLAUDE_HOME/hooks/announcement-fetch.js" ]; then
+    emit "OK" "Announcements" "announcement-fetch.js installed"
+    ok_count=$((ok_count + 1))
+  else
+    emit "FAIL" "Announcements" "announcement-fetch.js missing from hooks"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # 4. Version Check
+  if [ -f "$CLAUDE_HOME/toolkit-state/update-status.json" ]; then
+    emit "OK" "Version Check" "update-status.json exists"
+    ok_count=$((ok_count + 1))
+  else
+    emit "WARN" "Version Check" "update-status.json missing (created on first update check)"
+    warn_count=$((warn_count + 1))
+  fi
+
+  # 5. Rate Limits
+  if [ -f "$CLAUDE_HOME/hooks/usage-fetch.js" ] || [ -L "$CLAUDE_HOME/hooks/usage-fetch.js" ]; then
+    emit "OK" "Rate Limits" "usage-fetch.js installed"
+    ok_count=$((ok_count + 1))
+  else
+    emit "FAIL" "Rate Limits" "usage-fetch.js missing from hooks"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # 6. Statusline
+  if [ -f "$CLAUDE_HOME/statusline.sh" ] || [ -L "$CLAUDE_HOME/statusline.sh" ]; then
+    # Check settings.json has statusLine entry (quick grep; node already checked above)
+    if [ -f "$CLAUDE_HOME/settings.json" ] && grep -q '"statusLine"' "$CLAUDE_HOME/settings.json" 2>/dev/null; then
+      emit "OK" "Statusline" "statusline.sh installed, settings.json configured"
+      ok_count=$((ok_count + 1))
+    else
+      emit "WARN" "Statusline" "statusline.sh installed, but settings.json missing statusLine entry"
+      warn_count=$((warn_count + 1))
+    fi
+  else
+    emit "FAIL" "Statusline" "statusline.sh missing"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # ===========================================================================
+  # Summary
+  # ===========================================================================
+  emit_summary "${ok_count} OK, ${warn_count} WARN, ${fail_count} FAIL"
+
+  if [ "$fail_count" -gt 0 ]; then
+    return 1
+  fi
 }
 
 phase_mcps() {
-  emit_summary "mcps: not yet implemented"
+  emit_section "MCP Servers"
+
+  local manifest_file="$TOOLKIT_ROOT/core/mcp-manifest.json"
+  local claude_json="$HOME/.claude.json"
+
+  if [ ! -f "$manifest_file" ]; then
+    emit "FAIL" "mcp-manifest" "not found: $manifest_file"
+    return 1
+  fi
+
+  if [ ! -f "$claude_json" ]; then
+    emit "WARN" "claude.json" "not found: $claude_json — cannot check registrations"
+    return 0
+  fi
+
+  local node_manifest node_claude_json
+  node_manifest="$(to_node_path "$manifest_file")"
+  node_claude_json="$(to_node_path "$claude_json")"
+
+  node -e "
+    var fs = require('fs');
+    var platform = '${PLATFORM}';
+
+    var manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync('${node_manifest}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse mcp-manifest.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var claudeObj;
+    try {
+      claudeObj = JSON.parse(fs.readFileSync('${node_claude_json}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse .claude.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    // Collect all mcpServers keys by walking the entire object tree.
+    var registered = {};
+    function collectMcpKeys(obj) {
+      if (!obj || typeof obj !== 'object') return;
+      if (Array.isArray(obj)) { obj.forEach(collectMcpKeys); return; }
+      if (obj.mcpServers && typeof obj.mcpServers === 'object' && !Array.isArray(obj.mcpServers)) {
+        Object.keys(obj.mcpServers).forEach(function(k) { registered[k] = true; });
+      }
+      Object.keys(obj).forEach(function(k) { collectMcpKeys(obj[k]); });
+    }
+    collectMcpKeys(claudeObj);
+
+    var newAuto = 0;
+    var newManual = 0;
+
+    manifest.forEach(function(entry) {
+      var name = entry.name;
+      var entryPlatform = entry.platform || 'all';
+      var auto = entry.auto === true;
+
+      if (entryPlatform !== 'all' && entryPlatform !== platform) {
+        process.stdout.write('[SKIP] ' + name + ' \xe2\x80\x94 wrong platform (' + entryPlatform + ')\n');
+        return;
+      }
+
+      if (registered[name]) {
+        process.stdout.write('[OK] ' + name + ' \xe2\x80\x94 registered\n');
+      } else if (auto) {
+        process.stdout.write('[NEW] ' + name + ' \xe2\x80\x94 available (auto-install, run /health)\n');
+        newAuto++;
+      } else {
+        process.stdout.write('[INFO] ' + name + ' \xe2\x80\x94 available (requires setup, run /setup-wizard)\n');
+        newManual++;
+      }
+    });
+
+    if (newAuto === 0 && newManual === 0) {
+      process.stdout.write('[INFO] all platform MCPs registered\n');
+    } else {
+      var parts = [];
+      if (newAuto > 0) parts.push(newAuto + ' auto-install available');
+      if (newManual > 0) parts.push(newManual + ' requiring manual setup');
+      process.stdout.write('[INFO] ' + parts.join(', ') + '\n');
+    }
+  "
 }
 
 phase_plugins() {
-  emit_summary "plugins: not yet implemented"
+  emit_section "Marketplace Plugins"
+
+  local manifest_file="$TOOLKIT_ROOT/core/plugins-manifest.json"
+  local settings_file="$CLAUDE_HOME/settings.json"
+
+  if [ ! -f "$manifest_file" ]; then
+    emit "FAIL" "plugins-manifest" "not found: $manifest_file"
+    return 1
+  fi
+
+  if [ ! -f "$settings_file" ]; then
+    emit "WARN" "settings.json" "not found: $settings_file — cannot check registrations"
+    return 0
+  fi
+
+  local node_manifest node_settings
+  node_manifest="$(to_node_path "$manifest_file")"
+  node_settings="$(to_node_path "$settings_file")"
+
+  node -e "
+    var fs = require('fs');
+
+    var manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync('${node_manifest}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse plugins-manifest.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var settingsObj;
+    try {
+      settingsObj = JSON.parse(fs.readFileSync('${node_settings}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse settings.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var enabled = settingsObj.enabledPlugins || {};
+    var unregistered = 0;
+
+    manifest.forEach(function(plugin) {
+      if (enabled[plugin]) {
+        process.stdout.write('[OK] ' + plugin + ' \xe2\x80\x94 registered\n');
+      } else {
+        process.stdout.write('[NEW] ' + plugin + ' \xe2\x80\x94 not registered\n');
+        unregistered++;
+      }
+    });
+
+    if (unregistered === 0) {
+      process.stdout.write('[INFO] all plugins registered\n');
+    } else {
+      process.stdout.write('[INFO] ' + unregistered + ' unregistered plugin(s) found\n');
+    }
+  "
 }
 
 # version_gt A B
@@ -647,7 +1048,35 @@ EOF
 }
 
 phase_post_update() {
-  emit_summary "post-update: not yet implemented"
+  local from_ver="${1:-}"
+  local to_ver="${2:-}"
+  local overall_exit=0
+
+  phase_self_check || overall_exit=1
+  echo ""
+
+  if [ -n "$from_ver" ] && [ -n "$to_ver" ]; then
+    phase_migrations "$from_ver" "$to_ver" || overall_exit=1
+  else
+    emit_summary "migrations skipped — no version range provided"
+  fi
+  echo ""
+
+  phase_refresh || overall_exit=1
+  echo ""
+
+  phase_orphans || overall_exit=1
+  echo ""
+
+  phase_verify || overall_exit=1
+  echo ""
+
+  phase_mcps || overall_exit=1
+  echo ""
+
+  phase_plugins || overall_exit=1
+
+  return $overall_exit
 }
 
 # =============================================================================
@@ -690,7 +1119,7 @@ main() {
       phase_migrations "${2:-}" "${3:-}"
       ;;
     post-update)
-      phase_post_update
+      phase_post_update "${2:-}" "${3:-}"
       ;;
     *)
       emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|orphans|remove-orphan|verify|mcps|plugins|migrations|post-update"
