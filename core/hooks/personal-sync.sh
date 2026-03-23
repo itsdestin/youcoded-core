@@ -210,6 +210,8 @@ sync_github() {
                 local skill_name
                 skill_name=$(basename "$skill_dir")
                 mkdir -p "$REPO_DIR/skills/$skill_name"
+                # Note: cp -r dereferences symlinks within user skills. If a skill
+                # contains internal symlinks, the backup will contain copies instead.
                 cp -r "$skill_dir"* "$REPO_DIR/skills/$skill_name/" 2>/dev/null || true
             fi
         done
