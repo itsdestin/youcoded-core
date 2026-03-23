@@ -51,7 +51,7 @@ The **public plugin repo** (`itsdestin/destinclaude`) contains specs for public 
 | 13 | Encyclopedia System | Interview metadata schema | `enhancement`, `area:encyclopedia` | |
 | 14 | Encyclopedia System | Deep Search approval unification | `enhancement`, `area:encyclopedia` | |
 | 15 | Encyclopedia System | Todoist integration failure contract | `enhancement`, `area:encyclopedia` | |
-| 16 | Encyclopedia System | Contact info tracking in People Database | `enhancement`, `area:encyclopedia` | Private copy only — still migrate |
+| 16 | Encyclopedia System | Contact info tracking in People Database | `enhancement`, `area:encyclopedia` | |
 | 17 | Encyclopedia Librarian | Audience-aware filtering for sensitive content | `enhancement`, `area:encyclopedia` | |
 | 18 | Inbox Processor | Better rant/mini journal processing | `enhancement`, `area:inbox` | |
 | 19 | Inbox Processor | Formalize response format | `enhancement`, `area:inbox` | |
@@ -72,12 +72,7 @@ The **public plugin repo** (`itsdestin/destinclaude`) contains specs for public 
 
 **After deduplication:** Items #2 and #25 (iCloud restore) should be filed as a single issue labeled both `bug` and `enhancement`. Total unique issues: **32** (31 open + 1 closed).
 
-**Private-only specs (NOT migrated — keep inline):**
-- Google Messages MCP: 2 items (refactor for speed, rebuild proposal)
-- People Cross-Reference: 1 item (cross-ref to texting profiles)
-- Claude Desktop UI: 2 items (streaming text, message queuing)
-- Destin's Writing Voice: 1 item (full refactor)
-- Google Workspace: 1 item (evaluate bundling upstream skills)
+**Private-only specs** were reviewed separately and are not tracked in this public repository.
 
 ---
 
@@ -416,8 +411,6 @@ Each spec now points to the issue tracker instead of maintaining inline lists."
 - `~/.claude/skills/skill-creator/specs/skill-creator-spec.md`
 
 **Do NOT touch private-only specs** (those in the private repo). These keep their inline Planned Updates sections.
-
-**Note:** The private `encyclopedia-system-spec.md` has an extra Planned Update ("Contact info tracking in People Database") not present in the plugin copy. This item IS being migrated to GitHub Issues (item #16), so it's safe to replace the section.
 
 - [ ] **Step 1: Apply same replacement as Task 4 to all listed private specs**
 
