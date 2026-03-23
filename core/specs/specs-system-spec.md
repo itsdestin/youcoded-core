@@ -89,4 +89,4 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 | 2026-03-15 | 2.2 | Added enforcement rule #8 (spec-creation threshold), fixed stale sync-to-drive.sh reference | Revised | — | |
 | 2026-03-16 | 2.3 | Added "Known Bugs / Issues" as a standard section in the spec template (between Dependencies and Planned Updates). Added to all 25 existing specs. | Revised | — | |
 | 2026-03-16 | 2.4 | Added naming convention mandates for specs/designs/plans, separate plans/ directories, revised ephemeral design docs policy to preserve in plans/, updated skill spec naming to {name}-spec.md | Architecture | — | |
-| 2026-03-23 | 3.0 | Migrated Planned Updates and Known Bugs tracking to GitHub Issues. Specs now contain a pointer section instead of inline content. Updated mandate, design decision, and template description. | Architecture | Destin | |
+| 2026-03-23 | 3.0 | Migrated Planned Updates and Known Bugs tracking to GitHub Issues. Specs now contain a pointer section instead of inline content. Updated mandate, design decision, and template description. | Architecture | — | |

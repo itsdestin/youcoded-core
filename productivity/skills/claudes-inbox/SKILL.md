@@ -155,7 +155,7 @@ For remaining items, build a resolution plan in this priority order:
 | Work events | Work Events |
 | Social / concerts / friends | Social Events |
 | Appointments (dentist, doctor, etc.) | Appointments |
-| Partner's stuff | Partner's Schedule |
+| Partner's stuff | <Partner Calendar> |
 | School | School Events |
 | Family | Family |
 | Default (when unclear) | Appointments |

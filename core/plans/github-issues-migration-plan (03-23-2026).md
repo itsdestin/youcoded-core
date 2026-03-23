@@ -17,7 +17,7 @@
 - **After:** Specs contain a single line: `See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for planned updates and known issues.` All tracking happens on GitHub.
 
 ### Scope distinction
-The **public plugin repo** (`itsdestin/destinclaude`) contains specs for public features. Some specs exist only in the **private repo** (`destin-claude-config`) for personal features (gmessages MCP, people cross-reference, Claude Desktop UI, etc.). This migration covers:
+The **public plugin repo** (`itsdestin/destinclaude`) contains specs for public features. Some specs exist only in a **private repo** for personal features. This migration covers:
 - **Public specs (in plugin):** Migrate items → GitHub Issues, replace sections with pointer
 - **Private specs (not in plugin):** Keep their Planned Updates sections as-is (not relevant to community tracking)
 
@@ -415,7 +415,7 @@ Each spec now points to the issue tracker instead of maintaining inline lists."
 - `~/.claude/skills/inbox-processor/specs/inbox-processor-spec.md`
 - `~/.claude/skills/skill-creator/specs/skill-creator-spec.md`
 
-**Do NOT touch private-only specs** (gmessages-mcp, people-crossref, claude-desktop-ui, destins-writing-voice, elections-notebook, jlbc-fiscal-note, google-workspace). These keep their inline Planned Updates sections.
+**Do NOT touch private-only specs** (those in the private repo). These keep their inline Planned Updates sections.
 
 **Note:** The private `encyclopedia-system-spec.md` has an extra Planned Update ("Contact info tracking in People Database") not present in the plugin copy. This item IS being migrated to GitHub Issues (item #16), so it's safe to replace the section.
 
@@ -426,7 +426,7 @@ Same pattern: replace "Known Bugs / Issues" and "Planned Updates" with the conso
 - [ ] **Step 2: Verify private-only specs still have their sections intact**
 
 ```bash
-grep -l "Planned Updates" ~/.claude/specs/gmessages-mcp-spec.md ~/.claude/specs/people-crossref-spec.md ~/.claude/specs/claude-desktop-ui-spec.md ~/.claude/skills/destins-writing-voice/specs/destins-writing-voice-spec.md ~/.claude/skills/google-workspace/specs/google-workspace-spec.md
+grep -l "Planned Updates" ~/.claude/specs/*-spec.md ~/.claude/skills/*/specs/*-spec.md | grep -v "destinclaude/"
 ```
 
 Expected: All 5 files still have their Planned Updates content.
@@ -558,7 +558,7 @@ grep -rn "## Known Bugs" --include="*-spec.md" .
 grep -rn "## Known Issues$" --include="*-spec.md" .
 
 # In private repo — only private-only specs should still have content
-grep -rn "## Planned Updates" ~/.claude/specs/ | grep -v "gmessages\|people-crossref\|claude-desktop-ui"
+grep -rn "## Planned Updates" ~/.claude/specs/ | grep -v "private-only specs"
 ```
 
 Expected: No matches in the plugin repo. No matches in private repo (the private-only specs are excluded from the grep).
