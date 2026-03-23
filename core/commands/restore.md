@@ -136,9 +136,8 @@ After copying, rewrite any foreign project slugs:
 
 ```bash
 # Cross-device slug rewriting — symlinks foreign slugs into current device's slug
-HOOK_DIR="$(cd "$(dirname "$(readlink -f "$HOME/.claude/hooks/session-start.sh")")" && pwd)"
-if [[ -f "$HOOK_DIR/lib/backup-common.sh" ]]; then
-    source "$HOOK_DIR/lib/backup-common.sh"
+if [[ -f "$CLAUDE_DIR/hooks/lib/backup-common.sh" ]]; then
+    source "$CLAUDE_DIR/hooks/lib/backup-common.sh"
     rewrite_project_slugs "$CLAUDE_DIR/projects"
 fi
 ```
