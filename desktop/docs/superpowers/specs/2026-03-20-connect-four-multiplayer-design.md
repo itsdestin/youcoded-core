@@ -1,7 +1,7 @@
 # Connect 4 Multiplayer — Design Document
 
 **Date:** 2026-03-20
-**Status:** Draft
+**Status:** Superseded (replaced by GitHub-backed architecture — see `plans/2026-03-21-github-backend-connect4.md`)
 **Project:** destinclaude-desktop
 
 ## Overview

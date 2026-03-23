@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** Superseded (WebSocket architecture replaced by GitHub-backed architecture — see `2026-03-21-github-backend-connect4.md`)
+
 **Goal:** Add multiplayer Connect 4 with game chat, leaderboard, and online presence to the destinclaude desktop app.
 
 **Architecture:** Two backend services (WebSocket relay server + REST leaderboard API) plus a client-side game module in the Electron renderer. The relay handles real-time gameplay, chat, and presence. The leaderboard stores accounts and stats in SQLite. The client renders a right-side game panel with lobby, board, and chat.

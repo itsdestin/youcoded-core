@@ -5,6 +5,7 @@ release/
 *.tsbuildinfo
 src/renderer/dist/
 .firecrawl/
+**/.firecrawl/
 
 # Runtime state (generated during Claude sessions)
 sessions/
@@ -33,6 +34,11 @@ __pycache__/
 *.exe
 # Exception: pre-built gmessages binary for Windows
 !productivity/mcp-servers/gmessages/gmessages.exe
+
+# Runtime data
+*.db
+*.db-shm
+*.db-wal
 
 # OS
 .DS_Store
