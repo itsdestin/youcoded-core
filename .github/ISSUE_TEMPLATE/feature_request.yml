@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make DestinClaude better? We'd love to hear it.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the toolkit would this affect?
+      options:
+        - Core (hooks, backup, statusline, memory)
+        - Encyclopedia
+        - Journaling
+        - Inbox Processor
+        - Setup / Installation
+        - Specs System
+        - New Skill / Module
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What would you like?
+      description: Describe the feature or improvement
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why?
+      description: What problem does this solve or what workflow does it improve?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried other approaches or workarounds?

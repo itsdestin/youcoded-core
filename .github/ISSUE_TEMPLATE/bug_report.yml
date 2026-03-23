@@ -1,0 +1,53 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill out as much as you can.
+  - type: input
+    id: version
+    attributes:
+      label: DestinClaude Version
+      description: Run `/toolkit` or check your VERSION file
+      placeholder: "e.g., 1.3.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the toolkit is affected?
+      options:
+        - Core (hooks, backup, statusline, memory)
+        - Encyclopedia
+        - Journaling
+        - Inbox Processor
+        - Setup / Installation
+        - Specs System
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly
+      placeholder: "When I run X, I expect Y but get Z instead."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can someone else trigger this?
+      placeholder: |
+        1. Run `/setup-wizard`
+        2. Select option X
+        3. See error
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Logs, screenshots, OS, shell, etc.
