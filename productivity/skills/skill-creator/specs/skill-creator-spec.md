@@ -15,7 +15,7 @@ The Skill Creator is a meta-skill that enables Claude to build, test, iterate on
 - (2026-03-13) Communication should be calibrated to the user's technical level — avoid jargon like "JSON" and "assertion" unless context cues confirm familiarity.
 - (2026-03-13) When improving a skill, generalize from feedback rather than overfitting to specific test cases. Explain the "why" behind instructions instead of using heavy-handed ALWAYS/NEVER directives.
 - (2026-03-13) Skills must not contain malware, exploit code, or anything that would surprise the user if the skill's intent were described (Principle of Lack of Surprise).
-- (2026-03-13) Encyclopedia and modular files must never be written to Google Drive without Destin's explicit approval of the specific changes (global mandate from CLAUDE.md).
+- (2026-03-13) Encyclopedia and modular files must never be written to Google Drive without the user's explicit approval of the specific changes (global mandate from CLAUDE.md).
 
 ## Design Decisions
 
@@ -119,7 +119,7 @@ skill-creator/
 ## Dependencies
 
 - **Depends on:** Python 3 (for all scripts), `claude` CLI (`claude -p` for description optimization), subagent capability (for parallel test runs, grading, blind comparison — gracefully degrades without), browser/display (for viewer — falls back to `--static` HTML or inline presentation).
-- **Depended on by:** All other skills benefit from this skill during their creation and iteration lifecycle. Referenced in CLAUDE.md skill table. The `encyclopedia-update`, `encyclopedia-compile`, `journaling-assistant`, `encyclopedia-librarian`, `google-drive`, and `destins-writing-voice` skills were (or can be) developed and refined through this workflow.
+- **Depended on by:** All other skills benefit from this skill during their creation and iteration lifecycle. Referenced in CLAUDE.md skill table. The `encyclopedia-update`, `encyclopedia-compile`, `journaling-assistant`, `encyclopedia-librarian`, `google-drive`, and `users-writing-voice` skills were (or can be) developed and refined through this workflow.
 
 ## Known Bugs / Issues
 

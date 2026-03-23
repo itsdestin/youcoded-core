@@ -35,12 +35,12 @@ Update the description to reflect the resolve model:
 name: inbox-processor
 description: >
   Checks a dedicated Todoist project ("Claude's Inbox") for unprocessed notes captured
-  from Destin's phone. Actively resolves items — answering questions, making small changes,
+  from the user's phone. Actively resolves items — answering questions, making small changes,
   applying feedback, creating tasks, deleting noise — rather than just classifying and
   presenting. Uses Todoist MCP tools. Meta-feedback is applied first, then all items are
   presented in a resolution table for approval before execution. Rants are queued for
   end-of-session journaling. Use this skill when the session-start hook detects inbox items,
-  or when Destin says "check my inbox", "process my notes", or "what's in my inbox".
+  or when the user says "check my inbox", "process my notes", or "what's in my inbox".
 ---
 ```
 
@@ -78,7 +78,7 @@ Classify every entry into the 10 categories. Extract meta-feedback items regardl
 Present proposed meta-feedback changes with:
 - Which files/specs/memories would change
 - What the change would be
-- Wait for Destin's approval
+- Wait for the user's approval
 - Apply changes
 - Note: if no meta-feedback items exist, skip this phase silently
 

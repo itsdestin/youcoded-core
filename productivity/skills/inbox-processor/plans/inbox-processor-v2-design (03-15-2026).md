@@ -7,7 +7,7 @@
 
 ## Summary
 
-Redesign the inbox processor from a "classify and route" model to a "resolve" model. The processor actively resolves items — answering questions, making small changes, applying feedback, creating tasks — rather than just presenting them to Destin for manual triage. Uses Todoist MCP tools instead of curl API calls.
+Redesign the inbox processor from a "classify and route" model to a "resolve" model. The processor actively resolves items — answering questions, making small changes, applying feedback, creating tasks — rather than just presenting them to the user for manual triage. Uses Todoist MCP tools instead of curl API calls.
 
 ## Classification Categories
 
@@ -37,7 +37,7 @@ Redesign the inbox processor from a "classify and route" model to a "resolve" mo
 - Fetch all incomplete tasks from Claude's Inbox via Todoist MCP (`find-tasks`)
 - For each task, fetch comments (`find-comments`) — check re-presentation guard
 - Process attachments (images via vision, PDFs via native reader)
-- Read all entries before any action, newest to oldest (deliberate reversal of v1's oldest-first order — newer notes are more likely to supersede or correct older ones, and this matches Destin's stated preference)
+- Read all entries before any action, newest to oldest (deliberate reversal of v1's oldest-first order — newer notes are more likely to supersede or correct older ones, and this matches the user's stated preference)
 
 ### Phase 2 — Classify & Extract Meta-Feedback
 
@@ -47,7 +47,7 @@ Redesign the inbox processor from a "classify and route" model to a "resolve" mo
 ### Phase 3 — Apply Meta-Feedback
 
 - Present proposed meta-feedback changes (which files/specs/memories would change and how)
-- Wait for Destin's approval
+- Wait for the user's approval
 - Apply changes
 - Remaining items processed under the updated behavior
 
@@ -78,7 +78,7 @@ Single table with all items, proposed action, and target:
 | 6 | "package for Tanner" | Unresolvable | → Claude Tasks section |
 | 7 | AI economics rant | Rant | Queue for journal entry at end of session |
 
-Destin approves or tweaks individual items, then execution happens.
+the user approves or tweaks individual items, then execution happens.
 
 ### Phase 6 — Execute
 

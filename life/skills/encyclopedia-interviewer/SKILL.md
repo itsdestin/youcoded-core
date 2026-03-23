@@ -72,7 +72,7 @@ If running in system-driven mode, offer to mine primary sources for unconfirmed 
 
 > "I can also search your text histories, journal entries, and misc documents for people, events, or topics that might be missing from the encyclopedia. This takes a bit longer. Want me to do that?"
 
-Only proceed if Destin approves. Use the same Deep Search mechanics as the `encyclopedia-librarian` skill:
+Only proceed if the user approves. Use the same Deep Search mechanics as the `encyclopedia-librarian` skill:
 
 ```bash
 rclone ls "gdrive:Claude/The Journal/Daily Entries/"
@@ -83,7 +83,7 @@ Read entries selectively based on gaps identified in Step 1a. Findings from Deep
 
 #### 1c. Present Agenda
 
-**System-driven mode:** Present a categorized list of all findings, grouped by gap category. Let Destin pick which topics to dive into and in what order.
+**System-driven mode:** Present a categorized list of all findings, grouped by gap category. Let the user pick which topics to dive into and in what order.
 
 **User-directed mode:** Present findings relevant to the specified topic. Propose an agenda and confirm before proceeding.
 
@@ -102,7 +102,7 @@ Examples:
 
 ### Phase 3: Deep-Dive (1-3 topics, adaptive depth)
 
-Structured questions with prepared follow-ups. Follow Destin's energy:
+Structured questions with prepared follow-ups. Follow the user's energy:
 - Short answers get one probe, then move on
 - Engaged answers get explored further
 - Between topics, interleave 1-2 related quick-hits
@@ -134,10 +134,10 @@ For system-driven sessions, use "Interview - System-Driven Gap Review" as the to
 *[Date]*
 
 ## Quick-Hit Clarifications
-[Near-verbatim Q&A, in Destin's voice]
+[Near-verbatim Q&A, in the user's voice]
 
 ## [Deep-Dive Topic 1]
-[Near-verbatim conversation, in Destin's voice]
+[Near-verbatim conversation, in the user's voice]
 
 ## [Deep-Dive Topic 2]
 [...]
@@ -150,7 +150,7 @@ For system-driven sessions, use "Interview - System-Driven Gap Review" as the to
 - **[File] / [Subject]**: [What was learned/confirmed]
 
 ### Confirmed vs. Leads
-- Confirmed: [items directly validated by Destin]
+- Confirmed: [items directly validated by the user]
 - Unconfirmed leads (not addressed): [Deep Search leads declined/unconfirmed]
 ```
 
@@ -169,7 +169,7 @@ rm /tmp/interview-entry.md
 ```
 
 **Claude.ai web / Claude app:**
-Render the compiled entry as formatted markdown and instruct Destin to save it as `.md` to `gdrive:Claude/The Journal/Misc. Entries and Information/`.
+Render the compiled entry as formatted markdown and instruct the user to save it as `.md` to `gdrive:Claude/The Journal/Misc. Entries and Information/`.
 
 ### B. Encyclopedia-Update Invocation
 
