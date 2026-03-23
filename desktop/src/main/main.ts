@@ -3,7 +3,6 @@ import path from 'path';
 import os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import which from 'which';
 import { SessionManager } from './session-manager';
 import { HookRelay } from './hook-relay';
 import { registerIpcHandlers } from './ipc-handlers';
@@ -11,7 +10,8 @@ import { IPC } from '../shared/types';
 
 const execFileAsync = promisify(execFile);
 // Resolve 'gh' path for Windows where Electron's PATH may not include it
-const ghPath = which.sync('gh', { nothrow: true }) || 'gh';
+let ghPath = 'gh';
+try { const w = require('which'); ghPath = w.sync('gh'); } catch { /* use bare 'gh' */ }
 
 let mainWindow: BrowserWindow | null = null;
 const sessionManager = new SessionManager();

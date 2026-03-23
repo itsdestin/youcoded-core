@@ -2,9 +2,12 @@ import { spawn, ChildProcess } from 'child_process';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { app } from 'electron';
-import which from 'which';
 import { SessionInfo } from '../shared/types';
 import { EventEmitter } from 'events';
+
+// Optional — which may not be installed; fall back to bare command name
+let whichSync: ((cmd: string) => string) | null = null;
+try { const w = require('which'); whichSync = w.sync; } catch { /* noop */ }
 
 export interface CreateSessionOpts {
   name: string;
@@ -46,7 +49,8 @@ export class SessionManager extends EventEmitter {
     }
     // Always use system Node.js — Electron's binary can't load node-pty.
     // Resolve via which() for Windows where Electron's PATH may differ.
-    const nodePath = which.sync('node', { nothrow: true }) || 'node';
+    let nodePath = 'node';
+    try { if (whichSync) nodePath = whichSync('node'); } catch { /* use bare 'node' */ }
     const worker = spawn(nodePath, [workerPath], {
       stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
       windowsHide: true,
