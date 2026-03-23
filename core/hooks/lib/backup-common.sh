@@ -112,10 +112,15 @@ get_current_project_slug() {
     local home_path
     # Resolve symlinks to get the canonical path (important on Android where
     # /data/user/0 is a symlink to /data/data)
-    home_path=$(realpath "$HOME" 2>/dev/null || readlink -f "$HOME" 2>/dev/null || echo "$HOME")
-    # Replicate Claude Code's slug algorithm: replace / and \ with -
+    home_path=$(realpath "$HOME" 2>/dev/null \
+        || readlink -f "$HOME" 2>/dev/null \
+        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$HOME" 2>/dev/null \
+        || echo "$HOME")
+    # Replicate Claude Code's slug algorithm: replace /, \, and : with -
+    # (: is needed for Windows drive letters, e.g. C:\Users → C--Users)
     home_path="${home_path//\\/-}"
     home_path="${home_path//\//-}"
+    home_path="${home_path//:/-}"
     echo "$home_path"
 }
 
@@ -123,7 +128,8 @@ get_current_project_slug() {
 # Called after restore or pull operations to ensure cross-device continuity.
 # Arguments: $1 = projects directory (e.g., ~/.claude/projects)
 rewrite_project_slugs() {
-    local projects_dir="$1"
+    local projects_dir
+    projects_dir=$(cd "$1" && pwd) || return 0
     [[ ! -d "$projects_dir" ]] && return 0
 
     local current_slug
@@ -158,6 +164,12 @@ rewrite_project_slugs() {
                 # No local version — symlink the whole subdirectory
                 local abs_source
                 abs_source=$(cd "$subdir" && pwd)
+                # Containment check: only create symlinks within the projects dir
+                # to prevent a malicious backup from linking outside ~/.claude
+                if [[ "$abs_source" != "$projects_dir"/* ]]; then
+                    log_backup "WARN" "Skipping symlink outside projects dir: $abs_source"
+                    continue
+                fi
                 ln -sf "$abs_source" "$target" 2>/dev/null || \
                     cp -r "$subdir" "$target" 2>/dev/null || true
             fi
