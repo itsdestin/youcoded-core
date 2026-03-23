@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, nativeImage } from 'electron';
 import path from 'path';
 import os from 'os';
 import { execFile } from 'child_process';
@@ -74,6 +74,9 @@ app.whenReady().then(async () => {
       return null;
     }
   });
+
+  // Remove the default menu bar (File, Edit, View, Window, Help)
+  Menu.setApplicationMenu(null);
 
   createWindow();
 });
