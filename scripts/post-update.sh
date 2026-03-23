@@ -282,7 +282,7 @@ phase_self_check() {
   emit_summary "${checks_passed} checks passed, ${checks_failed} failed"
 
   if [ "$checks_failed" -gt 0 ]; then
-    exit 1
+    return 1
   fi
 }
 
@@ -450,7 +450,7 @@ phase_refresh() {
   emit_summary "${new_count} new, ${refreshed_count} refreshed, ${converted_count} converted, ${failed_count} failed"
 
   if [ "$failed_count" -gt 0 ]; then
-    exit 1
+    return 1
   fi
 }
 
@@ -815,6 +815,10 @@ EOF
   # Summary
   # ===========================================================================
   emit_summary "${ok_count} OK, ${warn_count} WARN, ${fail_count} FAIL"
+
+  if [ "$fail_count" -gt 0 ]; then
+    return 1
+  fi
 }
 
 phase_mcps() {
@@ -825,12 +829,12 @@ phase_mcps() {
 
   if [ ! -f "$manifest_file" ]; then
     emit "FAIL" "mcp-manifest" "not found: $manifest_file"
-    return
+    return 1
   fi
 
   if [ ! -f "$claude_json" ]; then
     emit "WARN" "claude.json" "not found: $claude_json — cannot check registrations"
-    return
+    return 0
   fi
 
   local node_manifest node_claude_json
@@ -912,12 +916,12 @@ phase_plugins() {
 
   if [ ! -f "$manifest_file" ]; then
     emit "FAIL" "plugins-manifest" "not found: $manifest_file"
-    return
+    return 1
   fi
 
   if [ ! -f "$settings_file" ]; then
     emit "WARN" "settings.json" "not found: $settings_file — cannot check registrations"
-    return
+    return 0
   fi
 
   local node_manifest node_settings
