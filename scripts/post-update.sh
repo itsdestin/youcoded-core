@@ -1044,7 +1044,35 @@ EOF
 }
 
 phase_post_update() {
-  emit_summary "post-update: not yet implemented"
+  local from_ver="${1:-}"
+  local to_ver="${2:-}"
+  local overall_exit=0
+
+  phase_self_check || overall_exit=1
+  echo ""
+
+  if [ -n "$from_ver" ] && [ -n "$to_ver" ]; then
+    phase_migrations "$from_ver" "$to_ver" || overall_exit=1
+  else
+    emit_summary "migrations skipped — no version range provided"
+  fi
+  echo ""
+
+  phase_refresh || overall_exit=1
+  echo ""
+
+  phase_orphans || overall_exit=1
+  echo ""
+
+  phase_verify || overall_exit=1
+  echo ""
+
+  phase_mcps || overall_exit=1
+  echo ""
+
+  phase_plugins || overall_exit=1
+
+  return $overall_exit
 }
 
 # =============================================================================
@@ -1087,7 +1115,7 @@ main() {
       phase_migrations "${2:-}" "${3:-}"
       ;;
     post-update)
-      phase_post_update
+      phase_post_update "${2:-}" "${3:-}"
       ;;
     *)
       emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|orphans|remove-orphan|verify|mcps|plugins|migrations|post-update"
