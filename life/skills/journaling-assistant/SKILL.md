@@ -64,20 +64,30 @@ Use the Google Drive connector to open `Claude/The Journal/System/Open Threads a
 
 ### Step 1c: Check Inbox for Queued Rants (Daily entries only)
 
-Before beginning the conversation, check Todoist for any inbox items that were queued for journaling by the `inbox-processor` skill.
+Before beginning the conversation, check both sources for any items that were queued for journaling by the `claudes-inbox` skill.
 
-**How to check (using Todoist MCP tools — do NOT use curl):**
+**Primary source — `~/.claude/inbox/journal-queue/` directory:**
 
-1. Call `find-projects` with search="Claude's Inbox" to get the project ID.
-2. Call `find-tasks` with projectId=`<project ID from step 1>` to get all tasks in the inbox.
-3. For each task returned, call `find-comments` with taskId=`<task ID>` and look for comments containing the marker `[queued-for-journal: YYYY-MM-DD]`.
-4. Collect any tasks whose comments contain that marker — these are queued rants.
+1. List all `.md` files in `~/.claude/inbox/journal-queue/`.
+2. For each file, read the content — skip any YAML frontmatter (lines between `---` delimiters at the top) and treat the remaining text as the rant content.
+3. Collect these as queued rants, tracking each file's path for cleanup later.
+
+**Legacy source — Todoist (if configured):**
+
+1. Read `~/.claude/toolkit-state/config.json` and check whether `todoist` appears in `inbox_providers`.
+2. If yes: call `find-projects` with search="Claude's Inbox" to get the project ID, then call `find-tasks` with that projectId, then for each task call `find-comments` with taskId=`<task ID>` looking for comments containing the marker `[queued-for-journal: YYYY-MM-DD]`. Collect any matching tasks as queued rants.
+3. If `todoist` is not in `inbox_providers` (or the config file doesn't exist), skip this source silently.
+
+**Merge results** from both sources into a single list of queued rants.
 
 **If queued rants are found:**
 - Present them as available topics before the opening question: "You have X queued rant(s) from your inbox — want to include any in today's session?"
-- List each one by its task content so the user can pick which (if any) to cover.
+- List each one by its task content (Todoist) or filename (journal-queue files) so the user can pick which (if any) to cover.
 - Queued rants can be journaled as part of the daily entry (woven into domain coverage) or handled as a separate topic within the session — let the user decide.
-- **After a queued rant has been fully journaled** (i.e., its content is included in the saved entry), complete the original inbox task by calling `complete-tasks` with the task's ID. Do this during or after Step 6 (Save), not before the content is actually saved.
+- **After a queued rant has been fully journaled** (i.e., its content is included in the saved entry):
+  - For journal-queue files: delete the file from `~/.claude/inbox/journal-queue/`.
+  - For Todoist tasks: call `complete-tasks` with the task's ID.
+  - Do this during or after Step 6 (Save), not before the content is actually saved.
 
 **If no queued rants are found:**
 - Proceed silently — no message needed.

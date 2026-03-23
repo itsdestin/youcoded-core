@@ -1,7 +1,7 @@
 # Journaling Assistant — Spec
 
-**Version:** 1.4
-**Last updated:** 2026-03-15
+**Version:** 1.5
+**Last updated:** 2026-03-23
 **Feature location:** `~/.claude/skills/journaling-assistant/`
 
 ## Purpose
@@ -103,11 +103,19 @@ Direct, neutral affect, short non-compound questions. Forbidden patterns: "That 
 
 Used 1-2 per session within relevant domains during Step 3. Topics include: academic progress/graduation, partner's career or academic updates, upcoming events or trips, investment/financial updates, pets, upcoming social events/travel, political developments being tracked.
 
+## Integration Points
+
+### Rant/Queue Sources (Step 1c — Daily entries only)
+
+- **Primary source:** `~/.claude/inbox/journal-queue/` directory — `.md` files dropped here by the `claudes-inbox` skill. After a rant is journaled and saved, the file is deleted.
+- **Legacy source (transition period):** Todoist `[queued-for-journal: YYYY-MM-DD]` comments — used only when `todoist` appears in `~/.claude/toolkit-state/config.json`'s `inbox_providers`. After a rant is journaled and saved, the originating task is completed via `complete-tasks`. This source will be removed at the next major journaling skill version.
+
 ## Dependencies
 
 - **Depends on:**
   - `encyclopedia-update` skill — invoked at the end of every session (daily Step 8, misc post-save) to update the 8 modular source files
   - `encyclopedia-interviewer` skill — optionally invoked from the monthly gap audit (Step 8b) if the user opts in
+  - `claudes-inbox` skill — drops queued rants into `~/.claude/inbox/journal-queue/` for Step 1c pickup
   - Google Drive via rclone (`gdrive:` remote) — all entry storage, entry index
   - Google Calendar MCP tools (`gcal_list_calendars`, `gcal_create_event`) — daily entry Step 7
   - Open Threads and Goals local cache (`~/.claude/encyclopedia/Open Threads and Goals.md`) — read at session start for thread/goal context
@@ -129,3 +137,4 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 | 2026-03-14 | 1.2 | Documented Entry Index People column for person-based lookups (people-entry cross-reference feature) | Implementation | User |
 | 2026-03-14 | 1.3 | Removed Mid-Day Notes system (Steps 1b triage, 2-4 weaving, 7 calendar candidates, 9 archive/clear). Mid-Day Notes replaced by inbox-processor skill. Removed python-docx dependency. Removed archive design decision. | Deprecation | User |
 | 2026-03-15 | 1.4 | Updated Open Threads read path from Drive to local encyclopedia cache (~/.claude/encyclopedia/) per Git + Drive hybrid migration | Implementation | User |
+| 2026-03-23 | 1.5 | Added Integration Points section: journal-queue directory as primary rant source (Step 1c), Todoist as legacy source during transition. Updated claudes-inbox dependency. | Implementation | User |
