@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+
+@source "../../";
+
+@theme {
+  /* DestinCode neutral palette — pure grays, no blue tint */
+  --color-gray-50: #F5F5F5;
+  --color-gray-100: #EBEBEB;
+  --color-gray-200: #E0E0E0;
+  --color-gray-300: #B0B0B0;
+  --color-gray-400: #999999;
+  --color-gray-500: #666666;
+  --color-gray-600: #555555;
+  --color-gray-700: #333333;
+  --color-gray-800: #222222;
+  --color-gray-850: #1C1C1C;
+  --color-gray-900: #191919;
+  --color-gray-950: #111111;
+
+  /* Status colors matched to DestinCode */
+  --color-green-400: #4CAF50;
+  --color-red-400: #DD4444;
+  --color-red-500: #DD4444;
+  --color-amber-700: #FF9800;
+
+  /* All-monospace typography (matches DestinCode's Cascadia Mono everywhere) */
+  --font-sans: 'Cascadia Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-mono: 'Cascadia Mono', 'Cascadia Code', 'Fira Code', monospace;
+}
+
+/* xterm.js needs explicit height to fill its container */
+.xterm {
+  height: 100%;
+}
+
+.xterm-viewport {
+  height: 100% !important;
+}
+
+.xterm-screen {
+  height: 100%;
+}
+
+@keyframes braille-burst {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0);
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--burst-x), var(--burst-y));
+    opacity: 0;
+  }
+}
