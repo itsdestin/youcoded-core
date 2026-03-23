@@ -62,6 +62,23 @@ detect_platform() {
 }
 
 # =============================================================================
+# Path helpers
+# =============================================================================
+
+# to_node_path PATH
+# On Windows/MSYS, converts /c/Users/... style paths to C:/Users/... so Node.js
+# (which does not understand MSYS drive paths) can open them.  On other platforms
+# the path is returned unchanged.
+to_node_path() {
+  local p="$1"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$p"
+  else
+    printf '%s' "$p"
+  fi
+}
+
+# =============================================================================
 # JSON helpers
 # =============================================================================
 
@@ -70,9 +87,11 @@ detect_platform() {
 json_read() {
   local file="$1"
   local key="$2"
+  local node_file
+  node_file="$(to_node_path "$file")"
   node -e "
     try {
-      var d = require('fs').readFileSync('${file}', 'utf8');
+      var d = require('fs').readFileSync('${node_file}', 'utf8');
       var obj = JSON.parse(d);
       var val = obj['${key}'];
       if (val === undefined || val === null) { process.stderr.write('key not found: ${key}\n'); process.exit(1); }
@@ -86,9 +105,11 @@ json_read() {
 json_read_array() {
   local file="$1"
   local key="$2"
+  local node_file
+  node_file="$(to_node_path "$file")"
   node -e "
     try {
-      var d = require('fs').readFileSync('${file}', 'utf8');
+      var d = require('fs').readFileSync('${node_file}', 'utf8');
       var obj = JSON.parse(d);
       var arr = obj['${key}'];
       if (!Array.isArray(arr)) { process.stderr.write('key is not an array: ${key}\n'); process.exit(1); }
@@ -158,11 +179,111 @@ emit_summary() {
 }
 
 # =============================================================================
-# Phase stubs
+# Phases
 # =============================================================================
 
 phase_self_check() {
-  emit_summary "self-check: not yet implemented"
+  emit_section "Self-Check"
+
+  local checks_passed=0
+  local checks_failed=0
+
+  # ---- 1. node available -------------------------------------------------------
+  local node_ver
+  if node_ver="$(node --version 2>/dev/null)"; then
+    emit "OK" "node" "found (${node_ver})"
+    checks_passed=$((checks_passed + 1))
+  else
+    emit "FAIL" "node" "not found — node is required"
+    checks_failed=$((checks_failed + 1))
+  fi
+
+  # ---- 2. config.json exists and is parseable ----------------------------------
+  local config_ok=0
+  if [ ! -f "$CONFIG_FILE" ]; then
+    emit "FAIL" "config.json" "not found: $CONFIG_FILE"
+    checks_failed=$((checks_failed + 1))
+  else
+    local node_config
+    node_config="$(to_node_path "$CONFIG_FILE")"
+    if node -e "JSON.parse(require('fs').readFileSync('${node_config}','utf8'))" 2>/dev/null; then
+      emit "OK" "config.json" "valid"
+      checks_passed=$((checks_passed + 1))
+      config_ok=1
+    else
+      emit "FAIL" "config.json" "invalid JSON: $CONFIG_FILE"
+      checks_failed=$((checks_failed + 1))
+    fi
+  fi
+
+  # ---- 3 & 4. toolkit_root exists and contains VERSION; stale check -----------
+  if [ "$config_ok" -eq 1 ]; then
+    local cfg_toolkit_root
+    if cfg_toolkit_root="$(json_read "$CONFIG_FILE" "toolkit_root" 2>/dev/null)"; then
+      if [ -d "$cfg_toolkit_root" ] && [ -f "$cfg_toolkit_root/VERSION" ]; then
+        emit "OK" "toolkit_root" "$cfg_toolkit_root"
+        checks_passed=$((checks_passed + 1))
+      else
+        # Directory missing or no VERSION — compare with discovered root
+        local discovered
+        discovered="$(discover_toolkit_root)"
+        if [ "$cfg_toolkit_root" != "$discovered" ]; then
+          emit "FAIL" "toolkit_root" "stale: config has '$cfg_toolkit_root', script suggests '$discovered'"
+        else
+          emit "FAIL" "toolkit_root" "missing or incomplete: $cfg_toolkit_root (no VERSION file)"
+        fi
+        checks_failed=$((checks_failed + 1))
+      fi
+    else
+      emit "FAIL" "toolkit_root" "key not found in config"
+      checks_failed=$((checks_failed + 1))
+    fi
+
+    # ---- 5. installed_layers is non-empty --------------------------------------
+    local layers=""
+    local layer_count=0
+    while IFS= read -r line; do
+      if [ -n "$line" ]; then
+        layer_count=$((layer_count + 1))
+        if [ -z "$layers" ]; then
+          layers="$line"
+        else
+          layers="${layers}, ${line}"
+        fi
+      fi
+    done < <(json_read_array "$CONFIG_FILE" "installed_layers" 2>/dev/null || true)
+
+    if [ "$layer_count" -gt 0 ]; then
+      emit "OK" "installed_layers" "$layers"
+      checks_passed=$((checks_passed + 1))
+    else
+      emit "FAIL" "installed_layers" "empty or missing — at least one layer required"
+      checks_failed=$((checks_failed + 1))
+    fi
+  fi
+
+  # ---- 6. Windows symlink creation test ----------------------------------------
+  if [ "$PLATFORM" = "windows" ]; then
+    local tmp_target tmp_link
+    tmp_target="$(mktemp)"
+    tmp_link="${tmp_target}.symlink"
+
+    if ln -s "$tmp_target" "$tmp_link" 2>/dev/null && [ -L "$tmp_link" ]; then
+      emit "OK" "symlinks" "creation test passed (windows)"
+      checks_passed=$((checks_passed + 1))
+    else
+      emit "FAIL" "symlinks" "cannot create (Developer Mode may be disabled)"
+      checks_failed=$((checks_failed + 1))
+    fi
+    rm -f "$tmp_target" "$tmp_link"
+  fi
+
+  # ---- Summary -----------------------------------------------------------------
+  emit_summary "${checks_passed} checks passed, ${checks_failed} failed"
+
+  if [ "$checks_failed" -gt 0 ]; then
+    exit 1
+  fi
 }
 
 phase_refresh() {
@@ -208,6 +329,11 @@ main() {
   detect_platform
 
   local phase="${1:-}"
+
+  # self-check validates config itself; all other phases need config loaded first
+  if [ "$phase" != "self-check" ]; then
+    load_config
+  fi
 
   case "$phase" in
     self-check)
