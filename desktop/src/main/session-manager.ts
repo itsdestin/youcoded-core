@@ -103,17 +103,24 @@ export class SessionManager extends EventEmitter {
     });
 
     // Tell the worker to spawn claude, passing our session ID
-    // so hook events can be correlated back to this session
-    worker.send({
-      type: 'spawn',
-      command: 'claude',
-      args,
-      cwd: opts.cwd,
-      cols: opts.cols || 80,
-      rows: opts.rows || 24,
-      sessionId: id,
-      pipeName: this.pipeName,
-    });
+    // so hook events can be correlated back to this session.
+    // Wrapped in try/catch because send() throws synchronously if
+    // the spawn failed (IPC channel never opened), which happens
+    // before the async 'error' event fires.
+    try {
+      worker.send({
+        type: 'spawn',
+        command: 'claude',
+        args,
+        cwd: opts.cwd,
+        cols: opts.cols || 80,
+        rows: opts.rows || 24,
+        sessionId: id,
+        pipeName: this.pipeName,
+      });
+    } catch {
+      // The 'error' handler above will clean up the session asynchronously.
+    }
 
     return info;
   }
@@ -123,22 +130,26 @@ export class SessionManager extends EventEmitter {
     if (!session) return false;
     session.info.status = 'destroyed';
     this.sessions.delete(id);
-    session.worker.send({ type: 'kill' });
-    session.worker.disconnect();
+    try {
+      session.worker.send({ type: 'kill' });
+      session.worker.disconnect();
+    } catch {
+      // Worker IPC already closed (e.g., process crashed or exited)
+    }
     return true;
   }
 
   sendInput(id: string, text: string): boolean {
     const session = this.sessions.get(id);
     if (!session) return false;
-    session.worker.send({ type: 'input', data: text });
+    try { session.worker.send({ type: 'input', data: text }); } catch { return false; }
     return true;
   }
 
   resizeSession(id: string, cols: number, rows: number): boolean {
     const session = this.sessions.get(id);
     if (!session) return false;
-    session.worker.send({ type: 'resize', cols, rows });
+    try { session.worker.send({ type: 'resize', cols, rows }); } catch { return false; }
     return true;
   }
 
