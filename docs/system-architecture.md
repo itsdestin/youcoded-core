@@ -33,6 +33,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `statusline.sh` | Statusline | Renders sync status, model info, context remaining, toolkit version |
 | `git-sync.sh` | PostToolUse | Commits and syncs changes after file modifications |
 | `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
+| `worktree-guard.sh` | PreToolUse | Blocks branch switches in main plugin directory — enforces worktree usage for concurrent sessions |
 | `tool-router.sh` | PreToolUse | Blocks Claude.ai Gmail/Calendar MCP tools, redirects to GWS CLI |
 | `contribution-detector.sh` | SessionStart | Detects local toolkit improvements, suggests contributing upstream |
 | `title-update.sh` | PostToolUse | Updates conversation title based on context |
