@@ -818,11 +818,149 @@ EOF
 }
 
 phase_mcps() {
-  emit_summary "mcps: not yet implemented"
+  emit_section "MCP Servers"
+
+  local manifest_file="$TOOLKIT_ROOT/core/mcp-manifest.json"
+  local claude_json="$HOME/.claude.json"
+
+  if [ ! -f "$manifest_file" ]; then
+    emit "FAIL" "mcp-manifest" "not found: $manifest_file"
+    return
+  fi
+
+  if [ ! -f "$claude_json" ]; then
+    emit "WARN" "claude.json" "not found: $claude_json — cannot check registrations"
+    return
+  fi
+
+  local node_manifest node_claude_json
+  node_manifest="$(to_node_path "$manifest_file")"
+  node_claude_json="$(to_node_path "$claude_json")"
+
+  node -e "
+    var fs = require('fs');
+    var platform = '${PLATFORM}';
+
+    var manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync('${node_manifest}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse mcp-manifest.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var claudeObj;
+    try {
+      claudeObj = JSON.parse(fs.readFileSync('${node_claude_json}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse .claude.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    // Collect all mcpServers keys by walking the entire object tree.
+    var registered = {};
+    function collectMcpKeys(obj) {
+      if (!obj || typeof obj !== 'object') return;
+      if (Array.isArray(obj)) { obj.forEach(collectMcpKeys); return; }
+      if (obj.mcpServers && typeof obj.mcpServers === 'object' && !Array.isArray(obj.mcpServers)) {
+        Object.keys(obj.mcpServers).forEach(function(k) { registered[k] = true; });
+      }
+      Object.keys(obj).forEach(function(k) { collectMcpKeys(obj[k]); });
+    }
+    collectMcpKeys(claudeObj);
+
+    var newAuto = 0;
+    var newManual = 0;
+
+    manifest.forEach(function(entry) {
+      var name = entry.name;
+      var entryPlatform = entry.platform || 'all';
+      var auto = entry.auto === true;
+
+      if (entryPlatform !== 'all' && entryPlatform !== platform) {
+        process.stdout.write('[SKIP] ' + name + ' \xe2\x80\x94 wrong platform (' + entryPlatform + ')\n');
+        return;
+      }
+
+      if (registered[name]) {
+        process.stdout.write('[OK] ' + name + ' \xe2\x80\x94 registered\n');
+      } else if (auto) {
+        process.stdout.write('[NEW] ' + name + ' \xe2\x80\x94 available (auto-install, run /health)\n');
+        newAuto++;
+      } else {
+        process.stdout.write('[INFO] ' + name + ' \xe2\x80\x94 available (requires setup, run /setup-wizard)\n');
+        newManual++;
+      }
+    });
+
+    if (newAuto === 0 && newManual === 0) {
+      process.stdout.write('[INFO] all platform MCPs registered\n');
+    } else {
+      var parts = [];
+      if (newAuto > 0) parts.push(newAuto + ' auto-install available');
+      if (newManual > 0) parts.push(newManual + ' requiring manual setup');
+      process.stdout.write('[INFO] ' + parts.join(', ') + '\n');
+    }
+  "
 }
 
 phase_plugins() {
-  emit_summary "plugins: not yet implemented"
+  emit_section "Marketplace Plugins"
+
+  local manifest_file="$TOOLKIT_ROOT/core/plugins-manifest.json"
+  local settings_file="$CLAUDE_HOME/settings.json"
+
+  if [ ! -f "$manifest_file" ]; then
+    emit "FAIL" "plugins-manifest" "not found: $manifest_file"
+    return
+  fi
+
+  if [ ! -f "$settings_file" ]; then
+    emit "WARN" "settings.json" "not found: $settings_file — cannot check registrations"
+    return
+  fi
+
+  local node_manifest node_settings
+  node_manifest="$(to_node_path "$manifest_file")"
+  node_settings="$(to_node_path "$settings_file")"
+
+  node -e "
+    var fs = require('fs');
+
+    var manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync('${node_manifest}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse plugins-manifest.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var settingsObj;
+    try {
+      settingsObj = JSON.parse(fs.readFileSync('${node_settings}', 'utf8'));
+    } catch(e) {
+      process.stderr.write('Failed to parse settings.json: ' + e.message + '\n');
+      process.exit(1);
+    }
+
+    var enabled = settingsObj.enabledPlugins || {};
+    var unregistered = 0;
+
+    manifest.forEach(function(plugin) {
+      if (enabled[plugin]) {
+        process.stdout.write('[OK] ' + plugin + ' \xe2\x80\x94 registered\n');
+      } else {
+        process.stdout.write('[NEW] ' + plugin + ' \xe2\x80\x94 not registered\n');
+        unregistered++;
+      }
+    });
+
+    if (unregistered === 0) {
+      process.stdout.write('[INFO] all plugins registered\n');
+    } else {
+      process.stdout.write('[INFO] ' + unregistered + ' unregistered plugin(s) found\n');
+    }
+  "
 }
 
 # version_gt A B
