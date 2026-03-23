@@ -114,7 +114,7 @@ if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
     _MODIFIED=""
 
     # Check all expected toolkit hook files
-    for _hook in checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
+    for _hook in check-inbox.sh checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh worktree-guard.sh write-guard.sh; do
         _installed="$CLAUDE_DIR/hooks/$_hook"
         _source="$TOOLKIT_ROOT/core/hooks/$_hook"
         if [[ -f "$_installed" && ! -L "$_installed" && -f "$_source" ]]; then

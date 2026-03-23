@@ -15,7 +15,7 @@ body:
         - Core (hooks, backup, statusline, memory)
         - Encyclopedia
         - Journaling
-        - Inbox Processor
+        - Claude's Inbox
         - Setup / Installation
         - Specs System
         - New Skill / Module
