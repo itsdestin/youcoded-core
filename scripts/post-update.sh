@@ -287,7 +287,171 @@ phase_self_check() {
 }
 
 phase_refresh() {
-  emit_summary "refresh: not yet implemented"
+  # Counters
+  local new_count=0
+  local refreshed_count=0
+  local converted_count=0
+  local failed_count=0
+
+  # Ensure target directories exist
+  mkdir -p "$CLAUDE_HOME/hooks" "$CLAUDE_HOME/commands" "$CLAUDE_HOME/skills"
+
+  # ---------------------------------------------------------------------------
+  # Helper: link_file SOURCE TARGET
+  # Creates/refreshes a symlink from TARGET -> SOURCE.
+  # Reports [OK] if already a symlink, [WARN]+converts if a regular file,
+  # [NEW] if it doesn't exist.
+  # Uses only [ -L ] for symlink detection (no readlink comparison).
+  # ---------------------------------------------------------------------------
+  link_file() {
+    local source="$1"
+    local target="$2"
+    local name
+    name="$(basename "$target")"
+
+    if [ -L "$target" ]; then
+      # Already a symlink — refresh in place (ln -sf is idempotent)
+      if ln -sf "$source" "$target" 2>/dev/null; then
+        emit "OK" "$name" "symlink verified"
+        refreshed_count=$((refreshed_count + 1))
+      else
+        emit "FAIL" "$name" "could not refresh symlink"
+        failed_count=$((failed_count + 1))
+      fi
+    elif [ -f "$target" ]; then
+      # Regular file (copy) — convert to symlink
+      if rm -f "$target" && ln -sf "$source" "$target" 2>/dev/null; then
+        emit "WARN" "$name" "converted regular file to symlink"
+        converted_count=$((converted_count + 1))
+      else
+        emit "FAIL" "$name" "could not convert to symlink"
+        failed_count=$((failed_count + 1))
+      fi
+    else
+      # Does not exist — create new symlink
+      if ln -sf "$source" "$target" 2>/dev/null; then
+        emit "NEW" "$name" "symlink created"
+        new_count=$((new_count + 1))
+      else
+        emit "FAIL" "$name" "could not create symlink"
+        failed_count=$((failed_count + 1))
+      fi
+    fi
+  }
+
+  # ---------------------------------------------------------------------------
+  # Helper: link_dir SOURCE TARGET
+  # Like link_file but uses ln -sfn for directory symlinks.
+  # ---------------------------------------------------------------------------
+  link_dir() {
+    local source="$1"
+    local target="$2"
+    local name
+    name="$(basename "$target")"
+
+    if [ -L "$target" ]; then
+      if ln -sfn "$source" "$target" 2>/dev/null; then
+        emit "OK" "$name" "symlink verified"
+        refreshed_count=$((refreshed_count + 1))
+      else
+        emit "FAIL" "$name" "could not refresh symlink"
+        failed_count=$((failed_count + 1))
+      fi
+    elif [ -d "$target" ] && [ ! -L "$target" ]; then
+      emit "WARN" "$name" "real directory exists — skipping (manual intervention required)"
+      failed_count=$((failed_count + 1))
+    else
+      if ln -sfn "$source" "$target" 2>/dev/null; then
+        emit "NEW" "$name" "symlink created"
+        new_count=$((new_count + 1))
+      else
+        emit "FAIL" "$name" "could not create symlink"
+        failed_count=$((failed_count + 1))
+      fi
+    fi
+  }
+
+  # ===========================================================================
+  # Section 1: Shell Hooks (.sh files, excluding statusline.sh)
+  # ===========================================================================
+  emit_section "Symlink Refresh: Hooks"
+
+  local layer file filename
+  for layer in "${INSTALLED_LAYERS[@]}"; do
+    local hooks_dir="$TOOLKIT_ROOT/$layer/hooks"
+    [ -d "$hooks_dir" ] || continue
+    for file in "$hooks_dir"/*.sh; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      [ "$filename" = "statusline.sh" ] && continue
+      link_file "$file" "$CLAUDE_HOME/hooks/$filename"
+    done
+  done
+
+  # ===========================================================================
+  # Section 2: Utilities (.js files from core/hooks)
+  # ===========================================================================
+  emit_section "Symlink Refresh: Utilities"
+
+  local js_dir="$TOOLKIT_ROOT/core/hooks"
+  if [ -d "$js_dir" ]; then
+    for file in "$js_dir"/*.js; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      link_file "$file" "$CLAUDE_HOME/hooks/$filename"
+    done
+  fi
+
+  # ===========================================================================
+  # Section 3: Statusline
+  # ===========================================================================
+  emit_section "Symlink Refresh: Statusline"
+
+  local statusline_src="$TOOLKIT_ROOT/core/hooks/statusline.sh"
+  if [ -f "$statusline_src" ]; then
+    link_file "$statusline_src" "$CLAUDE_HOME/statusline.sh"
+  else
+    emit "WARN" "statusline.sh" "source not found: $statusline_src"
+  fi
+
+  # ===========================================================================
+  # Section 4: Commands (.md files from core/commands)
+  # ===========================================================================
+  emit_section "Symlink Refresh: Commands"
+
+  local commands_dir="$TOOLKIT_ROOT/core/commands"
+  if [ -d "$commands_dir" ]; then
+    for file in "$commands_dir"/*.md; do
+      [ -f "$file" ] || continue
+      filename="$(basename "$file")"
+      link_file "$file" "$CLAUDE_HOME/commands/$filename"
+    done
+  fi
+
+  # ===========================================================================
+  # Section 5: Skills (directories)
+  # ===========================================================================
+  emit_section "Symlink Refresh: Skills"
+
+  local skill_dir skill_name
+  for layer in "${INSTALLED_LAYERS[@]}"; do
+    local skills_root="$TOOLKIT_ROOT/$layer/skills"
+    [ -d "$skills_root" ] || continue
+    for skill_dir in "$skills_root"/*/; do
+      [ -d "$skill_dir" ] || continue
+      skill_name="$(basename "$skill_dir")"
+      link_dir "$skill_dir" "$CLAUDE_HOME/skills/$skill_name"
+    done
+  done
+
+  # ===========================================================================
+  # Summary
+  # ===========================================================================
+  emit_summary "${new_count} new, ${refreshed_count} refreshed, ${converted_count} converted, ${failed_count} failed"
+
+  if [ "$failed_count" -gt 0 ]; then
+    exit 1
+  fi
 }
 
 phase_orphans() {
