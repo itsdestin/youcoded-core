@@ -73,11 +73,11 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
   ```
   {DRIVE_ROOT}/Backup/personal/
   ├── memory/                    # Flat merge of all project memory dirs
-  │   ├── C--Users-desti/        # Project key as subfolder
+  │   ├── <project-key>/        # Project key as subfolder
   │   │   ├── MEMORY.md
   │   │   ├── user_profile.md
   │   │   └── ...
-  │   └── C--Users-desti-claude-mobile/
+  │   └── <another-project-key>/
   │       └── ...
   ├── CLAUDE.md
   └── toolkit-state/
@@ -109,7 +109,7 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
   ```
   {ICLOUD_PATH}/
   ├── memory/
-  │   ├── C--Users-desti/
+  │   ├── <project-key>/
   │   │   ├── MEMORY.md
   │   │   └── ...
   │   └── ...

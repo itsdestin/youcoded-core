@@ -1,5 +1,7 @@
 # Inbox Processor Spec
 
+> **DEPRECATED (2026-03-23):** Replaced by Claude's Inbox (v3.0). See `productivity/skills/claudes-inbox/specs/claudes-inbox-spec.md`.
+
 **Version:** 2.4
 **Created:** 2026-03-14
 **Skill:** `~/.claude/skills/inbox-processor/SKILL.md`
