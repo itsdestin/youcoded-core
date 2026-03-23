@@ -34,7 +34,7 @@ After checking prerequisites, the script downloads the toolkit itself:
 
 - **From:** `https://github.com/itsdestin/destinclaude`
 - **To:** `~/.claude/plugins/destinclaude/` (inside your Claude Code configuration directory)
-- **Size:** About 50 MB for the toolkit, plus about 150 MB for the optional desktop app (~200 MB total)
+- **Size:** About 50 MB for the toolkit, plus about 150 MB for the desktop app (~200 MB total)
 - **What it contains:** Skills, hooks, commands, and templates — all plain text files you can read
 
 ## What Does NOT Happen
