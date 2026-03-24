@@ -2,6 +2,27 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.1.1] - 2026-03-23
+
+### Fixed
+- **macOS desktop app crash** — Removed hardcoded Windows paths (`C:\Users\desti`) from renderer components that caused the app to fail on macOS/Linux. Session CWD now resolves dynamically via `os.homedir()`.
+- **macOS PATH resolution** — Electron apps launched from Finder/Dock inherit a minimal PATH. Added PATH enrichment for Homebrew, nvm, Volta, and common tool locations on macOS.
+- **Unix socket lifecycle** — Hook relay now cleans up stale Unix socket files on startup and shutdown, preventing EADDRINUSE errors after crashes.
+- **Clipboard temp file cleanup** — Paste images older than 1 hour are automatically cleaned from the temp directory.
+- **Async home path IPC** — Changed `getHomePath` from synchronous `sendSync` to async `invoke`, preventing renderer thread blocking.
+- **GitHub API resilience** — Added 15-second fetch timeout and safe JSON parsing to the Connect 4 game's GitHub API client.
+- **Terminal buffer guard** — Protected against accessing a disposed terminal's buffer, preventing crashes on rapid session switching.
+- **GitHub game auth** — Added cancellation token and error handling to the auth initialization effect, preventing state updates on unmounted components.
+- **Asar unpacked fallback** — Hook installer and session manager now verify unpacked paths exist before using them, with graceful fallback.
+- **Dev server port flexibility** — Vite no longer requires strict port 5173; configurable via `VITE_DEV_SERVER_URL` env var.
+- **`which` dependency** — Added `which` as explicit desktop dependency (was previously try/catch optional require).
+- **Improved error logging** — Hook relay, IPC handlers, GitHub auth, and session manager now log specific error reasons instead of silently swallowing failures.
+- **Resource cleanup on shutdown** — IPC handlers return a cleanup function; status interval, topic watchers, and session maps are properly cleared on app close.
+
+### Documentation
+- Added Linux PATH enrichment note for future monitoring
+- Documented async IPC migration in preload bridge
+
 ## [2.1.0] - 2026-03-23
 
 ### Added
