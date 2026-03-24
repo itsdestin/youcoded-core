@@ -250,7 +250,7 @@ function AppInner() {
             <p className="text-sm text-gray-500">No active session</p>
             <AppIcon className="w-16 h-16 text-gray-400" />
             <button
-              onClick={() => createSession('C:\\Users\\desti', false)}
+              onClick={() => createSession('', false)}
               className="px-4 py-1.5 text-sm font-medium rounded-md bg-gray-300 text-gray-950 hover:bg-gray-200 transition-colors"
             >
               Click here to create one

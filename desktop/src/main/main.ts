@@ -8,6 +8,22 @@ import { HookRelay } from './hook-relay';
 import { registerIpcHandlers } from './ipc-handlers';
 import { IPC } from '../shared/types';
 
+// macOS Electron apps launched from Finder/Dock inherit a minimal PATH from
+// launchd (just /usr/bin:/bin:/usr/sbin:/sbin). Homebrew and nvm paths are
+// missing, so 'node' and 'claude' can't be found. Prepend common locations.
+if (process.platform === 'darwin') {
+  const home = os.homedir();
+  const extraPaths = [
+    '/opt/homebrew/bin',          // Homebrew (Apple Silicon)
+    '/usr/local/bin',             // Homebrew (Intel) / system-wide installs
+    `${home}/.nvm/current/bin`,   // nvm
+    `${home}/.volta/bin`,         // Volta
+    `${home}/.local/bin`,         // pipx, cargo, etc.
+    `${home}/.npm-global/bin`,    // npm global installs
+  ];
+  process.env.PATH = `${extraPaths.join(':')}:${process.env.PATH}`;
+}
+
 const execFileAsync = promisify(execFile);
 // Resolve 'gh' path for Windows where Electron's PATH may not include it
 let ghPath = 'gh';
@@ -76,6 +92,11 @@ app.whenReady().then(async () => {
     } catch {
       return null;
     }
+  });
+
+  // Expose the system home directory to the renderer
+  ipcMain.on('get-home-path', (event) => {
+    event.returnValue = os.homedir();
   });
 
   // Remove the default menu bar (File, Edit, View, Window, Help)

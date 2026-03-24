@@ -1,6 +1,8 @@
 import { spawn, ChildProcess } from 'child_process';
 import { randomUUID } from 'crypto';
+import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { app } from 'electron';
 import { SessionInfo } from '../shared/types';
 import { EventEmitter } from 'events';
@@ -32,6 +34,8 @@ export class SessionManager extends EventEmitter {
 
   createSession(opts: CreateSessionOpts): SessionInfo {
     const id = randomUUID();
+    // Resolve CWD: fall back to home directory if empty or nonexistent
+    const resolvedCwd = (opts.cwd && fs.existsSync(opts.cwd)) ? opts.cwd : os.homedir();
     const args: string[] = [];
     if (opts.skipPermissions) {
       args.push('--dangerously-skip-permissions');
@@ -59,7 +63,7 @@ export class SessionManager extends EventEmitter {
     const info: SessionInfo = {
       id,
       name: opts.name,
-      cwd: opts.cwd,
+      cwd: resolvedCwd,
       permissionMode: opts.skipPermissions ? 'bypass' : 'normal',
       skipPermissions: opts.skipPermissions,
       status: 'active',
@@ -118,7 +122,7 @@ export class SessionManager extends EventEmitter {
         type: 'spawn',
         command: 'claude',
         args,
-        cwd: opts.cwd,
+        cwd: resolvedCwd,
         cols: opts.cols || 80,
         rows: opts.rows || 24,
         sessionId: id,

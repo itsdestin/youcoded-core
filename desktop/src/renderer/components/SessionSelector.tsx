@@ -18,7 +18,9 @@ interface Props {
 export default function SessionSelector({ sessions, activeSessionId, onSelectSession, onCreateSession, onCloseSession }: Props) {
   const [open, setOpen] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newCwd, setNewCwd] = useState('C:\\Users\\desti');
+  const [newCwd, setNewCwd] = useState(() => {
+    try { return window.claude.getHomePath(); } catch { return ''; }
+  });
   const [dangerous, setDangerous] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
