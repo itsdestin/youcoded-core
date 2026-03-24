@@ -72,7 +72,7 @@ Check for and install updates to the DestinClaude toolkit.
    # Core commands
    for f in "$TOOLKIT_ROOT/core/commands/"*.md; do [ -f "$f" ] && ln -sf "$f" ~/.claude/commands/$(basename "$f"); done
 
-   # Skills — re-symlink all toolkit-managed skills
+   # Skills ï¿½ re-symlink all toolkit-managed skills
    ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
    # Layer-specific skills based on installed_layers in config
    ```
@@ -126,12 +126,18 @@ Check for and install updates to the DestinClaude toolkit.
     ```
     Present results as a verification table. For any `[FAIL]`: explain the problem, offer to fix it. After fix, re-run just that verification. For `[FAIL]` items suggesting missing dependencies, suggest `/setup-wizard` or `/health`.
 
-18. **Desktop app update.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, ask if the user wants to update the desktop app. If yes:
+18. **Check plugin dependencies.**
+    ```bash
+    bash "$TOOLKIT_ROOT/scripts/post-update.sh" deps
+    ```
+    For any `[MISSING]` dependencies: explain which plugin needs it, what symptoms the user will see (e.g., "hook error on every tool call"), show the install command, and offer to install. This is especially important after updates since new plugin versions may introduce new dependencies.
+
+19. **Desktop app update.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, ask if the user wants to update the desktop app. If yes:
     ```bash
     bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh"
     ```
 
-19. **Final confirmation.**
+20. **Final confirmation.**
     ```
     Update complete â€” DestinClaude vX.Y.Z
 

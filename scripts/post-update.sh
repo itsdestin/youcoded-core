@@ -1052,6 +1052,214 @@ phase_plugins() {
   "
 }
 
+# =============================================================================
+# Phase: deps — check runtime dependencies for all installed plugin hooks
+# =============================================================================
+
+phase_deps() {
+  emit_section "Plugin Dependencies"
+
+  local plugins_cache="$CLAUDE_HOME/plugins/cache"
+  local settings_file="$CLAUDE_HOME/settings.json"
+  local node_settings
+  node_settings="$(to_node_path "$settings_file")"
+  local node_cache
+  node_cache="$(to_node_path "$plugins_cache")"
+
+  if [ ! -f "$settings_file" ]; then
+    emit "WARN" "deps" "settings.json not found — cannot check plugin dependencies"
+    return 0
+  fi
+
+  if [ ! -d "$plugins_cache" ]; then
+    emit "INFO" "deps" "no marketplace plugins installed"
+    return 0
+  fi
+
+  # Use node to:
+  # 1. Read settings.json to find enabled plugins
+  # 2. For each enabled plugin, find its latest installed version's hooks.json
+  # 3. Extract command executables from hook definitions
+  # 4. Deduplicate and return the list of (executable, plugin, events) tuples
+  local dep_list
+  dep_list="$(node -e "
+    var fs = require('fs'), path = require('path');
+
+    var settings;
+    try { settings = JSON.parse(fs.readFileSync('${node_settings}', 'utf8')); }
+    catch(e) { process.exit(0); }
+
+    var enabled = settings.enabledPlugins || {};
+    var cache = '${node_cache}';
+    var deps = {};  // executable -> {plugins: Set, events: Set}
+
+    Object.keys(enabled).forEach(function(pluginId) {
+      if (!enabled[pluginId]) return;  // disabled plugin
+      var shortName = pluginId.split('@')[0];
+      var pluginDir = path.join(cache, pluginId.split('@')[1] || '', shortName);
+
+      // Find the latest version directory
+      var versions;
+      try { versions = fs.readdirSync(pluginDir); } catch(e) { return; }
+
+      // Try each version dir for hooks.json
+      var hooksData = null;
+      for (var i = versions.length - 1; i >= 0; i--) {
+        var hooksFile = path.join(pluginDir, versions[i], 'hooks', 'hooks.json');
+        try {
+          hooksData = JSON.parse(fs.readFileSync(hooksFile, 'utf8'));
+          break;
+        } catch(e) { continue; }
+      }
+      if (!hooksData || !hooksData.hooks) return;
+
+      Object.keys(hooksData.hooks).forEach(function(event) {
+        var hookList = hooksData.hooks[event];
+        if (!Array.isArray(hookList)) return;
+        hookList.forEach(function(entry) {
+          var innerHooks = entry.hooks || [];
+          innerHooks.forEach(function(h) {
+            if (!h.command) return;
+            // Extract executable: first token
+            var cmd = h.command.trim();
+            // Strip leading quotes
+            cmd = cmd.replace(/^\"/g, '');
+            var exe = cmd.split(/\\s+/)[0];
+            if (!exe) return;
+            // Skip commands where the executable itself is a plugin-relative path
+            if (exe.indexOf('CLAUDE_PLUGIN_ROOT') >= 0 || exe.indexOf('PLUGIN_ROOT') >= 0) return;
+            // Skip absolute/relative paths and common built-in executables
+            if (exe.startsWith('/') || exe.startsWith('.') || (/^[A-Z]:/.test(exe))) return;
+            if (['bash','sh','node','npx','cmd','cmd.exe','powershell.exe'].indexOf(exe) >= 0) return;
+
+            if (!deps[exe]) deps[exe] = {plugins: {}, events: {}};
+            deps[exe].plugins[shortName] = true;
+            deps[exe].events[event] = true;
+          });
+        });
+      });
+    });
+
+    // Also check toolkit hooks from settings.json
+    var settingsHooks = settings.hooks || {};
+    Object.keys(settingsHooks).forEach(function(event) {
+      var entries = settingsHooks[event];
+      if (!Array.isArray(entries)) return;
+      entries.forEach(function(entry) {
+        var hookList = entry.hooks || [];
+        hookList.forEach(function(h) {
+          if (!h.command) return;
+          var cmd = h.command.trim().replace(/^\"/g, '');
+          var exe = cmd.split(/\\s+/)[0];
+          if (!exe) return;
+          if (exe.indexOf('CLAUDE_PLUGIN_ROOT') >= 0 || exe.indexOf('PLUGIN_ROOT') >= 0) return;
+          if (exe.startsWith('/') || exe.startsWith('.') || (/^[A-Z]:/.test(exe))) return;
+          if (['bash','sh','node','npx','cmd','cmd.exe','powershell.exe'].indexOf(exe) >= 0) return;
+          if (!deps[exe]) deps[exe] = {plugins: {}, events: {}};
+          deps[exe].plugins['(settings.json)'] = true;
+          deps[exe].events[event] = true;
+        });
+      });
+    });
+
+    // Also check MCP servers from ~/.claude.json
+    try {
+      var claudeJson = JSON.parse(fs.readFileSync(path.join(process.env.HOME || process.env.USERPROFILE, '.claude.json'), 'utf8'));
+      var proj = (claudeJson.projects || {})['C:/Users/desti'] || claudeJson;
+      var mcps = proj.mcpServers || {};
+      Object.keys(mcps).forEach(function(name) {
+        var mcp = mcps[name];
+        var exe = mcp.command_windows || mcp.command;
+        if (!exe) return;
+        // Skip absolute paths, common builtins, and variable references
+        if (exe.startsWith('/') || exe.startsWith('.') || (/^[A-Z]:/.test(exe))) return;
+        if (exe.indexOf('CLAUDE_PLUGIN_ROOT') >= 0 || exe.indexOf('{{') >= 0) return;
+        if (['bash','sh','node','npx','cmd','cmd.exe','powershell.exe'].indexOf(exe) >= 0) return;
+        if (!deps[exe]) deps[exe] = {plugins: {}, events: {}};
+        deps[exe].plugins['mcp:' + name] = true;
+        deps[exe].events['mcp-server'] = true;
+      });
+    } catch(e) {}
+
+    Object.keys(deps).forEach(function(exe) {
+      var d = deps[exe];
+      var plugins = Object.keys(d.plugins).join(',');
+      var events = Object.keys(d.events).join(',');
+      console.log(exe + '\t' + plugins + '\t' + events);
+    });
+  " 2>/dev/null)" || true
+
+  if [ -z "$dep_list" ]; then
+    emit "INFO" "deps" "no external dependencies found"
+    return 0
+  fi
+
+  local missing_count=0
+  local ok_count=0
+  local missing_info=""
+
+  while IFS=$'\t' read -r exe plugins events; do
+    [ -z "$exe" ] && continue
+    if command -v "$exe" &>/dev/null; then
+      local version_str
+      version_str="$("$exe" --version 2>/dev/null | head -1 || echo "found")"
+      emit "OK" "$exe" "$version_str (used by: $plugins)"
+      ok_count=$((ok_count + 1))
+    else
+      emit "MISSING" "$exe" "required by: $plugins (hooks: $events)"
+      missing_count=$((missing_count + 1))
+      missing_info="${missing_info}${exe}\t${plugins}\t${events}\n"
+    fi
+  done <<< "$dep_list"
+
+  if [ "$missing_count" -gt 0 ]; then
+    echo ""
+    emit "WARN" "deps" "$missing_count missing dependency/dependencies — affected hooks will show errors"
+    # Print install suggestions
+    printf '%b' "$missing_info" | while IFS=$'\t' read -r exe plugins events; do
+      [ -z "$exe" ] && continue
+      local install_cmd=""
+      case "$exe" in
+        python|python3)
+          case "$PLATFORM" in
+            windows) install_cmd="winget install Python.Python.3.13" ;;
+            macos)   install_cmd="brew install python3" ;;
+            linux)   install_cmd="sudo apt install python3  # or your distro's package manager" ;;
+          esac
+          ;;
+        uvx|uv)
+          install_cmd="pip install uv  # or: curl -LsSf https://astral.sh/uv/install.sh | sh"
+          ;;
+        rclone)
+          case "$PLATFORM" in
+            windows) install_cmd="winget install Rclone.Rclone" ;;
+            macos)   install_cmd="brew install rclone" ;;
+            linux)   install_cmd="curl https://rclone.org/install.sh | sudo bash" ;;
+          esac
+          ;;
+        go)
+          case "$PLATFORM" in
+            windows) install_cmd="winget install GoLang.Go" ;;
+            macos)   install_cmd="brew install go" ;;
+            linux)   install_cmd="sudo apt install golang-go" ;;
+          esac
+          ;;
+        powershell)
+          install_cmd="(built into Windows — check PATH)"
+          ;;
+        *)
+          install_cmd="(no auto-install suggestion available)"
+          ;;
+      esac
+      emit "FIX" "$exe" "$install_cmd"
+    done
+    return 1
+  else
+    emit_summary "all $ok_count dependencies satisfied"
+    return 0
+  fi
+}
+
 # version_gt A B
 # Returns 0 (true) if A > B, 1 (false) otherwise.
 # Uses node for portable semver comparison (sort -V is GNU-only, fails on macOS stock).
@@ -1164,6 +1372,9 @@ phase_post_update() {
   echo ""
 
   phase_plugins || overall_exit=1
+  echo ""
+
+  phase_deps || overall_exit=1
 
   return $overall_exit
 }
@@ -1204,6 +1415,9 @@ main() {
     plugins)
       phase_plugins
       ;;
+    deps)
+      phase_deps
+      ;;
     migrations)
       phase_migrations "${2:-}" "${3:-}"
       ;;
@@ -1211,7 +1425,7 @@ main() {
       phase_post_update "${2:-}" "${3:-}"
       ;;
     *)
-      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|orphans|remove-orphan|verify|mcps|plugins|migrations|post-update"
+      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|orphans|remove-orphan|verify|mcps|plugins|deps|migrations|post-update"
       exit 2
       ;;
   esac

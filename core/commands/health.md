@@ -107,7 +107,19 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
 
    For `auto: false` MCPs that are missing, show: "[name] — [setup_note]. Run `/setup-wizard` to configure it."
 
-6. **Report results.** Show a clean pass/fail summary:
+6. **Plugin dependency check.** Scan all installed marketplace plugins and toolkit hooks for external runtime dependencies (executables they call). For each dependency, verify it's available on the system.
+    ```bash
+    bash "$TOOLKIT_ROOT/scripts/post-update.sh" deps
+    ```
+    Show results in the report. For any `[MISSING]` items:
+    - Explain which plugin/hook needs it and what events are affected
+    - Explain the symptom: "You'll see 'hook error' messages on every [event] until this is installed"
+    - Show the install command from the `[FIX]` lines
+    - Offer to install automatically (via winget/brew/apt depending on platform)
+
+    For `[OK]` items, show them in the summary table.
+
+7. **Report results.** Show a clean pass/fail summary:
 
    ```
    Toolkit Health Check
@@ -135,8 +147,11 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
 
    MCP Servers:
      [per step 5 above]
+
+   Plugin Dependencies:
+     [per step 6 above]
    ```
 
-7. **If anything failed:** Show "These items need attention:" with specific, plain-English guidance on how to fix each one. Offer to fix automatically where possible. For issues that require re-running setup, suggest: "You can fix this by running `/setup-wizard` — it's safe to run again and won't change your existing settings."
+8. **If anything failed:** Show "These items need attention:" with specific, plain-English guidance on how to fix each one. Offer to fix automatically where possible. For issues that require re-running setup, suggest: "You can fix this by running `/setup-wizard` — it's safe to run again and won't change your existing settings."
 
-8. **If everything passed:** Show: "Everything looks good! All [N] checks passed."
+9. **If everything passed:** Show: "Everything looks good! All [N] checks passed."
