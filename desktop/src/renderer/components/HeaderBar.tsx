@@ -46,12 +46,12 @@ export default function HeaderBar({
   const cfg = MODE_CONFIG[permissionMode];
 
   return (
-    <div className="flex items-center h-10 px-3 border-b border-gray-800 shrink-0">
-      {/* Left — model + permission badge + announcement */}
-      <div className="flex-1 flex items-center gap-2">
+    <div className="flex items-center h-10 px-2 sm:px-3 border-b border-gray-800 shrink-0">
+      {/* Left — settings + permission badge (model & announcement hidden on mobile) */}
+      <div className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
         <button
           onClick={onToggleSettings}
-          className={`p-1 rounded hover:bg-gray-800 transition-colors ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
+          className={`p-1 rounded hover:bg-gray-800 transition-colors shrink-0 ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
           title="Settings"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,14 +59,9 @@ export default function HeaderBar({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </button>
-        {model && (
-          <span className="text-[10px] text-gray-500 truncate max-w-[120px]">
-            {model}
-          </span>
-        )}
         <button
           onClick={onCyclePermission}
-          className="text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors cursor-pointer hover:brightness-125"
+          className="text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors cursor-pointer hover:brightness-125 shrink-0"
           style={{
             backgroundColor: cfg.bg,
             color: cfg.color,
@@ -76,8 +71,13 @@ export default function HeaderBar({
         >
           {cfg.label}
         </button>
+        {model && (
+          <span className="text-[10px] text-gray-500 truncate max-w-[120px] hidden sm:inline">
+            {model}
+          </span>
+        )}
         {announcement && (
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#FF9800]/15 text-[#FF9800] border border-[#FF9800]/25 truncate max-w-[200px]" title={announcement}>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#FF9800]/15 text-[#FF9800] border border-[#FF9800]/25 truncate max-w-[200px] hidden sm:inline" title={announcement}>
             ★ {announcement}
           </span>
         )}
@@ -92,12 +92,12 @@ export default function HeaderBar({
         onCloseSession={onCloseSession}
       />
 
-      {/* Right — view toggles */}
-      <div className="flex-1 flex items-center justify-end gap-2">
+      {/* Right — view toggles (icon-only on mobile) */}
+      <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
         <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
           <button
             onClick={() => onToggleView('chat')}
-            className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+            className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
               viewMode === 'chat'
                 ? 'bg-gray-300 text-gray-950'
                 : 'text-gray-400 hover:text-gray-300'
@@ -105,11 +105,11 @@ export default function HeaderBar({
             title="Chat"
           >
             <ChatIcon className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium">Chat</span>
+            <span className="text-xs font-medium hidden sm:inline">Chat</span>
           </button>
           <button
             onClick={() => onToggleView('terminal')}
-            className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+            className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
               viewMode === 'terminal'
                 ? 'bg-gray-300 text-gray-950'
                 : 'text-gray-400 hover:text-gray-300'
@@ -117,10 +117,10 @@ export default function HeaderBar({
             title="Terminal"
           >
             <TerminalIcon className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium">Terminal</span>
+            <span className="text-xs font-medium hidden sm:inline">Terminal</span>
           </button>
         </div>
-        <div className="bg-gray-800 rounded-md p-0.5">
+        <div className="bg-gray-800 rounded-md p-0.5 hidden sm:block">
           <button
             onClick={onToggleGamePanel}
             className={`px-2 py-1 rounded transition-colors flex items-center gap-1 ${
