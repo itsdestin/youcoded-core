@@ -34,6 +34,7 @@ export class RemoteServer {
   private wss: WebSocketServer | null = null;
   private clients = new Set<AuthenticatedClient>();
   private tokens = new Map<string, boolean>(); // token → valid
+  private tokensPath: string;
   private ptyBuffers = new Map<string, string>(); // sessionId → rolling PTY output
   private hookBuffers = new Map<string, any[]>(); // sessionId → rolling hook events
   private statusInterval: ReturnType<typeof setInterval> | null = null;
@@ -48,7 +49,26 @@ export class RemoteServer {
     private hookRelay: HookRelay,
     private config: RemoteConfig,
     private skillScanner?: () => any[],
-  ) {}
+  ) {
+    this.tokensPath = path.join(os.homedir(), '.claude', '.remote-tokens.json');
+    this.loadTokens();
+  }
+
+  private loadTokens(): void {
+    try {
+      const data = JSON.parse(fs.readFileSync(this.tokensPath, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const t of data) this.tokens.set(t, true);
+      }
+    } catch { /* no persisted tokens yet */ }
+  }
+
+  private saveTokens(): void {
+    try {
+      fs.mkdirSync(path.dirname(this.tokensPath), { recursive: true });
+      fs.writeFileSync(this.tokensPath, JSON.stringify(Array.from(this.tokens.keys())));
+    } catch { /* best effort */ }
+  }
 
   async start(): Promise<void> {
     if (!this.config.enabled) {
@@ -181,6 +201,7 @@ export class RemoteServer {
   /** Invalidate all session tokens (e.g., after password change). */
   invalidateTokens(): void {
     this.tokens.clear();
+    this.saveTokens();
     for (const client of this.clients) {
       client.ws.close(4001, 'Password changed');
     }
@@ -339,6 +360,7 @@ export class RemoteServer {
     if (this.config.trustTailscale && this.config.isTailscaleIp(ip)) {
       const token = randomUUID();
       this.tokens.set(token, true);
+      this.saveTokens();
       this.addClient(ws, token, ip);
       ws.send(JSON.stringify({ type: 'auth:ok', token }));
       this.replayBuffers(ws);
@@ -382,6 +404,7 @@ export class RemoteServer {
           this.clearFailedAttempts(ip);
           const token = msg.token && this.tokens.has(msg.token) ? msg.token : randomUUID();
           this.tokens.set(token, true);
+          this.saveTokens();
           this.addClient(ws, token, ip);
           ws.send(JSON.stringify({ type: 'auth:ok', token }));
           this.replayBuffers(ws);
