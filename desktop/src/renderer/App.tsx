@@ -14,6 +14,7 @@ import { useGitHubGame } from './hooks/useGitHubGame';
 import { AppIcon } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
+import SettingsPanel from './components/SettingsPanel';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 
 type ViewMode = 'chat' | 'terminal';
@@ -44,6 +45,7 @@ function AppInner() {
   const [initializedSessions, setInitializedSessions] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSearchMode, setDrawerSearchMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [skills, setSkills] = useState<SkillEntry[]>([]);
 
   usePromptDetector();
@@ -253,6 +255,8 @@ function AppInner() {
               onCyclePermission={cyclePermission}
               model={statusData.model}
               announcement={announcementText}
+              settingsOpen={settingsOpen}
+              onToggleSettings={() => setSettingsOpen(prev => !prev)}
             />
             <div className="flex-1 overflow-hidden relative">
               {sessions.map((s) => (
@@ -326,6 +330,17 @@ function AppInner() {
           <GamePanel connection={gameConnection} />
         </ErrorBoundary>
       )}
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSendInput={(text) => {
+          if (sessionId) {
+            const claude = (window as any).claude;
+            claude.session.sendInput(sessionId, text + '\r');
+          }
+        }}
+        hasActiveSession={!!sessionId}
+      />
     </div>
   );
 }
