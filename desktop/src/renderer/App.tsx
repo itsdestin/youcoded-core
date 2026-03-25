@@ -158,6 +158,26 @@ function AppInner() {
     };
   }, [dispatch]);
 
+  // Fetch session list on mount — catches sessions that existed before event handlers were registered
+  // (e.g., remote browser reconnecting after the replay buffer events already fired)
+  useEffect(() => {
+    window.claude.session.list().then((list: any[]) => {
+      if (!list || list.length === 0) return;
+      setSessions((prev) => {
+        const existingIds = new Set(prev.map((s) => s.id));
+        const newSessions = list.filter((s) => !existingIds.has(s.id));
+        if (newSessions.length === 0) return prev;
+        for (const s of newSessions) {
+          dispatch({ type: 'SESSION_INIT', sessionId: s.id });
+          setViewModes((vm) => vm.has(s.id) ? vm : new Map(vm).set(s.id, 'chat'));
+          setPermissionModes((pm) => pm.has(s.id) ? pm : new Map(pm).set(s.id, s.permissionMode || 'normal'));
+        }
+        return [...prev, ...newSessions];
+      });
+      setSessionId((prev) => prev ?? list[0].id);
+    }).catch(() => {});
+  }, [dispatch]);
+
   // Load skills once on mount
   useEffect(() => {
     window.claude.skills.list().then(setSkills).catch(console.error);
