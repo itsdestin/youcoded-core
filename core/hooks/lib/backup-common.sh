@@ -230,7 +230,7 @@ get_backends() {
     echo "$backends" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$'
 }
 
-get_primary_backend() {
+get_preferred_backend() {
     get_backends | head -1
 }
 

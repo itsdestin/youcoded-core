@@ -128,7 +128,7 @@ if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
     # If we cleaned, push to preferred backend so next pull doesn't re-introduce stale keys
     if [[ "$_CLEANED" == "cleaned" ]]; then
         _MIG_BACKEND=""
-        type get_primary_backend &>/dev/null && _MIG_BACKEND=$(get_primary_backend)
+        type get_preferred_backend &>/dev/null && _MIG_BACKEND=$(get_preferred_backend)
         case "$_MIG_BACKEND" in
             drive)
                 if command -v rclone &>/dev/null; then
@@ -280,8 +280,8 @@ fi
 # --- Personal data pull from configured backend (Design ref: D6) ---
 # Pull from the first (preferred) configured backend only.
 _PULL_BACKEND=""
-if type get_primary_backend &>/dev/null; then
-    _PULL_BACKEND=$(get_primary_backend)
+if type get_preferred_backend &>/dev/null; then
+    _PULL_BACKEND=$(get_preferred_backend)
 fi
 
 if [[ -n "$_PULL_BACKEND" ]]; then
