@@ -351,7 +351,10 @@ fi
 
 # 3. Unsynced projects — discover git repos not tracked by git-sync or registered
 if type discover_projects &>/dev/null; then
-    _DISCOVERED=$(discover_projects 2>/dev/null) || _DISCOVERED=""
+    _DISCOVERED=$(discover_projects 2>/dev/null) || {
+        _DISCOVERED=""
+        log_backup "WARN" "discover_projects() failed — project discovery skipped"
+    }
     if [[ -n "$_DISCOVERED" ]]; then
         # Write discovered paths for the /sync skill to consume
         echo "$_DISCOVERED" | sort -u > "$CLAUDE_DIR/.unsynced-projects"
