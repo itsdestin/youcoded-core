@@ -2,6 +2,11 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.1.2] - 2026-03-24
+
+### Fixed
+- **CRITICAL: Conversation history deletion** — Session-start Drive pull used `rclone sync` for memory files, which deletes local files not present on the remote. Since conversation `.jsonl` files share the `projects/` parent directory with memory subdirectories, every session start destroyed all local conversation history. Changed to `rclone copy --update` which only adds/updates files without deleting. This bug was introduced in v2.1.0 (backup system refactor).
+
 ## [2.1.1] - 2026-03-23
 
 ### Fixed

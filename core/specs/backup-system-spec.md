@@ -1,7 +1,7 @@
 # Backup & Sync -- Spec
 
-**Version:** 4.0
-**Last updated:** 2026-03-23
+**Version:** 4.1
+**Last updated:** 2026-03-24
 **Feature location:** `core/hooks/git-sync.sh`, `core/hooks/personal-sync.sh`, `core/hooks/lib/backup-common.sh`
 
 ## Purpose
@@ -132,6 +132,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-03-24 | 4.1 | Critical fix: session-start Drive pull used `rclone sync` for memory, which deletes local files (including conversation .jsonl) not present on the remote. Changed to `rclone copy --update`. This was silently destroying conversation history on every session start when Drive backend was configured. | Bugfix | Destin |
 | 2026-03-23 | 4.0 | Refactored: symlink-based ownership detection replaces drive-archive.sh — all backend replication now handled by personal-sync.sh. New shared library (lib/backup-common.sh), migration framework (lib/migrate.sh, migrations/v1.json), toolkit integrity check in session-start. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-18 | 3.3 | Added Interactive Restore section: setup wizard now handles restore for returning users via GitHub or Drive, complementing the existing manual restore.sh path. | Update | — |
 | 2026-03-16 | 3.2 | Multi-project backup support: git-sync.sh now routes files to the correct Git repo based on path prefix (`~/.claude/` → claude-config, `~/claude-mobile/` → claude-mobile). Each project gets independent push markers and rebase-fail counters. Branch detection is automatic. New mandate: all Claude projects must be backed up to private GitHub repos by default. | Update | — |

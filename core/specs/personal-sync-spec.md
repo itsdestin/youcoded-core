@@ -1,7 +1,7 @@
 # Personal Data Sync — Spec
 
-**Version:** 2.0
-**Last updated:** 2026-03-23
+**Version:** 2.1
+**Last updated:** 2026-03-24
 **Feature location:** `core/hooks/personal-sync.sh`, session-start integration in `core/hooks/session-start.sh`
 
 ## Purpose
@@ -182,7 +182,7 @@ New block in `session-start.sh`, after the encyclopedia cache sync:
 
 1. **Read config** — load `PERSONAL_SYNC_BACKEND` from config.json. If unset, run auto-detection (see above).
 2. **Pull** — based on backend:
-   - **Drive:** `rclone sync` from `gdrive:{DRIVE_ROOT}/Backup/personal/` to local paths
+   - **Drive:** `rclone copy --update` from `gdrive:{DRIVE_ROOT}/Backup/personal/` to local paths (MUST use `copy`, not `sync` — `sync` deletes local files not present on remote)
    - **GitHub:** `cd` to local repo checkout, `git pull personal-sync main`
 3. **Conflict handling** — if pull fails, log a warning and continue with local state. Never block session start.
 
@@ -230,6 +230,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-03-24 | 2.1 | Critical fix: session-start Drive pull used `rclone sync` for memory which destroyed local conversation .jsonl files. Changed to `rclone copy --update`. | Bugfix | Destin |
 | 2026-03-23 | 2.0 | Added iCloud backend, multi-backend loop, expanded scope (encyclopedia, user-created skills), backup-meta.json writing. Absorbed Drive archive from git-sync.sh. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-17 | 1.0 | Initial spec | New | — |
 | 2026-03-19 | 1.1 | Added auto-detection/self-healing for Drive and iCloud backends; added `"icloud"` as a backend option; documented the false-warning bug fix | Update | Destin |
