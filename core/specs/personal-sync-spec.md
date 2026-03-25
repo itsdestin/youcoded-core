@@ -1,7 +1,7 @@
 # Personal Data Sync — Spec
 
-**Version:** 2.1
-**Last updated:** 2026-03-24
+**Version:** 2.2
+**Last updated:** 2026-03-25
 **Feature location:** `core/hooks/personal-sync.sh`, session-start integration in `core/hooks/session-start.sh`
 
 ## Purpose
@@ -23,7 +23,7 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 | PostToolUse trigger with 15-min debounce | Matches the existing git-sync pattern. Syncs when data actually changes, not on a timer. Debounce prevents excessive API calls during active sessions. | SessionStart/SessionEnd only (mid-session data loss risk), every write (too frequent), cron (not available in Claude Code). |
 | Session-start pull for cross-device sync | When a user switches devices, the session-start hook pulls the latest personal data from the backend before the session begins. Memory files and CLAUDE.md are then current. For first-session restore on a new device, the setup wizard (Phase 0B) performs the initial pull before the session-start hook is ever invoked — the hook then handles all subsequent syncs automatically. | Manual sync command (users forget), no pull (defeats cross-device purpose). |
 | Config stored in toolkit-state/config.json | Consistent with existing config model. Setup wizard already reads/writes this file. | Separate config file (adds complexity), environment variable (not persistent). |
-| rclone sync with --update for Drive backend | Uses modification time to avoid overwriting newer remote files. Simple, reliable, bidirectional-safe for the pull-then-push pattern. | --checksum (slower for many small files), --force (overwrites newer remote). |
+| rclone copy with --update for Drive backend | Uses `copy` (not `sync`) to prevent deletion propagation in either direction. `--update` skips files newer on the destination. Orphaned remote files accumulate but this is preferable to losing backup data. | `sync` (rejected: propagates accidental deletions, destroyed memory files in production), --checksum (slower for many small files), --force (overwrites newer remote). |
 | Git backend uses simple add-commit-push | No rebase, no conflict resolution. If push fails (conflict), log it and move on. Personal data files rarely conflict since they're typically edited by one device at a time. | Full rebase flow like git-sync.sh (overkill for personal data, adds complexity). |
 | iCloud backend via local folder copy | rclone's iCloud backend requires session cookies that expire, making it unreliable for automated sync. Native iCloud sync uses local folder operations on macOS (`~/Library/Mobile Documents/com~apple~CloudDocs/`) — no token management required. | rclone iCloud (rejected: session cookie expiry causes silent failures), no iCloud support (rejected: important platform for Apple-primary users). |
 | Multi-backend loop | `PERSONAL_SYNC_BACKEND` can be comma-separated (e.g., `"drive,github"`) to enable multiple backends simultaneously. The hook iterates over each backend in sequence; failure in one is logged but does not block others. | Single-backend only (rejected: users may want redundancy), parallel execution (rejected: adds complexity, race conditions on shared state files). |
@@ -83,8 +83,8 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
   └── toolkit-state/
       └── config.json
   ```
-- **Push:** `rclone sync <local> <remote> --update` for each content type
-- **Pull:** `rclone sync <remote> <local> --update` (at session start)
+- **Push:** `rclone copy <local> <remote> --update` for each content type (MUST use `copy`, not `sync` — `sync` propagates accidental local deletions to the backup, destroying the safety net)
+- **Pull:** `rclone copy <remote> <local> --update` (at session start; MUST use `copy`, not `sync` — `sync` deletes local files not present on remote)
 
 ### Private GitHub backend
 
@@ -142,7 +142,7 @@ PostToolUse hook on Write and Edit actions.
 3. **Read config** — load `PERSONAL_SYNC_BACKEND` and `DRIVE_ROOT` (or `PERSONAL_SYNC_REPO`, `ICLOUD_PATH`) from `~/.claude/toolkit-state/config.json`. Exit if backend is `"none"` or unconfigured.
 4. **Debounce check** — read `~/.claude/toolkit-state/.personal-sync-marker`. Exit if last sync was less than 15 minutes ago.
 5. **Multi-backend loop** — parse `PERSONAL_SYNC_BACKEND` as comma-separated list; iterate over each backend:
-   - **Drive:** `rclone sync` each content category to `gdrive:{DRIVE_ROOT}/Backup/personal/`
+   - **Drive:** `rclone copy --update` each content category to `gdrive:{DRIVE_ROOT}/Backup/personal/`
    - **GitHub:** `cd` to local personal repo checkout, copy files in, `git add -A`, commit, push
    - **iCloud:** `rsync -a --update` each content category to `{ICLOUD_PATH}/`
    - Failure in one backend is logged but does not block remaining backends.
@@ -230,6 +230,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-03-25 | 2.2 | Three fixes: (1) Push operations changed from `rclone sync` to `rclone copy` — sync propagated accidental local deletions to Drive, destroying backup copies. (2) Pull path mapping fixed — memory files were restored to project root instead of `memory/` subdirectory. (3) Windows slug calculation fixed — `cygpath -w` used instead of `realpath` to match Claude Code's slug algorithm. Also fixed git-sync stash pop to emit visible `hookSpecificOutput` warning instead of silent stderr. | Bugfix | Destin |
 | 2026-03-24 | 2.1 | Critical fix: session-start Drive pull used `rclone sync` for memory which destroyed local conversation .jsonl files. Changed to `rclone copy --update`. | Bugfix | Destin |
 | 2026-03-23 | 2.0 | Added iCloud backend, multi-backend loop, expanded scope (encyclopedia, user-created skills), backup-meta.json writing. Absorbed Drive archive from git-sync.sh. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-17 | 1.0 | Initial spec | New | — |

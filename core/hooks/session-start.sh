@@ -181,11 +181,19 @@ if [[ -n "$_PULL_BACKEND" ]]; then
             DRIVE_ROOT=$(config_get "DRIVE_ROOT" "Claude")
             DRIVE_SOURCE="gdrive:$DRIVE_ROOT/Backup/personal"
             if command -v rclone &>/dev/null; then
-                # Memory files (rclone copy, NOT sync — sync deletes local files
-                # like conversation .jsonl that don't exist on the remote)
-                rclone copy "$DRIVE_SOURCE/memory/" "$CLAUDE_DIR/projects/" \
-                    --update --exclude '.DS_Store' 2>/dev/null || \
-                    log_backup "WARN" "Drive pull (memory) failed"
+                # Memory files — iterate per project key so files land in
+                # projects/{key}/memory/ (not at the project root).
+                # Uses rclone copy, NOT sync — sync deletes local files
+                # like conversation .jsonl that don't exist on the remote.
+                while IFS= read -r _mem_key; do
+                    _mem_key="${_mem_key%/}"
+                    [[ -z "$_mem_key" ]] && continue
+                    mkdir -p "$CLAUDE_DIR/projects/$_mem_key/memory"
+                    rclone copy "$DRIVE_SOURCE/memory/$_mem_key/" \
+                        "$CLAUDE_DIR/projects/$_mem_key/memory/" \
+                        --update --exclude '.DS_Store' 2>/dev/null || \
+                        log_backup "WARN" "Drive pull (memory/$_mem_key) failed"
+                done < <(rclone lsf "$DRIVE_SOURCE/memory/" --dirs-only 2>/dev/null)
                 # CLAUDE.md
                 rclone copy "$DRIVE_SOURCE/CLAUDE.md" "$CLAUDE_DIR/" \
                     --update 2>/dev/null || true

@@ -137,7 +137,12 @@ if ! git pull --rebase origin "$PUSH_BRANCH" 2>/dev/null; then
 
     # Restore stashed changes on failure path
     if [[ "$STASHED" == "true" ]]; then
-        git stash pop -q 2>/dev/null || echo "Warning: stash pop failed — check 'git stash list'" >&2
+        if ! git stash pop -q 2>/dev/null; then
+            # Abort any conflicted merge state so the working tree is clean
+            git checkout -- . 2>/dev/null || true
+            echo '{"hookSpecificOutput": "Warning: git stash pop failed after pull. Orphaned changes in stash — run `cd ~/.claude && git stash list` to inspect."}' >&2
+            log_backup "WARN" "Stash pop failed in $REPO_DIR — orphaned stash entry"
+        fi
     fi
 else
     # Rebase succeeded — reset fail counter
@@ -155,7 +160,11 @@ else
 
     # Restore stashed changes on success path
     if [[ "$STASHED" == "true" ]]; then
-        git stash pop -q 2>/dev/null || echo "Warning: stash pop failed — check 'git stash list'" >&2
+        if ! git stash pop -q 2>/dev/null; then
+            git checkout -- . 2>/dev/null || true
+            echo '{"hookSpecificOutput": "Warning: git stash pop failed after pull. Orphaned changes in stash — run `cd ~/.claude && git stash list` to inspect."}' >&2
+            log_backup "WARN" "Stash pop failed in $REPO_DIR — orphaned stash entry"
+        fi
     fi
 fi
 

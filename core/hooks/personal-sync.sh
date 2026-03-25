@@ -103,7 +103,7 @@ sync_drive() {
             [[ ! -d "$MEMORY_DIR" ]] && continue
             local PROJECT_KEY
             PROJECT_KEY=$(basename "$PROJECT_DIR")
-            rclone sync "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update 2>/dev/null || {
+            rclone copy "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update 2>/dev/null || {
                 log_backup "WARN" "Failed to sync memory for project $PROJECT_KEY"
                 ERRORS=$((ERRORS + 1))
             }
@@ -125,7 +125,7 @@ sync_drive() {
     fi
 
     if [[ -d "$CLAUDE_DIR/encyclopedia" ]]; then
-        rclone sync "$CLAUDE_DIR/encyclopedia/" "$REMOTE_BASE/encyclopedia/" \
+        rclone copy "$CLAUDE_DIR/encyclopedia/" "$REMOTE_BASE/encyclopedia/" \
             --update --exclude '.DS_Store' 2>/dev/null || \
             log_backup "WARN" "Encyclopedia sync to Drive failed"
     fi
@@ -136,7 +136,7 @@ sync_drive() {
             if [[ ! -L "$skill_dir" ]] || ! is_toolkit_owned "${skill_dir%/}"; then
                 local skill_name
                 skill_name=$(basename "$skill_dir")
-                rclone sync "$skill_dir" "$REMOTE_BASE/skills/$skill_name/" \
+                rclone copy "$skill_dir" "$REMOTE_BASE/skills/$skill_name/" \
                     --update --exclude '.DS_Store' 2>/dev/null || \
                     log_backup "WARN" "Skill $skill_name sync to Drive failed"
             fi

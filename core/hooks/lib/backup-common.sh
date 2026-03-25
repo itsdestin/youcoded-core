@@ -113,12 +113,23 @@ normalize_path() {
 
 get_current_project_slug() {
     local home_path
-    # Resolve symlinks to get the canonical path (important on Android where
-    # /data/user/0 is a symlink to /data/data)
-    home_path=$(realpath "$HOME" 2>/dev/null \
-        || readlink -f "$HOME" 2>/dev/null \
-        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$HOME" 2>/dev/null \
-        || echo "$HOME")
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            # Windows: Claude Code uses the native Windows path (C:\Users\...)
+            # to compute slugs. Git Bash's realpath returns /c/Users/... which
+            # produces a different slug. Use cygpath -w to match Claude Code.
+            home_path=$(cygpath -w "$HOME" 2>/dev/null || echo "$HOME")
+            ;;
+        *)
+            # Mac/Linux/Android: realpath matches Claude Code's path.
+            # Resolve symlinks (important on Android where /data/user/0
+            # is a symlink to /data/data).
+            home_path=$(realpath "$HOME" 2>/dev/null \
+                || readlink -f "$HOME" 2>/dev/null \
+                || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$HOME" 2>/dev/null \
+                || echo "$HOME")
+            ;;
+    esac
     # Replicate Claude Code's slug algorithm: replace /, \, and : with -
     # (: is needed for Windows drive letters, e.g. C:\Users → C--Users)
     home_path="${home_path//\\/-}"
