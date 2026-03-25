@@ -228,56 +228,88 @@ aggregate_conversations() {
     projects_dir=$(cd "$1" && pwd) || return 0
     [[ ! -d "$projects_dir" ]] && return 0
 
-    local home_slug
-    home_slug=$(get_current_project_slug)
-    [[ -z "$home_slug" ]] && return 0
+    # Determine home slug(s). On Windows/MSYS, realpath returns /c/Users/...
+    # but Claude Code uses the Windows-native path C:\Users\... which produces
+    # a different slug (C--Users-desti vs -c-Users-desti). We need to aggregate
+    # into BOTH so /resume works regardless of which slug Claude Code uses.
+    local -a home_slugs=()
+    local computed_slug
+    computed_slug=$(get_current_project_slug)
+    [[ -n "$computed_slug" ]] && home_slugs+=("$computed_slug")
 
-    local home_dir="$projects_dir/$home_slug"
-    mkdir -p "$home_dir"
+    # On Windows, also detect the Windows-native slug variant
+    if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+        # Get the Windows-style path (e.g., C:\Users\desti → C--Users-desti)
+        local win_home
+        win_home=$(cygpath -w "$HOME" 2>/dev/null || echo "")
+        if [[ -n "$win_home" ]]; then
+            local win_slug="${win_home//\\/-}"
+            win_slug="${win_slug//\//-}"
+            win_slug="${win_slug//:/-}"
+            if [[ "$win_slug" != "$computed_slug" ]]; then
+                home_slugs+=("$win_slug")
+            fi
+        fi
+    fi
+
+    [[ ${#home_slugs[@]} -eq 0 ]] && return 0
 
     # Windows symlink support
     [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && export MSYS=winsymlinks:nativestrict
 
-    local aggregated=0
+    local total_aggregated=0
 
-    for slug_dir in "$projects_dir"/*/; do
-        [[ ! -d "$slug_dir" ]] && continue
-        local slug_name
-        slug_name=$(basename "$slug_dir")
+    for home_slug in "${home_slugs[@]}"; do
+        local home_dir="$projects_dir/$home_slug"
+        mkdir -p "$home_dir"
 
-        # Skip the home slug itself
-        [[ "$slug_name" == "$home_slug" ]] && continue
+        local aggregated=0
 
-        # Skip symlinked slug directories (foreign device slugs from rewrite_project_slugs)
-        [[ -L "${slug_dir%/}" ]] && continue
+        for slug_dir in "$projects_dir"/*/; do
+            [[ ! -d "$slug_dir" ]] && continue
+            local slug_name
+            slug_name=$(basename "$slug_dir")
 
-        # Symlink each .jsonl file into the home slug
-        for jsonl_file in "$slug_dir"*.jsonl; do
-            [[ ! -f "$jsonl_file" ]] && continue
-            local basename_jsonl
-            basename_jsonl=$(basename "$jsonl_file")
-            local target="$home_dir/$basename_jsonl"
+            # Skip all home slugs
+            local is_home=false
+            for hs in "${home_slugs[@]}"; do
+                [[ "$slug_name" == "$hs" ]] && { is_home=true; break; }
+            done
+            "$is_home" && continue
 
-            # Skip if already exists (real file = local conversation, symlink = already aggregated)
-            [[ -e "$target" || -L "$target" ]] && continue
+            # Skip symlinked slug directories (foreign device slugs from rewrite_project_slugs)
+            [[ -L "${slug_dir%/}" ]] && continue
 
-            # Create relative symlink
-            ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null || \
-                cp "$jsonl_file" "$target" 2>/dev/null || true
-            aggregated=$((aggregated + 1))
+            # Symlink each .jsonl file into this home slug
+            for jsonl_file in "$slug_dir"*.jsonl; do
+                [[ ! -f "$jsonl_file" ]] && continue
+                local basename_jsonl
+                basename_jsonl=$(basename "$jsonl_file")
+                local target="$home_dir/$basename_jsonl"
+
+                # Skip if already exists (real file = local conversation, symlink = already aggregated)
+                [[ -e "$target" || -L "$target" ]] && continue
+
+                # Create relative symlink
+                ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null || \
+                    cp "$jsonl_file" "$target" 2>/dev/null || true
+                aggregated=$((aggregated + 1))
+            done
         done
+
+        # Clean up dangling symlinks in this home slug
+        for link in "$home_dir"/*.jsonl; do
+            [[ ! -L "$link" ]] && continue
+            if [[ ! -e "$link" ]]; then
+                rm -f "$link" 2>/dev/null
+            fi
+        done
+
+        total_aggregated=$((total_aggregated + aggregated))
     done
 
-    # Clean up dangling symlinks in home slug
-    for link in "$home_dir"/*.jsonl; do
-        [[ ! -L "$link" ]] && continue
-        if [[ ! -e "$link" ]]; then
-            rm -f "$link" 2>/dev/null
-        fi
-    done
-
-    if [[ $aggregated -gt 0 ]]; then
-        log_backup "INFO" "Aggregated $aggregated conversation(s) into home slug: $home_slug"
+    if [[ $total_aggregated -gt 0 ]]; then
+        log_backup "INFO" "Aggregated $total_aggregated conversation(s) into home slug(s): ${home_slugs[*]}"
     fi
 }
 
