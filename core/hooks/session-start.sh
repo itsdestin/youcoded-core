@@ -341,26 +341,17 @@ if [[ -n "$_UNBACKEDUP_SKILLS" ]]; then
     echo "SKILLS:$_UNBACKEDUP_SKILLS" >> "$WARNINGS_FILE"
 fi
 
-# 3. Unsynced projects (dedup, filter blanks, filter ignored/registered paths from registry)
-if [[ -s "$CLAUDE_DIR/.unsynced-projects" ]]; then
-    _REGISTRY="$CLAUDE_DIR/tracked-projects.json"
-    if [[ -f "$_REGISTRY" ]] && command -v node &>/dev/null; then
-        _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null | grep -c '.' 2>/dev/null | tr -d ' ')
-        if [[ "$_UP_COUNT" -gt 0 ]]; then
-            _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" | grep '.' | node -e '
-                const fs=require("fs"),rl=require("readline");
-                try{const reg=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
-                const skip=new Set([...(reg.ignored||[]),...(reg.projects||[]).map(p=>p.path)]);
-                const iface=rl.createInterface({input:process.stdin});let c=0;
-                iface.on("line",l=>{const t=l.trim();if(t&&!skip.has(t))c++});
-                iface.on("close",()=>console.log(c))}catch{const i=require("readline").createInterface({input:process.stdin});let c=0;
-                i.on("line",l=>{if(l.trim())c++});i.on("close",()=>console.log(c))}
-            ' "$_REGISTRY" 2>/dev/null | tr -d ' ')
-        fi
+# 3. Unsynced projects — discover git repos not tracked by git-sync or registered
+if type discover_projects &>/dev/null; then
+    _DISCOVERED=$(discover_projects 2>/dev/null) || _DISCOVERED=""
+    if [[ -n "$_DISCOVERED" ]]; then
+        # Write discovered paths for the /sync skill to consume
+        echo "$_DISCOVERED" | sort -u > "$CLAUDE_DIR/.unsynced-projects"
+        _UP_COUNT=$(echo "$_DISCOVERED" | wc -l | tr -d ' ')
+        [[ "$_UP_COUNT" -gt 0 ]] && echo "PROJECTS:$_UP_COUNT" >> "$WARNINGS_FILE"
     else
-        _UP_COUNT=$(sort -u "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null | grep -c '.' 2>/dev/null | tr -d ' ')
+        rm -f "$CLAUDE_DIR/.unsynced-projects" 2>/dev/null
     fi
-    [[ "$_UP_COUNT" -gt 0 ]] && echo "PROJECTS:$_UP_COUNT" >> "$WARNINGS_FILE"
 fi
 
 # Remove warnings file if empty (no warnings = no statusline clutter)
@@ -414,6 +405,21 @@ if command -v node &>/dev/null; then
     fi
     if [[ -f "$ANNOUNCEMENT_FETCH" ]]; then
         nohup node "$ANNOUNCEMENT_FETCH" >/dev/null 2>&1 &
+    fi
+fi
+
+# --- Branch safety check ---
+# Warn if the current working directory is a git repo and not on the default branch
+if git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+    _CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
+    _DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@') || _DEFAULT_BRANCH=""
+    # Fallback: check for master or main
+    if [[ -z "$_DEFAULT_BRANCH" ]]; then
+        git rev-parse --verify master &>/dev/null && _DEFAULT_BRANCH="master" || _DEFAULT_BRANCH="main"
+    fi
+    if [[ -n "$_CURRENT_BRANCH" && "$_CURRENT_BRANCH" != "$_DEFAULT_BRANCH" ]]; then
+        _REPO_NAME=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
+        echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"WARNING: You are on branch '$_CURRENT_BRANCH' in repo '$_REPO_NAME', NOT the default branch '$_DEFAULT_BRANCH'. Switch to '$_DEFAULT_BRANCH' before making changes unless Destin explicitly asked for this branch.\"}}"
     fi
 fi
 
