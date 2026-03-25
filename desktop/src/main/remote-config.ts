@@ -11,6 +11,7 @@ interface ConfigData {
   port: number;
   passwordHash: string | null;
   trustTailscale: boolean;
+  keepAwakeHours: number; // 0 = off
 }
 
 export class RemoteConfig {
@@ -18,6 +19,7 @@ export class RemoteConfig {
   port: number;
   passwordHash: string | null;
   trustTailscale: boolean;
+  keepAwakeHours: number;
 
   constructor() {
     const defaults: ConfigData = {
@@ -25,6 +27,7 @@ export class RemoteConfig {
       port: 9900,
       passwordHash: null,
       trustTailscale: false,
+      keepAwakeHours: 0,
     };
 
     const configPath = CONFIG_PATH();
@@ -35,6 +38,7 @@ export class RemoteConfig {
         this.port = data.port ?? defaults.port;
         this.passwordHash = data.passwordHash ?? defaults.passwordHash;
         this.trustTailscale = data.trustTailscale ?? defaults.trustTailscale;
+        this.keepAwakeHours = data.keepAwakeHours ?? defaults.keepAwakeHours;
         return;
       } catch {
         // Fall through to defaults
@@ -45,6 +49,7 @@ export class RemoteConfig {
     this.port = defaults.port;
     this.passwordHash = defaults.passwordHash;
     this.trustTailscale = defaults.trustTailscale;
+    this.keepAwakeHours = defaults.keepAwakeHours;
   }
 
   async setPassword(plaintext: string): Promise<void> {
@@ -77,16 +82,18 @@ export class RemoteConfig {
       port: this.port,
       passwordHash: this.passwordHash,
       trustTailscale: this.trustTailscale,
+      keepAwakeHours: this.keepAwakeHours,
     }, null, 2));
   }
 
   /** Return config data safe for the renderer (no password hash). */
-  toSafeObject(): { enabled: boolean; port: number; hasPassword: boolean; trustTailscale: boolean } {
+  toSafeObject(): { enabled: boolean; port: number; hasPassword: boolean; trustTailscale: boolean; keepAwakeHours: number } {
     return {
       enabled: this.enabled,
       port: this.port,
       hasPassword: !!this.passwordHash,
       trustTailscale: this.trustTailscale,
+      keepAwakeHours: this.keepAwakeHours,
     };
   }
 

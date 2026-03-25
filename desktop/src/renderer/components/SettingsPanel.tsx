@@ -6,8 +6,17 @@ interface RemoteConfig {
   port: number;
   hasPassword: boolean;
   trustTailscale: boolean;
+  keepAwakeHours: number;
   clientCount: number;
 }
+
+const KEEP_AWAKE_OPTIONS = [
+  { label: 'Off', value: 0 },
+  { label: '1h', value: 1 },
+  { label: '4h', value: 4 },
+  { label: '8h', value: 8 },
+  { label: '24h', value: 24 },
+];
 
 interface TailscaleInfo {
   installed: boolean;
@@ -107,6 +116,11 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
     const updated = await (window as any).claude.remote.setConfig({ trustTailscale: !config.trustTailscale });
     setConfig(prev => prev ? { ...prev, ...updated } : prev);
   }, [config]);
+
+  const handleSetKeepAwake = useCallback(async (hours: number) => {
+    const updated = await (window as any).claude.remote.setConfig({ keepAwakeHours: hours });
+    setConfig(prev => prev ? { ...prev, ...updated } : prev);
+  }, []);
 
   const handleRunSetup = useCallback(() => {
     if (!hasActiveSession) return;
@@ -258,6 +272,28 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
                     >
                       {passwordStatus === 'saved' ? '✓' : passwordStatus === 'saving' ? '...' : 'Set'}
                     </button>
+                  </div>
+                </div>
+
+                {/* Keep awake */}
+                <div className="py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-300">Keep awake</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {KEEP_AWAKE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleSetKeepAwake(opt.value)}
+                        className={`flex-1 px-1.5 py-1 rounded text-[10px] transition-colors ${
+                          config?.keepAwakeHours === opt.value
+                            ? 'bg-gray-300 text-gray-950 font-medium'
+                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </section>

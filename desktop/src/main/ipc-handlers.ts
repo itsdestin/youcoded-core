@@ -1,4 +1,4 @@
-import { IpcMain, BrowserWindow, dialog, clipboard, nativeImage, shell } from 'electron';
+import { IpcMain, BrowserWindow, dialog, clipboard, nativeImage, shell, powerSaveBlocker } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -136,7 +136,38 @@ export function registerIpcHandlers(
   });
 
   // --- Remote access settings ---
+  let keepAwakeBlockerId: number | null = null;
+  let keepAwakeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function applyKeepAwake(hours: number) {
+    // Clear existing blocker
+    if (keepAwakeBlockerId !== null) {
+      powerSaveBlocker.stop(keepAwakeBlockerId);
+      keepAwakeBlockerId = null;
+    }
+    if (keepAwakeTimeout) {
+      clearTimeout(keepAwakeTimeout);
+      keepAwakeTimeout = null;
+    }
+    // Start new blocker if hours > 0
+    if (hours > 0) {
+      keepAwakeBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+      keepAwakeTimeout = setTimeout(() => {
+        if (keepAwakeBlockerId !== null) {
+          powerSaveBlocker.stop(keepAwakeBlockerId);
+          keepAwakeBlockerId = null;
+        }
+        if (remoteConfig) {
+          remoteConfig.keepAwakeHours = 0;
+          remoteConfig.save();
+        }
+      }, hours * 60 * 60 * 1000);
+    }
+  }
+
   if (remoteConfig) {
+    // Apply saved keep-awake on startup
+    if (remoteConfig.keepAwakeHours > 0) applyKeepAwake(remoteConfig.keepAwakeHours);
     ipcMain.handle(IPC.REMOTE_GET_CONFIG, async () => {
       return {
         ...remoteConfig.toSafeObject(),
@@ -150,9 +181,13 @@ export function registerIpcHandlers(
       return true;
     });
 
-    ipcMain.handle(IPC.REMOTE_SET_CONFIG, async (_event, updates: { enabled?: boolean; trustTailscale?: boolean }) => {
+    ipcMain.handle(IPC.REMOTE_SET_CONFIG, async (_event, updates: { enabled?: boolean; trustTailscale?: boolean; keepAwakeHours?: number }) => {
       if (typeof updates.enabled === 'boolean') remoteConfig.enabled = updates.enabled;
       if (typeof updates.trustTailscale === 'boolean') remoteConfig.trustTailscale = updates.trustTailscale;
+      if (typeof updates.keepAwakeHours === 'number') {
+        remoteConfig.keepAwakeHours = updates.keepAwakeHours;
+        applyKeepAwake(updates.keepAwakeHours);
+      }
       remoteConfig.save();
       return remoteConfig.toSafeObject();
     });

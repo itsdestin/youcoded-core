@@ -563,6 +563,7 @@ export class RemoteServer {
       case 'remote:set-config': {
         if (typeof payload.enabled === 'boolean') this.config.enabled = payload.enabled;
         if (typeof payload.trustTailscale === 'boolean') this.config.trustTailscale = payload.trustTailscale;
+        if (typeof payload.keepAwakeHours === 'number') this.config.keepAwakeHours = payload.keepAwakeHours;
         this.config.save();
         this.respond(client.ws, type, id, this.config.toSafeObject());
         break;
