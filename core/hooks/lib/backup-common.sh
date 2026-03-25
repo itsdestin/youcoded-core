@@ -227,7 +227,7 @@ discover_projects() {
 
     if [[ -f "$tracked_file" ]] && command -v node &>/dev/null; then
         while IFS= read -r p; do
-            [[ -n "$p" ]] && skip_paths+=("$p")
+            [[ -n "$p" ]] && skip_paths+=("$(normalize_path "$p")")
         done < <(node -e "
             const fs = require('fs');
             try {
@@ -261,7 +261,7 @@ discover_projects() {
             for sp in "${skip_paths[@]}"; do
                 [[ "$norm_path" == "$sp" ]] && { skip=true; break; }
             done
-            "$skip" && continue
+            [[ "$skip" == "true" ]] && continue
 
             echo "$norm_path"
         done
