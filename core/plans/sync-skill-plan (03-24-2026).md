@@ -92,13 +92,13 @@ discover_projects() {
 
 - [ ] **Step 2: Verify the function is syntactically valid**
 
-Run: `bash -n /c/Users/desti/.claude/plugins/destinclaude/core/hooks/lib/backup-common.sh`
+Run: `bash -n $TOOLKIT_ROOT/core/hooks/lib/backup-common.sh`
 Expected: No output (clean parse)
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /c/Users/desti/.claude/plugins/destinclaude
+cd $TOOLKIT_ROOT
 git add core/hooks/lib/backup-common.sh
 git commit -m "feat(backup): add discover_projects() helper for project tracking"
 ```
@@ -140,18 +140,18 @@ fi
 
 - [ ] **Step 2: Verify session-start.sh parses cleanly**
 
-Run: `bash -n /c/Users/desti/.claude/plugins/destinclaude/core/hooks/session-start.sh`
+Run: `bash -n $TOOLKIT_ROOT/core/hooks/session-start.sh`
 Expected: No output (clean parse)
 
 - [ ] **Step 3: Test project discovery manually**
 
-Run: `source /c/Users/desti/.claude/plugins/destinclaude/core/hooks/lib/backup-common.sh && discover_projects`
+Run: `source $TOOLKIT_ROOT/core/hooks/lib/backup-common.sh && discover_projects`
 Expected: List of git repo paths found in ~/projects/, ~/repos/, ~/code/, ~/dev/, ~/src/, ~/Documents/, ~/Desktop/ (may be empty if no repos exist there)
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /c/Users/desti/.claude/plugins/destinclaude
+cd $TOOLKIT_ROOT
 git add core/hooks/session-start.sh
 git commit -m "feat(session-start): active project discovery replaces passive .unsynced-projects read"
 ```
@@ -167,7 +167,7 @@ The main deliverable. A Claude Code skill at `core/skills/sync/SKILL.md`.
 
 - [ ] **Step 1: Create the skill directory**
 
-Run: `mkdir -p /c/Users/desti/.claude/plugins/destinclaude/core/skills/sync`
+Run: `mkdir -p $TOOLKIT_ROOT/core/skills/sync`
 
 - [ ] **Step 2: Write SKILL.md**
 
@@ -459,13 +459,13 @@ This matches the `normalize_path()` function in `lib/backup-common.sh`.
 
 - [ ] **Step 3: Verify the skill file exists and is well-formed**
 
-Run: `head -5 /c/Users/desti/.claude/plugins/destinclaude/core/skills/sync/SKILL.md`
+Run: `head -5 $TOOLKIT_ROOT/core/skills/sync/SKILL.md`
 Expected: YAML frontmatter with name: sync
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /c/Users/desti/.claude/plugins/destinclaude
+cd $TOOLKIT_ROOT
 git add core/skills/sync/
 git commit -m "feat: add /sync skill — status dashboard, warning resolution, project onboarding, force sync"
 ```
@@ -483,7 +483,7 @@ The skill needs to be accessible to Claude Code via the skills directory.
 
 ```bash
 export MSYS=winsymlinks:nativestrict
-ln -sf /c/Users/desti/.claude/plugins/destinclaude/core/skills/sync ~/.claude/skills/sync
+ln -sf $TOOLKIT_ROOT/core/skills/sync ~/.claude/skills/sync
 ```
 
 - [ ] **Step 2: Verify symlink resolves**
@@ -506,7 +506,7 @@ No new files — just validation.
 - [ ] **Step 1: Verify session-start project discovery works**
 
 ```bash
-source /c/Users/desti/.claude/plugins/destinclaude/core/hooks/lib/backup-common.sh
+source $TOOLKIT_ROOT/core/hooks/lib/backup-common.sh
 discover_projects
 ```
 
@@ -520,7 +520,7 @@ The skill should appear in Claude Code's skill list. Invoke with `/sync` and ver
 
 Run session-start manually:
 ```bash
-bash /c/Users/desti/.claude/plugins/destinclaude/core/hooks/session-start.sh 2>&1 | head -20
+bash $TOOLKIT_ROOT/core/hooks/session-start.sh 2>&1 | head -20
 ```
 
 Verify `~/.claude/.sync-warnings` is created/updated.
