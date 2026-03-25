@@ -175,6 +175,13 @@ function AppInner() {
         return [...prev, ...newSessions];
       });
       setSessionId((prev) => prev ?? list[0].id);
+      // Mark all existing sessions as initialized — they're already running,
+      // so skip the "Initializing" overlay (which waits for first hook event)
+      setInitializedSessions((prev) => {
+        const next = new Set(prev);
+        for (const s of list) next.add(s.id);
+        return next;
+      });
     }).catch(() => {});
   }, [dispatch]);
 
