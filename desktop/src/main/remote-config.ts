@@ -98,10 +98,17 @@ export class RemoteConfig {
       const execFileAsync = promisify(execFile);
       let tsPath = 'tailscale';
       try { const w = require('which'); tsPath = w.sync('tailscale'); } catch {}
-      // Windows: Tailscale installs to Program Files but may not be on PATH
-      if (process.platform === 'win32' && tsPath === 'tailscale') {
-        const winPath = 'C:\\Program Files\\Tailscale\\tailscale.exe';
-        try { require('fs').accessSync(winPath); tsPath = winPath; } catch {}
+      // Platform-specific fallbacks when tailscale isn't on PATH
+      if (tsPath === 'tailscale') {
+        const fs = require('fs');
+        const candidates = process.platform === 'win32'
+          ? ['C:\\Program Files\\Tailscale\\tailscale.exe']
+          : process.platform === 'darwin'
+            ? ['/Applications/Tailscale.app/Contents/MacOS/Tailscale', '/usr/local/bin/tailscale', '/opt/homebrew/bin/tailscale']
+            : ['/usr/bin/tailscale', '/usr/local/bin/tailscale'];
+        for (const p of candidates) {
+          try { fs.accessSync(p); tsPath = p; break; } catch {}
+        }
       }
 
       const { stdout: ip } = await execFileAsync(tsPath, ['ip', '-4']);
