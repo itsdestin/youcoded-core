@@ -2,6 +2,33 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.1.3] - 2026-03-24
+
+### Added
+- **Blocking permission hooks** — Bidirectional relay for PermissionRequest hooks in the desktop app. relay-blocking.js holds the socket open for approve/deny responses, HookRelay generates request IDs, and the renderer shows Yes/Always Allow/No buttons on ToolCards. 300s timeout with fail-closed (auto-deny). Permission prompts render as standalone cards, collapse optimistically on click, and handle expiry gracefully.
+- **Plugin dependency checker** — `/health` and `/update` now scan enabled plugin hooks, toolkit hooks, and MCP server configs for missing external runtime dependencies, with platform-specific install suggestions.
+- **Initializing overlay** — Desktop app shows "Initializing session..." with a pulsing icon until Claude Code is ready, preventing premature input.
+
+### Changed
+- **Hookify removed from defaults** — Hookify no longer auto-registered for new installs (fires 4 hooks per tool call with no rules configured). Users can still enable it manually.
+- **Permission mode badge** — HeaderBar badge now syncs reactively from PTY screen text detection, matching the mobile app approach. Detects mode changes from any source (badge click, terminal Shift+Tab, etc.).
+
+### Fixed
+- **DestinCode desktop app now functional** — The desktop app shipped in v2.0.0 but was unlaunchable for all users due to cascading issues: session spawn failed (bare `which` package unavailable outside asar), trust prompt never appeared (xterm zero-size buffer from `display:none`, Windows ConPTY selector character mismatch), and stale hook relay paths broke on every install after the first. These are now resolved — the app launches, creates sessions, detects prompts, and handles permissions on all three platforms.
+- **Cross-platform compatibility** — 10 targeted fixes: `path.delimiter` for PATH joining, `fs.cpSync` replacing Unix `cp` in npm scripts, forward-slash path conversion in install.ps1, `process.platform` guard on iMessages MCP, `printf` for bash 3.2, `os.homedir()` replacing env vars, macOS Keychain platform check, asar path handling, case-insensitive path matching, portable shebangs.
+- **Comprehensive bug audit** — 23 fixes across shell, TS, and Go: code injection in post-update.sh, unquoted glob expansion (data loss risk), unchecked JSON unmarshalling, DB connection leaks, hook relay socket race, DNS lookup timeout, sha256sum portability, osascript injection, XSS prevention in markdown renderer, and more.
+- **Permission prompt deduplication** — Debounced parser-based detection with hook-event cancellation prevents showing duplicate prompts for the same tool approval.
+- **Hardcoded user path** — Removed `C:/Users/desti` from post-update.sh MCP scanning; now derives project key dynamically via `os.homedir()`.
+- **Non-destructive symlink conversion** — post-update.sh now diffs copies against source before replacing with symlinks, preserving user-modified files.
+- **macOS timeout compatibility** — DNS connectivity check guards GNU `timeout` with `command -v`, falling back to node's `setTimeout`.
+- **Execute permissions** — Set +x on scripts/post-update.sh, release.sh, security-sweep.sh.
+
+### Documentation
+- Blocking permission hooks design spec and implementation plan
+- Plugin count updated 14→13 across all specs and docs (hookify removal)
+- Hook count updated 14→16 in system-architecture-spec; added worktree-guard, check-inbox, sync-encyclopedia to hook table
+- Desktop app architecture section updated with permission hooks system
+
 ## [2.1.2] - 2026-03-24
 
 ### Fixed
