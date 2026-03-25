@@ -370,6 +370,27 @@ if [[ -n "$_PULL_BACKEND" ]]; then
     esac
 fi
 
+# --- Legacy conversation migration (Design ref: D9) ---
+# One-time: copy conversations from old gdrive:Claude/Backup/conversations/
+# to new gdrive:Claude/Backup/personal/conversations/
+_LEGACY_MARKER="$CLAUDE_DIR/toolkit-state/.legacy-conversations-migrated"
+if [[ ! -f "$_LEGACY_MARKER" ]] && command -v rclone &>/dev/null; then
+    DRIVE_ROOT=$(config_get "DRIVE_ROOT" "Claude")
+    _LEGACY_PATH="gdrive:$DRIVE_ROOT/Backup/conversations/"
+    # Check if legacy path exists
+    if rclone lsd "$_LEGACY_PATH" &>/dev/null; then
+        log_backup "INFO" "Migrating legacy conversations from $_LEGACY_PATH..."
+        rclone copy "$_LEGACY_PATH" "gdrive:$DRIVE_ROOT/Backup/personal/conversations/" \
+            --checksum 2>/dev/null && {
+            date +%s > "$_LEGACY_MARKER"
+            log_backup "INFO" "Legacy conversation migration complete"
+        } || log_backup "WARN" "Legacy conversation migration failed (will retry next session)"
+    else
+        # No legacy path — mark as done
+        date +%s > "$_LEGACY_MARKER"
+    fi
+fi
+
 # --- Cross-device project slug rewriting (after pull) ---
 # If backup data came from a device with a different $HOME, the project slug
 # directories won't match. Symlink foreign slugs into the current device's slug
