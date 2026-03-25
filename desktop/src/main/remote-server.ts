@@ -318,7 +318,7 @@ export class RemoteServer {
     const client: AuthenticatedClient = { ws, token };
     this.clients.add(client);
 
-    ws.on('message', (raw) => this.handleMessage(client, raw));
+    ws.on('message', (raw) => this.handleMessage(client, raw as Buffer | string));
     ws.on('close', () => this.clients.delete(client));
     ws.on('error', () => this.clients.delete(client));
   }
