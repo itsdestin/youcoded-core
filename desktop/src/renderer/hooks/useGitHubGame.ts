@@ -11,6 +11,11 @@ export function useGitHubGame() {
   const opsRef = useRef<GameOps | null>(null);
   const currentGameCode = useRef<string | null>(null);
 
+  // Refs for synchronous access in poll callbacks (avoids stale closures)
+  const movePendingRef = useRef(false);
+  const actionCountRef = useRef(0);
+  const chatCountRef = useRef(0);
+
   // ── Initialize: get GitHub auth on mount ──
   useEffect(() => {
     let cancelled = false;
@@ -71,37 +76,57 @@ export function useGitHubGame() {
   }, [state.screen, dispatch]);
 
   // ── Game state poll (10s, during opponent's turn) ──
+  // Uses refs to avoid stale closure bugs and to skip polls during in-flight moves
   useEffect(() => {
     if (state.screen !== 'playing' || !opsRef.current || !currentGameCode.current) return;
     if (state.turn === state.myColor) return; // my turn, no need to poll
+
     const poll = async () => {
+      // Skip if a local move is in flight — the API response hasn't returned yet,
+      // so the server might not have our comment and would return stale state
+      if (movePendingRef.current) return;
+
       const ops = opsRef.current;
       const code = currentGameCode.current;
       if (!ops || !code) return;
       try {
-        const game = await ops.readGame(code);
-        if (!game) return;
-        // Check if game state changed
-        if (game.status === 'finished' && game.winner) {
-          dispatch({ type: 'GAME_STATE', board: game.board, turn: game.turn, lastMove: state.lastMove! });
-          dispatch({ type: 'GAME_OVER', winner: game.winner, line: game.winLine });
-        } else if (game.turn !== state.turn) {
-          dispatch({ type: 'GAME_STATE', board: game.board, turn: game.turn, lastMove: { col: 0, row: 0 } });
-        }
-        // Check for new chat messages
-        if (game.chat && game.chat.length > state.chatMessages.length) {
-          const newMsgs = game.chat.slice(state.chatMessages.length);
+        const readResult = await ops.readGame(code);
+        if (!readResult) return;
+        const { game, actionCount } = readResult;
+
+        // Double-check: could have started a move while the fetch was in flight
+        if (movePendingRef.current) return;
+
+        // Only apply if the server has strictly MORE actions than we know about.
+        // This prevents stale reads from reverting optimistic local state.
+        if (actionCount <= actionCountRef.current) return;
+
+        actionCountRef.current = actionCount;
+        dispatch({
+          type: 'GAME_STATE',
+          board: game.board,
+          turn: game.turn,
+          lastMove: { col: 0, row: 0 },
+          actionCount,
+          winner: game.status === 'finished' ? game.winner : undefined,
+          winLine: game.status === 'finished' ? game.winLine : undefined,
+        });
+
+        // Sync chat messages
+        if (game.chat && game.chat.length > chatCountRef.current) {
+          const newMsgs = game.chat.slice(chatCountRef.current);
           for (const msg of newMsgs) {
             if (msg.from !== state.username) {
               dispatch({ type: 'CHAT_MESSAGE', from: msg.from, text: msg.text });
             }
           }
+          chatCountRef.current = game.chat.length;
         }
       } catch {}
     };
     const interval = setInterval(poll, 10_000);
     return () => clearInterval(interval);
-  }, [state.screen, state.turn, state.myColor, state.chatMessages.length, state.username, state.lastMove, dispatch]);
+  }, [state.screen, state.turn, state.myColor, state.username, dispatch]);
 
   // ── Waiting for opponent poll (10s, on waiting screen) ──
   useEffect(() => {
@@ -111,14 +136,18 @@ export function useGitHubGame() {
       const code = currentGameCode.current;
       if (!ops || !code) return;
       try {
-        const game = await ops.readGame(code);
-        if (!game) return;
+        const readResult = await ops.readGame(code);
+        if (!readResult) return;
+        const { game, actionCount } = readResult;
         if (game.status === 'playing' && game.yellow) {
+          actionCountRef.current = actionCount;
+          chatCountRef.current = 0;
           dispatch({
             type: 'GAME_START',
             board: game.board,
             you: game.red === state.username ? 'red' : 'yellow',
             opponent: game.red === state.username ? game.yellow : game.red,
+            actionCount,
           });
         }
       } catch {}
@@ -133,6 +162,8 @@ export function useGitHubGame() {
     if (!opsRef.current) return;
     const code = await opsRef.current.createGame();
     currentGameCode.current = code;
+    actionCountRef.current = 0;
+    chatCountRef.current = 0;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
   }, [dispatch]);
 
@@ -140,36 +171,59 @@ export function useGitHubGame() {
     if (!opsRef.current) return;
     const result = await opsRef.current.joinGame(code);
     if (!result.ok) return; // TODO: show error
-    const game = await opsRef.current.readGame(code);
-    if (!game) return;
+    const readResult = await opsRef.current.readGame(code);
+    if (!readResult) return;
     currentGameCode.current = code;
+    actionCountRef.current = readResult.actionCount;
+    chatCountRef.current = 0;
     dispatch({
       type: 'GAME_START',
-      board: game.board,
+      board: readResult.game.board,
       you: 'yellow',
-      opponent: game.red,
+      opponent: readResult.game.red,
+      actionCount: readResult.actionCount,
     });
   }, [dispatch]);
 
   const makeMove = useCallback(async (column: number) => {
     if (!opsRef.current || !currentGameCode.current) return;
-    const result = await opsRef.current.makeMove(currentGameCode.current, column);
-    if (!result.ok || !result.gameState) return;
-    const game = result.gameState;
-    dispatch({
-      type: 'GAME_STATE',
-      board: game.board,
-      turn: game.turn,
-      lastMove: { col: column, row: 0 }, // approximate — the reducer uses this for display
-    });
-    if (game.status === 'finished' && game.winner) {
-      dispatch({ type: 'GAME_OVER', winner: game.winner, line: game.winLine });
+    // Block concurrent moves — prevents double-click and race conditions
+    if (movePendingRef.current) return;
+
+    movePendingRef.current = true;
+    dispatch({ type: 'MOVE_PENDING', pending: true });
+
+    try {
+      const result = await opsRef.current.makeMove(currentGameCode.current, column);
+      if (!result.ok || !result.gameState) {
+        movePendingRef.current = false;
+        dispatch({ type: 'MOVE_PENDING', pending: false });
+        return;
+      }
+      const game = result.gameState;
+      const newActionCount = result.actionCount ?? (actionCountRef.current + 1);
+      actionCountRef.current = newActionCount;
+
+      // Single atomic dispatch — board + turn + optional game-over in one frame
+      dispatch({
+        type: 'GAME_STATE',
+        board: game.board,
+        turn: game.turn,
+        lastMove: { col: column, row: 0 },
+        actionCount: newActionCount,
+        winner: game.status === 'finished' ? game.winner : undefined,
+        winLine: game.status === 'finished' ? game.winLine : undefined,
+      });
+    } finally {
+      movePendingRef.current = false;
+      dispatch({ type: 'MOVE_PENDING', pending: false });
     }
   }, [dispatch]);
 
   const sendChat = useCallback(async (text: string) => {
     if (!opsRef.current || !currentGameCode.current) return;
     await opsRef.current.sendChat(currentGameCode.current, text);
+    chatCountRef.current += 1;
     dispatch({ type: 'CHAT_MESSAGE', from: state.username || '', text });
   }, [dispatch, state.username]);
 
@@ -178,11 +232,15 @@ export function useGitHubGame() {
     const result = await opsRef.current.requestRematch(currentGameCode.current);
     if (result.ready && result.gameState) {
       const game = result.gameState;
+      const ac = result.actionCount ?? 0;
+      actionCountRef.current = ac;
+      chatCountRef.current = 0;
       dispatch({
         type: 'GAME_START',
         board: game.board,
         you: game.red === state.username ? 'red' : 'yellow',
         opponent: game.red === state.username ? (game.yellow || '') : game.red,
+        actionCount: ac,
       });
     }
     // If not ready, opponent hasn't voted yet — keep polling
@@ -192,12 +250,16 @@ export function useGitHubGame() {
     if (!opsRef.current || !currentGameCode.current) return;
     await opsRef.current.leaveGame(currentGameCode.current);
     currentGameCode.current = null;
+    actionCountRef.current = 0;
+    chatCountRef.current = 0;
   }, []);
 
   const challengePlayer = useCallback(async (target: string) => {
     if (!opsRef.current) return;
     const code = await opsRef.current.challengePlayer(target);
     currentGameCode.current = code;
+    actionCountRef.current = 0;
+    chatCountRef.current = 0;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
   }, [dispatch]);
 
@@ -207,12 +269,16 @@ export function useGitHubGame() {
     const result = await opsRef.current.respondToChallenge(from, accept);
     if (accept && result.ok && result.gameState) {
       const game = result.gameState;
+      const ac = result.actionCount ?? 0;
       currentGameCode.current = game.code;
+      actionCountRef.current = ac;
+      chatCountRef.current = 0;
       dispatch({
         type: 'GAME_START',
         board: game.board,
         you: 'yellow',
         opponent: game.red,
+        actionCount: ac,
       });
     }
   }, [dispatch]);

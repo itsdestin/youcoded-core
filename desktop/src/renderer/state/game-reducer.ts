@@ -34,15 +34,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winLine: null,
         chatMessages: [],
         lastMove: null,
+        actionCount: action.actionCount,
+        movePending: false,
       };
 
-    case 'GAME_STATE':
-      return {
+    case 'GAME_STATE': {
+      // Reject stale poll data — only apply if remote has more actions than we know about
+      if (action.actionCount <= state.actionCount) return state;
+      const next: GameState = {
         ...state,
         board: action.board,
         turn: action.turn,
         lastMove: action.lastMove,
+        actionCount: action.actionCount,
       };
+      // Handle game-over atomically (no flicker frame between board update and overlay)
+      if (action.winner) {
+        return { ...next, winner: action.winner, winLine: action.winLine ?? null, screen: 'game-over' };
+      }
+      return next;
+    }
 
     case 'GAME_OVER':
       return {
@@ -51,6 +62,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winLine: action.line ?? null,
         screen: 'game-over',
       };
+
+    case 'MOVE_PENDING':
+      return { ...state, movePending: action.pending };
 
     case 'CHAT_MESSAGE':
       return {
@@ -79,6 +93,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winLine: null,
         chatMessages: [],
         lastMove: null,
+        actionCount: 0,
+        movePending: false,
       };
 
     case 'CHALLENGE_RECEIVED':

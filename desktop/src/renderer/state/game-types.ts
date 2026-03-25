@@ -32,6 +32,10 @@ export interface GameState {
   challengeFrom: string | null;
   /** Outgoing challenge was declined */
   challengeDeclinedBy: string | null;
+  /** Monotonic version — total action count from GitHub comments */
+  actionCount: number;
+  /** True while a move API call is in flight — blocks clicks and polls */
+  movePending: boolean;
 }
 
 export type GameAction =
@@ -40,9 +44,10 @@ export type GameAction =
   | { type: 'CONNECTION_STATUS'; connected: boolean }
   | { type: 'PRESENCE_UPDATE'; online: OnlineUser[] }
   | { type: 'ROOM_CREATED'; code: string; color: PlayerColor }
-  | { type: 'GAME_START'; board: number[][]; you: PlayerColor; opponent: string }
-  | { type: 'GAME_STATE'; board: number[][]; turn: PlayerColor; lastMove: { col: number; row: number } }
+  | { type: 'GAME_START'; board: number[][]; you: PlayerColor; opponent: string; actionCount: number }
+  | { type: 'GAME_STATE'; board: number[][]; turn: PlayerColor; lastMove: { col: number; row: number }; actionCount: number; winner?: PlayerColor | 'draw'; winLine?: [number, number][] }
   | { type: 'GAME_OVER'; winner: PlayerColor | 'draw'; line?: [number, number][] }
+  | { type: 'MOVE_PENDING'; pending: boolean }
   | { type: 'CHAT_MESSAGE'; from: string; text: string }
   | { type: 'OPPONENT_DISCONNECTED' }
   | { type: 'TOGGLE_PANEL' }
@@ -71,5 +76,7 @@ export function createInitialGameState(): GameState {
     panelOpen: false,
     challengeFrom: null,
     challengeDeclinedBy: null,
+    actionCount: 0,
+    movePending: false,
   };
 }
