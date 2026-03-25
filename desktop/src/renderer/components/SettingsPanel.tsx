@@ -170,22 +170,32 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
                     Remote access lets you use DestinCode from any device — phone, tablet, or another computer.
                   </p>
 
-                  {/* Show QR if Tailscale is connected and password is set */}
                   {tailscale?.installed && tailscale.url && config?.hasPassword ? (
-                    <div className="mt-2">
-                      <p className="text-[10px] text-gray-500 mb-2">Scan to connect a device:</p>
-                      <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
-                        <QRCodeSVG value={tailscale.url} size={140} />
+                    /* Tailscale ready — show button that expands to QR */
+                    showAddDevice ? (
+                      <div className="mt-2">
+                        <p className="text-[10px] text-gray-500 mb-2">Scan to connect a device:</p>
+                        <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
+                          <QRCodeSVG value={tailscale.url} size={140} />
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2 text-center font-mono">{tailscale.url}</p>
+                        <button
+                          onClick={handleCopyLink}
+                          className="w-full mt-2 px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[10px] text-gray-400"
+                        >
+                          {copied ? 'Copied!' : 'Copy link'}
+                        </button>
                       </div>
-                      <p className="text-[10px] text-gray-500 mt-2 text-center font-mono">{tailscale.url}</p>
+                    ) : (
                       <button
-                        onClick={handleCopyLink}
-                        className="w-full mt-2 px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[10px] text-gray-400"
+                        onClick={() => setShowAddDevice(true)}
+                        className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium"
                       >
-                        {copied ? 'Copied!' : 'Copy link'}
+                        Set Up Remote Access
                       </button>
-                    </div>
+                    )
                   ) : (
+                    /* Tailscale not installed — run the setup skill */
                     <>
                       <button
                         onClick={handleRunSetup}
