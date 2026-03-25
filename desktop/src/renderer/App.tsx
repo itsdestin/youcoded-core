@@ -65,6 +65,14 @@ function AppInner() {
       setSessionId((prev) => prev ?? info.id);
       setViewModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, 'chat'));
       setPermissionModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, info.permissionMode || 'normal'));
+      // Mark as initialized immediately — the TrustGate handles blocking for
+      // trust prompts, so the Initializing overlay is not needed as a gate
+      setInitializedSessions((prev) => {
+        if (prev.has(info.id)) return prev;
+        const next = new Set(prev);
+        next.add(info.id);
+        return next;
+      });
     });
 
     const destroyedHandler = window.claude.on.sessionDestroyed((id) => {
