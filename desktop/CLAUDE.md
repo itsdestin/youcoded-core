@@ -17,6 +17,10 @@ Electron + React app that wraps Claude Code CLI in a GUI.
 - **Preload** (`src/main/preload.ts`) — IPC channel constants are inlined (not imported) because Electron's sandboxed preload cannot resolve relative imports
 - **TerminalRegistry** (`src/renderer/hooks/terminal-registry.ts`) — Coordinates xterm.js instances, screen buffer reads, and write-completion notifications. Permission prompt detection depends on the write-callback pub/sub here — do not bypass it by reading the buffer on raw `pty:output` events
 - **PermissionMode** (`src/shared/types.ts`) — `'normal' | 'auto-accept' | 'plan' | 'bypass'`. The HeaderBar badge cycles through these on click by sending Shift+Tab (`\x1b[Z`) to the PTY. Bypass mode only appears in sessions created with `skipPermissions: true`
+- **RemoteServer** (`src/main/remote-server.ts`) — HTTP + WebSocket server for remote browser access. Handles auth tokens, PTY buffer replay, hook event relay, and cross-device session sync
+- **RemoteConfig** (`src/main/remote-config.ts`) — Reads/writes `~/.claude/destincode-remote.json` for port, password hash, and Tailscale trust settings
+- **SkillScanner** (`src/main/skill-scanner.ts`) — Scans installed skills and exposes them to the remote UI's command drawer
+- **SettingsPanel** (`src/renderer/components/SettingsPanel.tsx`) — Settings UI for remote access config (password, Tailscale trust, QR code, connected clients)
 
 ## Node.js vs Browser Boundary
 
@@ -46,4 +50,4 @@ DestinCode includes a built-in remote access server that serves the UI to any we
 
 ## Spec
 
-See `~/.claude/specs/claude-desktop-ui-spec.md` for full design.
+See `desktop/docs/` for design documents and implementation plans.
