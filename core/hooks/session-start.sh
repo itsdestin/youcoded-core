@@ -276,12 +276,11 @@ if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
 fi
 
 # --- Encyclopedia cache sync ---
+# Handled by personal data pull (Phase 2) from Backup/personal/encyclopedia/.
+# Previously had a standalone sync here using ENCYCLOPEDIA_DRIVE_PATH config,
+# but the default path ("The Journal/System") doesn't exist for most users,
+# causing rclone to retry 3x (~20s wasted). Deduplicated per optimization design D3.
 mkdir -p "$ENCYCLOPEDIA_DIR"
-if command -v rclone &>/dev/null; then
-    _ENCY_PATH=$(config_get "ENCYCLOPEDIA_DRIVE_PATH" "The Journal/System")
-    rclone sync "gdrive:$DRIVE_ROOT/$_ENCY_PATH/" "$ENCYCLOPEDIA_DIR/" 2>/dev/null || \
-        echo '{"hookSpecificOutput": "Warning: Encyclopedia cache sync failed. Skills will use stale cache."}' >&2
-fi
 
 # --- Personal data pull from configured backend (Design ref: D6) ---
 # Pull from the first (preferred) configured backend only.
