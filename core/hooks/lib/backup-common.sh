@@ -238,7 +238,7 @@ aggregate_conversations() {
     [[ -n "$computed_slug" ]] && home_slugs+=("$computed_slug")
 
     # On Windows, also detect the Windows-native slug variant
-    if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+    if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* || "$(uname -s)" == CYGWIN* ]]; then
         # Get the Windows-style path (e.g., C:\Users\desti → C--Users-desti)
         local win_home
         win_home=$(cygpath -w "$HOME" 2>/dev/null || echo "")
@@ -255,7 +255,7 @@ aggregate_conversations() {
     [[ ${#home_slugs[@]} -eq 0 ]] && return 0
 
     # Windows symlink support
-    [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]] && export MSYS=winsymlinks:nativestrict
+    [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* || "$(uname -s)" == CYGWIN* ]] && export MSYS=winsymlinks:nativestrict
 
     local total_aggregated=0
 
