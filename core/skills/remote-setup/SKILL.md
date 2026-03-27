@@ -1,3 +1,4 @@
+<!-- SPEC: Read core/specs/remote-access-spec.md before modifying this file -->
 ---
 name: remote-setup
 description: Set up remote access for DestinCode — installs Tailscale, configures password, and walks you through connecting from your phone. Use when the user says "set up remote access", "remote setup", "I want to use DestinCode from my phone", or similar.
