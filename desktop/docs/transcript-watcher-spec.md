@@ -60,7 +60,7 @@ An `EventEmitter` in the main process that manages watching one transcript file 
 
 - `parseTranscriptLine(line, sessionId)` — Parses a single JSONL line into zero or more `TranscriptEvent` objects. Handles content block types: `text`, `tool_use`, `tool_result`. Skips `thinking`, `image`, and non-message lines (`file-history-snapshot`, `queue-operation`). Only emits `user-message` for lines with a `promptId` (user-typed prompts, not tool-result wrappers).
 
-- `cwdToProjectSlug(cwd)` — Converts a filesystem path to Claude Code's project directory slug (e.g., `C:\Users\desti` → `C--Users-desti`).
+- `cwdToProjectSlug(cwd)` — Converts a filesystem path to Claude Code's project directory slug (e.g., `C:\Users\alice` → `C--Users-alice`).
 
 - `startWatching(desktopSessionId, claudeSessionId, cwd)` — Computes the transcript path, reads existing content (catch-up), then attaches `fs.watch`. Falls back to 1-second polling if the file doesn't exist yet.
 

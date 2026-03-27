@@ -239,17 +239,17 @@ describe('parseTranscriptLine', () => {
 // cwdToProjectSlug
 // ---------------------------------------------------------------------------
 describe('cwdToProjectSlug', () => {
-  it('converts Windows path: C:\\Users\\desti → C--Users-desti', () => {
-    expect(cwdToProjectSlug('C:\\Users\\desti')).toBe('C--Users-desti');
+  it('converts Windows path: C:\\Users\\alice → C--Users-alice', () => {
+    expect(cwdToProjectSlug('C:\\Users\\alice')).toBe('C--Users-alice');
   });
 
   it('converts Unix path: /home/user/project → home-user-project', () => {
     expect(cwdToProjectSlug('/home/user/project')).toBe('home-user-project');
   });
 
-  it('converts nested Windows path: C:\\Users\\desti\\destinclaude\\desktop → C--Users-desti-destinclaude-desktop', () => {
-    expect(cwdToProjectSlug('C:\\Users\\desti\\destinclaude\\desktop')).toBe(
-      'C--Users-desti-destinclaude-desktop'
+  it('converts nested Windows path: C:\\Users\\alice\\destinclaude\\desktop → C--Users-alice-destinclaude-desktop', () => {
+    expect(cwdToProjectSlug('C:\\Users\\alice\\destinclaude\\desktop')).toBe(
+      'C--Users-alice-destinclaude-desktop'
     );
   });
 });
@@ -274,7 +274,7 @@ describe('TranscriptWatcher', () => {
   it('emits transcript-event when lines are appended to the file', async () => {
     const desktopSessionId = 'desktop-1';
     const claudeSessionId = 'claude-session-abc';
-    const cwd = 'C:\\Users\\desti';
+    const cwd = 'C:\\Users\\alice';
 
     // Create the project directory and JSONL file
     const slug = cwdToProjectSlug(cwd);
@@ -348,7 +348,7 @@ describe('TranscriptWatcher', () => {
   it('stopWatching cleans up the session', () => {
     const desktopSessionId = 'desktop-3';
     const claudeSessionId = 'claude-session-stop';
-    const cwd = 'C:\\Users\\desti';
+    const cwd = 'C:\\Users\\alice';
 
     const slug = cwdToProjectSlug(cwd);
     const projectDir = path.join(tmpDir, slug);
@@ -437,7 +437,7 @@ describe('TranscriptWatcher', () => {
   it('falls back to polling if file does not exist yet', async () => {
     const desktopSessionId = 'desktop-5';
     const claudeSessionId = 'claude-session-poll';
-    const cwd = 'C:\\Users\\desti\\newproject';
+    const cwd = 'C:\\Users\\alice\\newproject';
 
     const events: TranscriptEvent[] = [];
     watcher.on('transcript-event', (ev: TranscriptEvent) => events.push(ev));
