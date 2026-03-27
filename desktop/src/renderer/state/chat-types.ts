@@ -50,36 +50,6 @@ export type ChatAction =
       timestamp: number;
     }
   | {
-      type: 'PRE_TOOL_USE';
-      sessionId: string;
-      toolUseId: string;
-      toolName: string;
-      input: Record<string, unknown>;
-    }
-  | {
-      type: 'POST_TOOL_USE';
-      sessionId: string;
-      toolUseId: string;
-      response?: string;
-    }
-  | {
-      type: 'POST_TOOL_USE_FAILURE';
-      sessionId: string;
-      toolUseId: string;
-      error?: string;
-    }
-  | {
-      type: 'STOP';
-      sessionId: string;
-      lastAssistantMessage: string;
-      timestamp: number;
-    }
-  | {
-      type: 'UPDATE_STREAMING';
-      sessionId: string;
-      text: string;
-    }
-  | {
       type: 'SHOW_PROMPT';
       sessionId: string;
       promptId: string;
