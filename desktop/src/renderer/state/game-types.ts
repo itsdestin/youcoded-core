@@ -30,8 +30,12 @@ export interface GameState {
   panelOpen: boolean;
   /** Incoming challenge from another player */
   challengeFrom: string | null;
+  /** Room code from incoming challenge */
+  challengeCode: string | null;
   /** Outgoing challenge was declined */
   challengeDeclinedBy: string | null;
+  /** Whether this player has requested a rematch */
+  rematchRequested: boolean;
 }
 
 export type GameAction =
@@ -51,9 +55,10 @@ export type GameAction =
   | { type: 'TOGGLE_PANEL' }
   | { type: 'RETURN_TO_LOBBY' }
   | { type: 'RESET' }
-  | { type: 'CHALLENGE_RECEIVED'; from: string }
+  | { type: 'CHALLENGE_RECEIVED'; from: string; code: string }
   | { type: 'CHALLENGE_DECLINED'; by: string }
-  | { type: 'CLEAR_CHALLENGE' };
+  | { type: 'CLEAR_CHALLENGE' }
+  | { type: 'REMATCH_REQUESTED' };
 
 export interface GameConnection {
   createGame: () => void;
@@ -84,6 +89,8 @@ export function createInitialGameState(): GameState {
     chatMessages: [],
     panelOpen: false,
     challengeFrom: null,
+    challengeCode: null,
     challengeDeclinedBy: null,
+    rematchRequested: false,
   };
 }

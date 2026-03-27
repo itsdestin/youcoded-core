@@ -52,6 +52,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winLine: null,
         chatMessages: [],
         lastMove: null,
+        rematchRequested: false,
       };
 
     case 'GAME_STATE': {
@@ -102,16 +103,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winLine: null,
         chatMessages: [],
         lastMove: null,
+        challengeCode: null,
+        rematchRequested: false,
       };
 
     case 'CHALLENGE_RECEIVED':
-      return { ...state, challengeFrom: action.from, panelOpen: true };
+      return { ...state, challengeFrom: action.from, challengeCode: action.code, panelOpen: true };
 
     case 'CHALLENGE_DECLINED':
       return { ...state, challengeDeclinedBy: action.by };
 
     case 'CLEAR_CHALLENGE':
-      return { ...state, challengeFrom: null, challengeDeclinedBy: null };
+      return { ...state, challengeFrom: null, challengeCode: null, challengeDeclinedBy: null };
+
+    case 'REMATCH_REQUESTED':
+      return { ...state, rematchRequested: true };
 
     case 'RESET':
       return createInitialGameState();

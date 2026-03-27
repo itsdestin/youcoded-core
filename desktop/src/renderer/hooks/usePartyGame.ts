@@ -24,6 +24,7 @@ export function usePartyGame(
   const myColorRef = useRef<'red' | 'yellow' | null>(null);
   const boardRef = useRef<number[][]>([]);
   const turnRef = useRef<'red' | 'yellow'>('red');
+  const rematchRequestedRef = useRef(false);
 
   // Clean up game connection on unmount
   useEffect(() => {
@@ -75,6 +76,7 @@ export function usePartyGame(
             const winLine = checkWin(result.board, { col: data.column, row: result.row });
             const isDraw = !winLine && checkDraw(result.board);
             const nextTurn = turnRef.current === 'red' ? 'yellow' : 'red';
+            turnRef.current = nextTurn;
 
             if (winLine) {
               dispatch({
@@ -82,7 +84,7 @@ export function usePartyGame(
                 board: result.board,
                 turn: nextTurn,
                 lastMove: { col: data.column, row: result.row },
-                winner: turnRef.current,
+                winner: nextTurn === 'red' ? 'yellow' : 'red',
                 winLine: winLine as [number, number][],
               });
             } else if (isDraw) {
@@ -94,7 +96,6 @@ export function usePartyGame(
                 winner: 'draw',
               });
             } else {
-              turnRef.current = nextTurn;
               dispatch({
                 type: 'GAME_STATE',
                 board: result.board,
@@ -113,16 +114,23 @@ export function usePartyGame(
           }
 
           case 'rematch': {
-            const board = createBoard();
-            boardRef.current = board;
-            myColorRef.current = myColorRef.current === 'red' ? 'yellow' : 'red';
-            turnRef.current = 'red';
-            dispatch({
-              type: 'GAME_START',
-              board,
-              you: myColorRef.current,
-              opponent: data.username,
-            });
+            if (rematchRequestedRef.current) {
+              // Both players agreed — start new game
+              const board = createBoard();
+              boardRef.current = board;
+              myColorRef.current = myColorRef.current === 'red' ? 'yellow' : 'red';
+              turnRef.current = 'red';
+              rematchRequestedRef.current = false;
+              dispatch({
+                type: 'GAME_START',
+                board,
+                you: myColorRef.current,
+                opponent: data.username,
+              });
+            } else {
+              // Opponent wants a rematch; we haven't agreed yet
+              dispatch({ type: 'REMATCH_REQUESTED' });
+            }
             break;
           }
         }
@@ -137,6 +145,7 @@ export function usePartyGame(
     if (!state.username) return;
     const code = generateCode();
     myColorRef.current = 'red';
+    rematchRequestedRef.current = false;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
     connectToRoom(code, state.username);
   }, [state.username, dispatch, connectToRoom]);
@@ -144,6 +153,7 @@ export function usePartyGame(
   const joinGame = useCallback((code: string) => {
     if (!state.username) return;
     myColorRef.current = 'yellow';
+    rematchRequestedRef.current = false;
     connectToRoom(code, state.username);
   }, [state.username, connectToRoom]);
 
@@ -156,7 +166,9 @@ export function usePartyGame(
     boardRef.current = result.board;
     const winLine = checkWin(result.board, { col: column, row: result.row });
     const isDraw = !winLine && checkDraw(result.board);
-    const nextTurn = turnRef.current === 'red' ? 'yellow' : 'red';
+    const mover = turnRef.current;
+    const nextTurn = mover === 'red' ? 'yellow' : 'red';
+    turnRef.current = nextTurn;
 
     clientRef.current.send({ type: 'move', username: state.username, column });
 
@@ -166,7 +178,7 @@ export function usePartyGame(
         board: result.board,
         turn: nextTurn,
         lastMove: { col: column, row: result.row },
-        winner: turnRef.current,
+        winner: mover,
         winLine: winLine as [number, number][],
       });
     } else if (isDraw) {
@@ -178,7 +190,6 @@ export function usePartyGame(
         winner: 'draw',
       });
     } else {
-      turnRef.current = nextTurn;
       dispatch({
         type: 'GAME_STATE',
         board: result.board,
@@ -196,8 +207,10 @@ export function usePartyGame(
 
   const requestRematch = useCallback(() => {
     if (!clientRef.current || !state.username) return;
+    rematchRequestedRef.current = true;
     clientRef.current.send({ type: 'rematch', username: state.username });
-  }, [state.username]);
+    dispatch({ type: 'REMATCH_REQUESTED' });
+  }, [state.username, dispatch]);
 
   const leaveGame = useCallback(() => {
     if (clientRef.current && state.username) {
@@ -209,6 +222,7 @@ export function usePartyGame(
     myColorRef.current = null;
     boardRef.current = [];
     turnRef.current = 'red';
+    rematchRequestedRef.current = false;
     lobbyStatusUpdate('idle');
   }, [state.username, lobbyStatusUpdate]);
 
@@ -216,6 +230,7 @@ export function usePartyGame(
     if (!state.username) return;
     const code = generateCode();
     myColorRef.current = 'red';
+    rematchRequestedRef.current = false;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
     connectToRoom(code, state.username);
     lobbyChallenge(target, 'connect-four', code);

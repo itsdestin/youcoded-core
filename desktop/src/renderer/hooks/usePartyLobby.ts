@@ -37,7 +37,7 @@ export function usePartyLobby() {
                 dispatch({ type: 'USER_STATUS', username: data.username, status: data.status });
                 break;
               case 'challenge':
-                dispatch({ type: 'CHALLENGE_RECEIVED', from: data.from });
+                dispatch({ type: 'CHALLENGE_RECEIVED', from: data.from, code: data.code });
                 break;
               case 'challenge-response':
                 if (!data.accept) {
