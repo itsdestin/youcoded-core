@@ -136,7 +136,8 @@ if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
             drive)
                 if command -v rclone &>/dev/null; then
                     _DR=$(config_get "DRIVE_ROOT" "Claude")
-                    rclone copyto "$CONFIG_FILE" "gdrive:$_DR/Backup/personal/toolkit-state/config.json" 2>/dev/null || true
+                    _PDR=$(config_get "PERSONAL_DRIVE_REMOTE" "gdrive")
+                    rclone copyto "$CONFIG_FILE" "${_PDR}:$_DR/Backup/personal/toolkit-state/config.json" 2>/dev/null || true
                 fi
                 ;;
             github)
@@ -314,7 +315,9 @@ _session_sync_background() {
                 drive)
                     local _DR
                     _DR=$(config_get "DRIVE_ROOT" "Claude")
-                    local DRIVE_SOURCE="gdrive:$_DR/Backup/personal"
+                    local _PDR
+                    _PDR=$(config_get "PERSONAL_DRIVE_REMOTE" "gdrive")
+                    local DRIVE_SOURCE="${_PDR}:$_DR/Backup/personal"
                     if command -v rclone &>/dev/null; then
                         local _drive_pull_ok=true
                         # Memory files — iterate per project key so files land in
@@ -463,7 +466,7 @@ _session_sync_background() {
         if [[ -z "$_PS_BACKEND" || "$_PS_BACKEND" == "none" ]]; then
             local _DETECTED=""
             # Check Google Drive (rclone + gdrive remote)
-            if [[ -z "$_DETECTED" ]] && command -v rclone &>/dev/null && rclone lsd "gdrive:$DRIVE_ROOT/Backup/" &>/dev/null; then
+            if [[ -z "$_DETECTED" ]] && command -v rclone &>/dev/null && rclone lsd "$(config_get "PERSONAL_DRIVE_REMOTE" "gdrive"):$DRIVE_ROOT/Backup/" &>/dev/null; then
                 _DETECTED="drive"
             fi
             # Check iCloud Drive (macOS: ~/Library/Mobile Documents/com~apple~CloudDocs/)

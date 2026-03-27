@@ -404,14 +404,14 @@ cat <<'ENCYCLOPEDIA_EOF' > /tmp/encyclopedia.md
 ENCYCLOPEDIA_EOF
 
 # Save to primary path
-if rclone copyto /tmp/encyclopedia.md "gdrive:Claude/The Journal/Encyclopedia.md"; then
+if rclone copyto /tmp/encyclopedia.md "gdrive-personal:Claude/The Journal/Encyclopedia.md"; then
     echo "Encyclopedia saved successfully"
 else
     echo "ERROR: Save failed. File preserved at /tmp/encyclopedia.md"
 fi
 
 # Save archived copy
-if rclone copyto /tmp/encyclopedia.md "gdrive:Claude/The Journal/Encyclopedia Archive/Encyclopedia (${DATETIME}).md"; then
+if rclone copyto /tmp/encyclopedia.md "gdrive-personal:Claude/The Journal/Encyclopedia Archive/Encyclopedia (${DATETIME}).md"; then
     rm /tmp/encyclopedia.md
     echo "Encyclopedia archived successfully"
 else
@@ -420,7 +420,7 @@ fi
 ```
 
 **Claude.ai web / Claude app:**
-Render the full compiled Encyclopedia as formatted markdown. Instruct the user to save it to `gdrive:Claude/The Journal/Encyclopedia.md` and optionally to the archive folder.
+Render the full compiled Encyclopedia as formatted markdown. Instruct the user to save it to `gdrive-personal:Claude/The Journal/Encyclopedia.md` and optionally to the archive folder.
 
 ### 2. Confirm
 

@@ -30,8 +30,16 @@ if [[ -f "$CONFIG_FILE" ]]; then
     fi
 fi
 
+PERSONAL_DRIVE_REMOTE="gdrive"
+if [[ -f "$CONFIG_FILE" ]]; then
+    CONFIGURED_REMOTE=$(grep -o '"PERSONAL_DRIVE_REMOTE"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | sed 's/.*"PERSONAL_DRIVE_REMOTE"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//')
+    if [[ -n "$CONFIGURED_REMOTE" ]]; then
+        PERSONAL_DRIVE_REMOTE="$CONFIGURED_REMOTE"
+    fi
+fi
+
 LOCAL_DIR="$HOME/.claude/$ENCYCLOPEDIA_DIR"
-REMOTE_DIR="gdrive:$DRIVE_ROOT/$ENCYCLOPEDIA_REMOTE_PATH"
+REMOTE_DIR="${PERSONAL_DRIVE_REMOTE}:$DRIVE_ROOT/$ENCYCLOPEDIA_REMOTE_PATH"
 
 # Ensure local directory exists
 mkdir -p "$LOCAL_DIR"

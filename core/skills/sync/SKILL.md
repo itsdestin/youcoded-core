@@ -64,7 +64,7 @@ Always show this first. Compute relative times from epoch timestamps.
 
   Personal Data:
     Backend: Google Drive
-    Last sync: Xm ago → gdrive:Claude/Backup/personal/
+    Last sync: Xm ago → gdrive-personal:Claude/Backup/personal/
     Status: ✓ OK
     — OR —
     ⚠ Not configured — run /setup-wizard

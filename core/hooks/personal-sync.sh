@@ -55,22 +55,26 @@ if type config_get &>/dev/null; then
     BACKEND=$(config_get "PERSONAL_SYNC_BACKEND" "none")
     DRIVE_ROOT=$(config_get "DRIVE_ROOT" "Claude")
     SYNC_REPO=$(config_get "PERSONAL_SYNC_REPO" "")
+    PERSONAL_DRIVE_REMOTE=$(config_get "PERSONAL_DRIVE_REMOTE" "gdrive")
 elif command -v node &>/dev/null; then
-    read -r BACKEND DRIVE_ROOT SYNC_REPO < <(node -e "
+    read -r BACKEND DRIVE_ROOT SYNC_REPO PERSONAL_DRIVE_REMOTE < <(node -e "
         const fs = require('fs');
         try {
             const c = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
             const b = c.PERSONAL_SYNC_BACKEND || 'none';
             const d = c.DRIVE_ROOT || 'Claude';
             const r = c.PERSONAL_SYNC_REPO || '';
-            process.stdout.write(b + ' ' + d + ' ' + r);
-        } catch { process.stdout.write('none Claude '); }
+            const p = c.PERSONAL_DRIVE_REMOTE || 'gdrive';
+            process.stdout.write(b + ' ' + d + ' ' + r + ' ' + p);
+        } catch { process.stdout.write('none Claude  gdrive'); }
     " "$CONFIG_FILE" 2>/dev/null) || true
 else
     BACKEND=$(grep -o '"PERSONAL_SYNC_BACKEND"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"PERSONAL_SYNC_BACKEND"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "none")
     DRIVE_ROOT=$(grep -o '"DRIVE_ROOT"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"DRIVE_ROOT"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "Claude")
     SYNC_REPO=$(grep -o '"PERSONAL_SYNC_REPO"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"PERSONAL_SYNC_REPO"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "")
+    PERSONAL_DRIVE_REMOTE=$(grep -o '"PERSONAL_DRIVE_REMOTE"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"PERSONAL_DRIVE_REMOTE"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "gdrive")
 fi
+PERSONAL_DRIVE_REMOTE="${PERSONAL_DRIVE_REMOTE:-gdrive}"
 
 [[ -z "$BACKEND" || "$BACKEND" == "none" ]] && exit 0
 
@@ -96,7 +100,7 @@ sync_drive() {
         return 1
     fi
 
-    local REMOTE_BASE="gdrive:$DRIVE_ROOT/Backup/personal"
+    local REMOTE_BASE="${PERSONAL_DRIVE_REMOTE}:$DRIVE_ROOT/Backup/personal"
     local ERRORS=0
 
     if [[ -d "$CLAUDE_DIR/projects" ]]; then
