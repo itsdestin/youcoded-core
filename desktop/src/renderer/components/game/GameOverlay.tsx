@@ -38,10 +38,11 @@ export default function GameOverlay({ connection }: Props) {
 
       <div className="flex flex-col gap-2 w-40">
         <button
-          onClick={() => connection.requestRematch()}
-          className="w-full bg-gray-300 hover:bg-gray-200 text-gray-950 text-sm font-medium rounded-lg py-2 transition-colors"
+          onClick={() => { if (!state.rematchRequested) connection.requestRematch(); }}
+          disabled={state.rematchRequested}
+          className="w-full bg-gray-300 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 text-sm font-medium rounded-lg py-2 transition-colors"
         >
-          Rematch
+          {state.rematchRequested ? 'Rematch Requested' : 'Rematch'}
         </button>
         <button
           onClick={() => { connection.leaveGame(); dispatch({ type: 'RETURN_TO_LOBBY' }); }}

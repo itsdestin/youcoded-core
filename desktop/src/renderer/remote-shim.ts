@@ -274,5 +274,7 @@ export function installShim(): void {
     removeAllListeners: (channel: string) => removeAllListeners(channel),
     getGitHubAuth: () => invoke('github:auth'),
     getHomePath: () => invoke('get-home-path'),
+    getFavorites: () => invoke('favorites:get'),
+    setFavorites: (favorites: string[]) => invoke('favorites:set', favorites),
   };
 }

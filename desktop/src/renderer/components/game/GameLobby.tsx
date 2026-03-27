@@ -64,7 +64,11 @@ function LobbyScreen({ connection }: Props) {
           </p>
           <div className="flex gap-2">
             <button
-              onClick={() => { connection.respondToChallenge(state.challengeFrom!, true); dispatch({ type: 'CLEAR_CHALLENGE' }); }}
+              onClick={() => {
+                connection.respondToChallenge(state.challengeFrom!, true);
+                connection.joinGame(state.challengeCode!);
+                dispatch({ type: 'CLEAR_CHALLENGE' });
+              }}
               className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-medium rounded-lg py-1.5 transition-colors"
             >
               Accept
