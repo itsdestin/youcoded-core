@@ -230,7 +230,7 @@ describe('parseTranscriptLine', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
 Expected: FAIL — `parseTranscriptLine` not found.
 
 - [ ] **Step 3: Write the TranscriptWatcher implementation**
@@ -374,7 +374,7 @@ export function parseTranscriptLine(line: string, sessionId: string): Transcript
 
 /**
  * Converts a CWD path to the Claude Code project directory slug.
- * e.g., "C:\Users\desti" → "C--Users-desti"
+ * e.g., "C:\Users\alice" → "C--Users-alice"
  *       "/home/user/project" → "-home-user-project"
  */
 export function cwdToProjectSlug(cwd: string): string {
@@ -547,7 +547,7 @@ export class TranscriptWatcher extends EventEmitter {
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
 Expected: All 7 tests PASS.
 
 - [ ] **Step 5: Write additional test — cwdToProjectSlug**
@@ -559,7 +559,7 @@ import { cwdToProjectSlug } from '../src/main/transcript-watcher';
 
 describe('cwdToProjectSlug', () => {
   it('converts a Windows path', () => {
-    expect(cwdToProjectSlug('C:\\Users\\desti')).toBe('C--Users-desti');
+    expect(cwdToProjectSlug('C:\\Users\\desti')).toBe('C--Users-alice');
   });
 
   it('converts a Unix path', () => {
@@ -568,14 +568,14 @@ describe('cwdToProjectSlug', () => {
 
   it('handles nested paths', () => {
     expect(cwdToProjectSlug('C:\\Users\\desti\\destinclaude\\desktop'))
-      .toBe('C--Users-desti-destinclaude-desktop');
+      .toBe('C--Users-alice-destinclaude-desktop');
   });
 });
 ```
 
 - [ ] **Step 6: Run tests**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run tests/transcript-watcher.test.ts`
 Expected: All 10 tests PASS.
 
 - [ ] **Step 7: Commit**
@@ -789,7 +789,7 @@ describe('transcript-driven chat actions', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run tests/transcript-reducer.test.ts`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run tests/transcript-reducer.test.ts`
 Expected: FAIL — action types not recognized.
 
 - [ ] **Step 3: Add action types to chat-types.ts**
@@ -993,7 +993,7 @@ Add these cases to the `chatReducer` switch statement in `src/renderer/state/cha
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run tests/transcript-reducer.test.ts`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run tests/transcript-reducer.test.ts`
 Expected: All 7 tests PASS.
 
 - [ ] **Step 6: Commit**
@@ -1352,7 +1352,7 @@ In `src/renderer/state/chat-reducer.ts`, remove the `case` blocks for:
 
 - [ ] **Step 3: Run all tests to verify nothing broke**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npx vitest run`
+Run: `cd C:/Users/alice/destinclaude/desktop && npx vitest run`
 Expected: All tests PASS. Some old tests that reference removed action types may fail — update them to use the new `TRANSCRIPT_*` actions.
 
 - [ ] **Step 4: Commit**
@@ -1370,11 +1370,11 @@ git commit -m "refactor: remove hook-based chat actions replaced by transcript w
 
 - [ ] **Step 1: Start the app in dev mode**
 
-Run: `cd C:/Users/desti/destinclaude/desktop && npm run dev`
+Run: `cd C:/Users/alice/destinclaude/desktop && npm run dev`
 
 - [ ] **Step 2: Create a new session and send a message that triggers multiple tool calls**
 
-Type something like: "Read the file at C:/Users/desti/destinclaude/desktop/package.json and tell me the version"
+Type something like: "Read the file at C:/Users/alice/destinclaude/desktop/package.json and tell me the version"
 
 - [ ] **Step 3: Verify the chat view shows the full sequence**
 
