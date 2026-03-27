@@ -147,11 +147,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Dedup by uuid
-      if (session.seenUuids.has(action.uuid)) return state;
-      const seenUuids = new Set(session.seenUuids);
-      seenUuids.add(action.uuid);
-
       // Dedup against last timeline entry (optimistic USER_PROMPT)
       const lastEntry = session.timeline[session.timeline.length - 1];
       if (
@@ -161,11 +156,10 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       ) {
         // Already showing this message — just ensure isThinking is set
         if (!session.isThinking) {
-          next.set(action.sessionId, { ...session, isThinking: true, currentGroupId: null, seenUuids });
+          next.set(action.sessionId, { ...session, isThinking: true, currentGroupId: null });
           return next;
         }
-        next.set(action.sessionId, { ...session, seenUuids });
-        return next;
+        return state;
       }
 
       const message = {
@@ -180,7 +174,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         timeline: [...session.timeline, { kind: 'user', message }],
         isThinking: true,
         currentGroupId: null,
-        seenUuids,
       });
       return next;
     }
@@ -188,11 +181,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'TRANSCRIPT_ASSISTANT_TEXT': {
       const session = next.get(action.sessionId);
       if (!session) return state;
-
-      // Dedup by uuid
-      if (session.seenUuids.has(action.uuid)) return state;
-      const seenUuids = new Set(session.seenUuids);
-      seenUuids.add(action.uuid);
 
       const message = {
         id: nextMessageId(),
@@ -205,7 +193,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...session,
         timeline: [...session.timeline, { kind: 'assistant', message }],
         currentGroupId: null, // Critical: next tool_use creates a new group
-        seenUuids,
       });
       return next;
     }
@@ -213,11 +200,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'TRANSCRIPT_TOOL_USE': {
       const session = next.get(action.sessionId);
       if (!session) return state;
-
-      // Dedup by uuid
-      if (session.seenUuids.has(action.uuid)) return state;
-      const seenUuids = new Set(session.seenUuids);
-      seenUuids.add(action.uuid);
 
       const toolCalls = new Map(session.toolCalls);
       toolCalls.set(action.toolUseId, {
@@ -251,7 +233,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       next.set(action.sessionId, {
         ...session, toolCalls, toolGroups, timeline, currentGroupId,
         lastActivityAt: Date.now(),
-        seenUuids,
       });
       return next;
     }
@@ -259,11 +240,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'TRANSCRIPT_TOOL_RESULT': {
       const session = next.get(action.sessionId);
       if (!session) return state;
-
-      // Dedup by uuid
-      if (session.seenUuids.has(action.uuid)) return state;
-      const seenUuids = new Set(session.seenUuids);
-      seenUuids.add(action.uuid);
 
       const toolCalls = new Map(session.toolCalls);
       const existing = toolCalls.get(action.toolUseId);
@@ -280,7 +256,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       }
 
       next.set(action.sessionId, {
-        ...session, toolCalls, lastActivityAt: Date.now(), seenUuids,
+        ...session, toolCalls, lastActivityAt: Date.now(),
       });
       return next;
     }
@@ -289,17 +265,11 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Dedup by uuid
-      if (session.seenUuids.has(action.uuid)) return state;
-      const seenUuids = new Set(session.seenUuids);
-      seenUuids.add(action.uuid);
-
       next.set(action.sessionId, {
         ...session,
         isThinking: false,
         streamingText: '',
         currentGroupId: null,
-        seenUuids,
       });
       return next;
     }
@@ -324,7 +294,30 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         }
       }
 
-      if (!found) return state;
+      if (!found) {
+        // Permission hook arrived before transcript watcher — create the tool entry
+        const syntheticId = `perm-${action.requestId}`;
+        toolCalls.set(syntheticId, {
+          toolUseId: syntheticId,
+          toolName: action.toolName,
+          input: action.input,
+          status: 'awaiting-approval',
+          requestId: action.requestId,
+          permissionSuggestions: action.permissionSuggestions,
+        });
+
+        const groupId = nextGroupId();
+        const toolGroups = new Map(session.toolGroups);
+        toolGroups.set(groupId, { id: groupId, toolIds: [syntheticId] });
+
+        const timeline = session.timeline.filter(
+          (e) => !(e.kind === 'prompt' && !e.prompt.completed),
+        );
+        timeline.push({ kind: 'tool-group', groupId });
+
+        next.set(action.sessionId, { ...session, toolCalls, toolGroups, timeline });
+        return next;
+      }
 
       // Dismiss any parser-detected PromptCards for this session — the hook-based
       // ToolCard is now handling the permission flow. This prevents duplicate

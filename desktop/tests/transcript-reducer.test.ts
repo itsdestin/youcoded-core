@@ -277,29 +277,6 @@ describe('TRANSCRIPT_* reducer actions', () => {
     }
   });
 
-  // --- Test 8: Deduplicates by uuid ---
-  it('deduplicates by uuid (same uuid dispatched twice -> only one timeline entry)', () => {
-    state = dispatch(state, {
-      type: 'TRANSCRIPT_USER_MESSAGE',
-      sessionId: SESSION,
-      uuid: 'uuid-1',
-      text: 'Hello',
-      timestamp: 1000,
-    });
-
-    // Dispatch same uuid again
-    state = dispatch(state, {
-      type: 'TRANSCRIPT_USER_MESSAGE',
-      sessionId: SESSION,
-      uuid: 'uuid-1',
-      text: 'Hello',
-      timestamp: 1000,
-    });
-
-    const session = state.get(SESSION)!;
-    expect(session.timeline).toHaveLength(1);
-  });
-
   // --- Test 9: TRANSCRIPT_USER_MESSAGE deduplicates against optimistic USER_PROMPT ---
   it('TRANSCRIPT_USER_MESSAGE deduplicates against optimistic USER_PROMPT from InputBar', () => {
     // Simulate InputBar sending USER_PROMPT first (optimistic)

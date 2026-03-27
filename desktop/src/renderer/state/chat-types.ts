@@ -23,8 +23,6 @@ export interface SessionChatState {
   currentGroupId: string | null;
   /** Timestamp of last activity from Claude — used to reset the thinking timeout */
   lastActivityAt: number;
-  /** UUIDs of transcript events already processed — prevents duplicate entries */
-  seenUuids: Set<string>;
 }
 
 export function createSessionChatState(): SessionChatState {
@@ -36,7 +34,6 @@ export function createSessionChatState(): SessionChatState {
     streamingText: '',
     currentGroupId: null,
     lastActivityAt: 0,
-    seenUuids: new Set(),
   };
 }
 
