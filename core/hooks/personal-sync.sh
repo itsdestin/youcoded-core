@@ -128,9 +128,23 @@ sync_drive() {
     fi
 
     if [[ -d "$CLAUDE_DIR/encyclopedia" ]]; then
+        # Only sync top-level .md files — exclude subdirectories to prevent
+        # contamination loops where stray dirs get pushed up and pulled back.
         rclone copy "$CLAUDE_DIR/encyclopedia/" "$REMOTE_BASE/encyclopedia/" \
-            --update --exclude '.DS_Store' 2>/dev/null || \
-            log_backup "WARN" "Encyclopedia sync to Drive failed"
+            --update --max-depth 1 --include "*.md" 2>/dev/null || \
+            log_backup "WARN" "Encyclopedia sync to Backup failed"
+
+        # Also push to The Journal/System/ — the canonical source of truth
+        # that other skills (encyclopedia-compile, sync-encyclopedia) read from.
+        local _enc_remote_path="The Journal/System"
+        if [[ -f "$CONFIG_FILE" ]]; then
+            local _enc_configured
+            _enc_configured=$(grep -o '"encyclopedia_remote_path"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"encyclopedia_remote_path"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || true)
+            [[ -n "$_enc_configured" ]] && _enc_remote_path="$_enc_configured"
+        fi
+        rclone copy "$CLAUDE_DIR/encyclopedia/" "gdrive:$DRIVE_ROOT/$_enc_remote_path/" \
+            --update --max-depth 1 --include "*.md" 2>/dev/null || \
+            log_backup "WARN" "Encyclopedia sync to The Journal/System failed"
     fi
 
     if [[ -d "$CLAUDE_DIR/skills" ]]; then

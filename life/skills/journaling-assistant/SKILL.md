@@ -215,12 +215,13 @@ A short structured summary written by the assistant, appended after the full ses
 **Steps to save — depends on environment:**
 
 **Claude Code CLI:**
-Write to a temp file, upload, then clean up:
+Write to a temp file, ensure the destination exists, upload, then clean up:
 ```bash
 cat << 'EOF' > /tmp/journal-entry.md
 [compiled entry content]
 EOF
 
+rclone mkdir "gdrive:Claude/The Journal/Daily Entries"
 rclone copyto /tmp/journal-entry.md "gdrive:Claude/The Journal/Daily Entries/YYYY-MM-DD.md"
 rm /tmp/journal-entry.md
 ```
@@ -334,6 +335,7 @@ cat << 'EOF' > /tmp/misc-entry.md
 [compiled entry content]
 EOF
 
+rclone mkdir "gdrive:Claude/The Journal/Misc. Entries and Information"
 rclone copyto /tmp/misc-entry.md "gdrive:Claude/The Journal/Misc. Entries and Information/YYYY-MM-DD - Short Topic Title.md"
 rm /tmp/misc-entry.md
 ```

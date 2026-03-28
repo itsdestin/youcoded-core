@@ -403,6 +403,10 @@ cat <<'ENCYCLOPEDIA_EOF' > /tmp/encyclopedia.md
 [full compiled Encyclopedia content]
 ENCYCLOPEDIA_EOF
 
+# Ensure destination folders exist
+rclone mkdir "gdrive:Claude/The Journal"
+rclone mkdir "gdrive:Claude/The Journal/Encyclopedia Archive"
+
 # Save to primary path
 if rclone copyto /tmp/encyclopedia.md "gdrive:Claude/The Journal/Encyclopedia.md"; then
     echo "Encyclopedia saved successfully"

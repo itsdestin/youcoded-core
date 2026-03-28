@@ -37,6 +37,9 @@ REMOTE_DIR="gdrive:$DRIVE_ROOT/$ENCYCLOPEDIA_REMOTE_PATH"
 mkdir -p "$LOCAL_DIR"
 
 # Sync from Drive to local (Drive is source of truth)
+# Only sync top-level .md files to prevent contamination from stray subdirs.
 if command -v rclone &>/dev/null; then
-    rclone sync "$REMOTE_DIR/" "$LOCAL_DIR/" --update 2>/dev/null || true
+    if ! rclone sync "$REMOTE_DIR/" "$LOCAL_DIR/" --update --max-depth 1 --include "*.md" 2>/dev/null; then
+        echo "WARN: Encyclopedia sync from $REMOTE_DIR failed (folder may not exist)" >&2
+    fi
 fi
