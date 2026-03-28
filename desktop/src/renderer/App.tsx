@@ -16,6 +16,7 @@ import { AppIcon, WelcomeAppIcon } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
+import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 
 type ViewMode = 'chat' | 'terminal';
@@ -52,6 +53,7 @@ function AppInner() {
   // Track which sessions the user has "seen" (switched to after activity completed)
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
   const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
+  const [resumeRequested, setResumeRequested] = useState(false);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -302,7 +304,18 @@ function AppInner() {
 
   // Load skills once on mount
   useEffect(() => {
-    window.claude.skills.list().then(setSkills).catch(console.error);
+    window.claude.skills.list().then((list) => {
+      // Inject built-in resume skill at the top
+      const resumeSkill: SkillEntry = {
+        id: '_resume',
+        displayName: 'Resume Session',
+        description: 'Resume a previous conversation',
+        category: 'personal',
+        prompt: '',
+        source: 'destinclaude',
+      };
+      setSkills([resumeSkill, ...list]);
+    }).catch(console.error);
   }, []);
 
   // Mark session as viewed when the user switches to it
@@ -355,6 +368,11 @@ function AppInner() {
 
   const handleSelectSkill = useCallback(
     (skill: SkillEntry) => {
+      if (skill.id === '_resume') {
+        setDrawerOpen(false);
+        setResumeRequested(true);
+        return;
+      }
       if (!sessionId) return;
       setDrawerOpen(false);
       dispatch({
@@ -377,41 +395,38 @@ function AppInner() {
   }, []);
 
   const handleResumeSession = useCallback(async (claudeSessionId: string, projectSlug: string) => {
-    // Derive the project path from the slug
     const slugToPath = (s: string) => {
       if (/^[A-Z]--/.test(s)) return s.replace(/^([A-Z])--/, '$1:\\').replace(/-/g, '\\');
       return '/' + s.replace(/-/g, '/');
     };
     const cwd = slugToPath(projectSlug);
 
-    // Create a new session in that project directory
-    await window.claude.session.create({ name: 'Resuming...', cwd, skipPermissions: false });
+    // Pass --resume flag so Claude Code boots directly into the resumed session
+    const newSession = await (window.claude.session.create as any)({
+      name: 'Resuming...',
+      cwd,
+      skipPermissions: false,
+      resumeSessionId: claudeSessionId,
+    });
+    if (!newSession?.id) return;
 
-    // Small delay for session initialization, then send /resume command
-    setTimeout(() => {
-      // Find the session that was just created (most recent)
-      const latestSession = sessions[sessions.length - 1];
-      if (!latestSession) return;
+    setResumeInfo((prev) => new Map(prev).set(newSession.id, { claudeSessionId, projectSlug }));
 
-      setResumeInfo((prev) => new Map(prev).set(latestSession.id, { claudeSessionId, projectSlug }));
-
-      window.claude.session.sendInput(latestSession.id, `/resume ${claudeSessionId}\r`);
-
-      // Load recent history into chat view
-      (window as any).claude.session.loadHistory(claudeSessionId, projectSlug, 10, false)
-        .then((messages: any[]) => {
-          if (messages.length > 0) {
-            dispatch({
-              type: 'HISTORY_LOADED',
-              sessionId: latestSession.id,
-              messages,
-              hasMore: true,
-            });
-          }
-        })
-        .catch(console.error);
-    }, 500);
-  }, [sessions, dispatch]);
+    // Load recent history into chat view
+    try {
+      const messages = await (window as any).claude.session.loadHistory(claudeSessionId, projectSlug, 10, false);
+      if (messages.length > 0) {
+        dispatch({
+          type: 'HISTORY_LOADED',
+          sessionId: newSession.id,
+          messages,
+          hasMore: true,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    }
+  }, [dispatch]);
 
   const currentViewMode = sessionId ? (viewModes.get(sessionId) || 'chat') : 'chat';
 
@@ -487,6 +502,7 @@ function AppInner() {
               settingsBadge={settingsBadge}
               sessionStatuses={sessionStatuses}
               onResumeSession={handleResumeSession}
+              onOpenResumeBrowser={() => setResumeRequested(true)}
             />
             <div className="flex-1 overflow-hidden relative">
               {sessions.map((s) => (
@@ -517,7 +533,7 @@ function AppInner() {
             </div>
             {currentViewMode === 'chat' && (
               <>
-                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive || !sessionInitialized} />
+                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
                 <CommandDrawer
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
@@ -581,12 +597,17 @@ function AppInner() {
         }}
         hasActiveSession={!!sessionId}
       />
+      <ResumeBrowser
+        open={resumeRequested}
+        onClose={() => setResumeRequested(false)}
+        onResume={handleResumeSession}
+      />
     </div>
   );
 }
 
-function ChatInputBar({ sessionId, onOpenDrawer, disabled }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean }) {
-  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} />;
+function ChatInputBar({ sessionId, onOpenDrawer, disabled, onResumeCommand }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean; onResumeCommand?: () => void }) {
+  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} onResumeCommand={onResumeCommand} />;
 }
 
 export default function App() {

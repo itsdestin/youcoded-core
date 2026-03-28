@@ -17,6 +17,8 @@ export interface CreateSessionOpts {
   skipPermissions: boolean;
   cols?: number;
   rows?: number;
+  /** Resume a previous session by its Claude Code session ID */
+  resumeSessionId?: string;
 }
 
 interface ManagedSession {
@@ -39,6 +41,9 @@ export class SessionManager extends EventEmitter {
     const args: string[] = [];
     if (opts.skipPermissions) {
       args.push('--dangerously-skip-permissions');
+    }
+    if (opts.resumeSessionId) {
+      args.push('--resume', opts.resumeSessionId);
     }
 
     // Spawn a separate Node.js process for node-pty so it uses Node's

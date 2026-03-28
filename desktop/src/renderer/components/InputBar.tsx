@@ -8,6 +8,7 @@ interface Props {
   sessionId: string;
   disabled?: boolean;
   onOpenDrawer?: (searchMode: boolean) => void;
+  onResumeCommand?: () => void;
 }
 
 interface Attachment {
@@ -27,7 +28,7 @@ function fileNameFromPath(p: string): string {
   return p.replace(/\\/g, '/').split('/').pop() || p;
 }
 
-export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
+export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCommand }: Props) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -53,6 +54,12 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
 
   const sendMessage = useCallback(
     (message: string, files: Attachment[] = []) => {
+      // Intercept /resume command
+      if (message.trim() === '/resume' && onResumeCommand) {
+        onResumeCommand();
+        return;
+      }
+
       const parts: string[] = [];
       for (const f of files) {
         parts.push(f.path);

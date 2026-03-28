@@ -1,18 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SessionStatusColor } from './StatusDot';
 
-function formatRelativeTime(epochMs: number): string {
-  const diff = Date.now() - epochMs;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(epochMs).toLocaleDateString();
-}
-
 interface SessionEntry {
   id: string;
   name: string;
@@ -28,6 +16,7 @@ interface Props {
   onCloseSession: (id: string) => void;
   sessionStatuses?: Map<string, SessionStatusColor>;
   onResumeSession: (sessionId: string, projectSlug: string) => void;
+  onOpenResumeBrowser: () => void;
 }
 
 const DOT_COLORS: Record<SessionStatusColor, string> = {
@@ -52,14 +41,13 @@ function SessionDot({ color, isActive }: { color: SessionStatusColor; isActive: 
 export default function SessionStrip({
   sessions, activeSessionId, onSelectSession,
   onCreateSession, onCloseSession, sessionStatuses, onResumeSession,
+  onOpenResumeBrowser,
 }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newCwd, setNewCwd] = useState('');
   const [dangerous, setDangerous] = useState(false);
-  const [pastSessions, setPastSessions] = useState<any[]>([]);
-  const [browseLoading, setBrowseLoading] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -106,13 +94,6 @@ export default function SessionStrip({
     const opening = !menuOpen;
     setMenuOpen(opening);
     setShowNewForm(false);
-    if (opening) {
-      setBrowseLoading(true);
-      (window as any).claude.session.browse()
-        .then((list: any[]) => setPastSessions(list.slice(0, 20)))
-        .catch(() => setPastSessions([]))
-        .finally(() => setBrowseLoading(false));
-    }
   }, [menuOpen]);
 
   const handleCreate = useCallback(() => {
@@ -229,38 +210,18 @@ export default function SessionStrip({
 
             <div className="border-t border-gray-700" />
 
-            {/* Past sessions — resume */}
-            {pastSessions.length > 0 && (
-              <>
-                <div className="px-3 pt-2 pb-1">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500">Resume</span>
-                </div>
-                <div className="max-h-48 overflow-y-auto py-1">
-                  {pastSessions.map((ps) => (
-                    <button
-                      key={ps.sessionId}
-                      onClick={() => {
-                        onResumeSession(ps.sessionId, ps.projectSlug);
-                        setMenuOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 flex items-center gap-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors min-w-0"
-                    >
-                      <span className="text-sm truncate flex-1">{ps.name}</span>
-                      <span className="text-[10px] text-gray-600 shrink-0">
-                        {formatRelativeTime(ps.lastModified)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <div className="border-t border-gray-700" />
-              </>
-            )}
-            {browseLoading && pastSessions.length === 0 && (
-              <>
-                <div className="px-3 py-2 text-xs text-gray-500">Loading sessions...</div>
-                <div className="border-t border-gray-700" />
-              </>
-            )}
+            {/* Resume — single line, opens browser */}
+            <button
+              onClick={() => { setMenuOpen(false); onOpenResumeBrowser(); }}
+              className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Resume Session</span>
+            </button>
+
+            <div className="border-t border-gray-700" />
 
             {showNewForm ? (
               <div className="p-3 flex flex-col gap-2">

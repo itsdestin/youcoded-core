@@ -38,6 +38,7 @@ interface Props {
   settingsBadge?: boolean;
   sessionStatuses?: Map<string, SessionStatusColor>;
   onResumeSession: (sessionId: string, projectSlug: string) => void;
+  onOpenResumeBrowser: () => void;
 }
 
 export default function HeaderBar({
@@ -46,6 +47,7 @@ export default function HeaderBar({
   gamePanelOpen, onToggleGamePanel, gameConnected,
   permissionMode, onCyclePermission, model, announcement,
   settingsOpen, onToggleSettings, settingsBadge, sessionStatuses, onResumeSession,
+  onOpenResumeBrowser,
 }: Props) {
   const cfg = MODE_CONFIG[permissionMode];
 
@@ -100,6 +102,7 @@ export default function HeaderBar({
         onCloseSession={onCloseSession}
         sessionStatuses={sessionStatuses}
         onResumeSession={onResumeSession}
+        onOpenResumeBrowser={onOpenResumeBrowser}
       />
 
       {/* Right — view toggles */}

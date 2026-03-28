@@ -38,7 +38,7 @@ const IPC = {
 
 contextBridge.exposeInMainWorld('claude', {
   session: {
-    create: (opts: { name: string; cwd: string; skipPermissions: boolean; cols?: number; rows?: number }) =>
+    create: (opts: { name: string; cwd: string; skipPermissions: boolean; cols?: number; rows?: number; resumeSessionId?: string }) =>
       ipcRenderer.invoke(IPC.SESSION_CREATE, opts),
     destroy: (sessionId: string) =>
       ipcRenderer.invoke(IPC.SESSION_DESTROY, sessionId),
