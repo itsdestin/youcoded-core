@@ -338,9 +338,9 @@ _session_sync_background() {
                             --update 2>/dev/null &
                         rclone copy "$DRIVE_SOURCE/toolkit-state/config.json" "$CLAUDE_DIR/toolkit-state/" \
                             --update 2>/dev/null &
-                        # Only sync top-level .md files — exclude subdirectories to prevent
+                        # Only copy top-level .md files — exclude subdirectories to prevent
                         # contamination loops where stray dirs get mirrored into the cache.
-                        rclone sync "$DRIVE_SOURCE/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" \
+                        rclone copy "$DRIVE_SOURCE/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" \
                             --update --max-depth 1 --include "*.md" 2>/dev/null &
                         # Conversations — pull per-slug (Design ref: D3)
                         {
