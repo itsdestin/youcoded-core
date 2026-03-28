@@ -2,6 +2,27 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.1.8] - 2026-03-27
+
+### Added
+- **Session resume** — Browse and resume past Claude Code sessions from the desktop app. SessionStrip replaces the old session selector with an inline nav bar showing status dots, hover-to-expand names, and a dropdown with session management. ResumeBrowser modal provides searchable access to all past sessions grouped by project. History is loaded into the chat view with a "see previous messages" expand button.
+- **`/resume` command** — Type `/resume` in the input bar or use the command drawer to open the resume browser.
+
+### Changed
+- **Transcript watcher dedup** — UUID deduplication is now selective: only `assistant-text` is skipped on repeated UUIDs, while `tool-use`, `tool-result`, `turn-complete`, and `user-message` events are emitted. This fixes stuck "thinking" indicators and missing tool cards that occurred when turn-complete events were incorrectly dropped.
+- **Permission matching** — Permission requests now match by tool name (with fallback to first running tool) instead of always targeting the last running tool. `PERMISSION_EXPIRED` now transitions tools to a "failed" state with an error message instead of silently reverting to "running."
+- **Markdown formatting** — Headers now have bottom borders and more spacing, inline code uses amber-tinted styling for visibility, code blocks have a subtle border, tables are full-width with bolder headers, and overall spacing between elements is increased.
+- **Auto-approve in dangerous mode** — Sessions created with skip-permissions now auto-approve permission requests via the hook relay, matching Claude Code's native `--dangerously-skip-permissions` behavior.
+
+### Fixed
+- **Encyclopedia contamination loop** — All rclone operations on encyclopedia files now use `--max-depth 1 --include "*.md"` to prevent subdirectory propagation between local cache and Drive.
+- **Journal/encyclopedia folder creation** — `rclone mkdir` commands added before saves in journaling-assistant and encyclopedia-compile skills, preventing failures on fresh installs.
+- **Transcript system tag stripping** — `<system-reminder>`, `<antml_thinking>`, `<command-name>`, and `<task-notification>` tags are now stripped from assistant responses before display.
+- **Transcript watcher reliability** — Safety-net 2-second poll runs alongside `fs.watch` on Windows to catch silently missed file change notifications.
+- **Permission response delivery** — ToolCard now waits for IPC confirmation before transitioning state; handles socket-closed failures gracefully.
+- **Session-start encyclopedia pull** — Changed from `rclone sync` to `rclone copy` to comply with personal-sync spec mandate (sync deletes local files missing from remote).
+- **Session browser path validation** — `loadHistory()` now validates `projectSlug` and `sessionId` against a safe identifier pattern before constructing file paths.
+
 ## [2.1.7] - 2026-03-27
 
 ### Added
