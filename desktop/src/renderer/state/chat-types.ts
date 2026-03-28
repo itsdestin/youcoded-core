@@ -140,6 +140,12 @@ export type ChatAction =
       sessionId: string;
       uuid: string;
       timestamp: number;
+    }
+  | {
+      type: 'HISTORY_LOADED';
+      sessionId: string;
+      messages: { role: 'user' | 'assistant'; content: string; timestamp: number }[];
+      hasMore: boolean;
     };
 
 export type ChatState = Map<string, SessionChatState>;
