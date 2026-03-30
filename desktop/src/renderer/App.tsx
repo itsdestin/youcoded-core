@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TerminalView from './components/TerminalView';
 import ChatView from './components/ChatView';
 import HeaderBar from './components/HeaderBar';
@@ -18,6 +18,7 @@ import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
+import type { SessionStatusColor } from './components/StatusDot';
 
 type ViewMode = 'chat' | 'terminal';
 
@@ -74,27 +75,41 @@ function AppInner() {
     respondToChallenge: lobby.respondToChallenge,
   };
 
-  // Derive session status colors for status dots
-  const sessionStatuses = React.useMemo(() => {
-    const statuses = new Map<string, 'green' | 'red' | 'blue' | 'gray'>();
+  // Derive session status colors for status dots.
+  // chatStateMap is a new Map reference on every dispatch, so we stabilize with
+  // a ref — return the previous reference when the derived values haven't changed.
+  const sessionStatusesRef = useRef<Map<string, SessionStatusColor>>(new Map());
+
+  const sessionStatuses = useMemo(() => {
+    const newStatuses = new Map<string, SessionStatusColor>();
+    let changed = false;
+
     for (const s of sessions) {
       const chatState = chatStateMap.get(s.id);
-      if (!chatState) { statuses.set(s.id, 'gray'); continue; }
+      if (!chatState) { newStatuses.set(s.id, 'gray'); }
+      else {
+        const hasAwaiting = [...chatState.toolCalls.values()].some(t => t.status === 'awaiting-approval');
+        const hasRunning = [...chatState.toolCalls.values()].some(t => t.status === 'running');
 
-      const hasAwaiting = [...chatState.toolCalls.values()].some(t => t.status === 'awaiting-approval');
-      const hasRunning = [...chatState.toolCalls.values()].some(t => t.status === 'running');
-
-      if (hasAwaiting) {
-        statuses.set(s.id, 'red');
-      } else if (chatState.isThinking || hasRunning) {
-        statuses.set(s.id, 'green');
-      } else if (chatState.timeline.length > 0 && !viewedSessions.has(s.id) && s.id !== sessionId) {
-        statuses.set(s.id, 'blue');
-      } else {
-        statuses.set(s.id, 'gray');
+        const status: SessionStatusColor = hasAwaiting
+          ? 'red'
+          : (chatState.isThinking || hasRunning)
+            ? 'green'
+            : (chatState.timeline.length > 0 && !viewedSessions.has(s.id) && s.id !== sessionId)
+              ? 'blue'
+              : 'gray';
+        newStatuses.set(s.id, status);
       }
+
+      const prev = sessionStatusesRef.current.get(s.id);
+      if (prev !== newStatuses.get(s.id)) changed = true;
     }
-    return statuses;
+
+    if (!changed && newStatuses.size === sessionStatusesRef.current.size) {
+      return sessionStatusesRef.current;
+    }
+    sessionStatusesRef.current = newStatuses;
+    return newStatuses;
   }, [sessions, chatStateMap, viewedSessions, sessionId]);
 
   useEffect(() => {
@@ -330,8 +345,16 @@ function AppInner() {
     }
   }, [sessionId]);
 
-  // Clear viewed status when a session starts thinking (user sent a new message)
+  // Clear viewed status when a session starts thinking (user sent a new message).
+  // Early-exit: skip iteration if no sessions are currently thinking.
   useEffect(() => {
+    let anyThinking = false;
+    for (const s of sessions) {
+      const chatState = chatStateMap.get(s.id);
+      if (chatState?.isThinking) { anyThinking = true; break; }
+    }
+    if (!anyThinking) return;
+
     for (const s of sessions) {
       const chatState = chatStateMap.get(s.id);
       if (chatState?.isThinking) {
