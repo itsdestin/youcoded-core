@@ -171,6 +171,8 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
           // Store token for reconnection
           const token = msg.token;
           localStorage.setItem('destincode-remote-token', token);
+          const platform = msg.platform || 'browser';
+          (window as any).__PLATFORM__ = platform;
           resolve(token);
           // Switch to normal message handling
           ws!.onmessage = (e) => handleMessage(e.data as string);
