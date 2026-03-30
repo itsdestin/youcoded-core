@@ -1361,6 +1361,110 @@ $sorted_versions
 EOF
 }
 
+# ---------------------------------------------------------------------------
+# Phase: settings-migrate — Reconcile settings.json against hooks-manifest.json
+# ---------------------------------------------------------------------------
+phase_settings_migrate() {
+  emit_section "SETTINGS RECONCILIATION"
+
+  local MANIFEST="$TOOLKIT_ROOT/core/hooks/hooks-manifest.json"
+  local SETTINGS="$HOME/.claude/settings.json"
+
+  if [[ ! -f "$MANIFEST" ]]; then
+    emit "SKIP" "hooks-manifest.json" "not found — skipping settings reconciliation"
+    return 0
+  fi
+
+  if [[ ! -f "$SETTINGS" ]]; then
+    emit "SKIP" "settings.json" "not found — run setup-wizard first"
+    return 0
+  fi
+
+  local _result
+  _result=$(node -e "
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync('$(to_node_path "$MANIFEST")', 'utf8'));
+const settingsPath = '$(to_node_path "$SETTINGS")';
+const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+
+if (!settings.hooks) settings.hooks = {};
+const changes = [];
+
+for (const [trigger, desired] of Object.entries(manifest.hooks)) {
+  if (!settings.hooks[trigger]) settings.hooks[trigger] = [];
+  const triggerEntries = settings.hooks[trigger];
+
+  for (const want of desired) {
+    const hookFile = want.command.split('/').pop();
+
+    // Find existing entry by command substring (the hook filename)
+    let found = null;
+    let foundIn = null;
+    for (const group of triggerEntries) {
+      for (const h of (group.hooks || [])) {
+        if (h.command && h.command.includes(hookFile)) {
+          found = h;
+          foundIn = group;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    if (!found) {
+      if (!want.required) continue;  // Don't add optional hooks that aren't registered
+      const entry = { hooks: [{ type: 'command', command: want.command }] };
+      if (want.matcher) entry.matcher = want.matcher;
+      if (want.timeout != null) entry.hooks[0].timeout = want.timeout;
+      triggerEntries.push(entry);
+      changes.push('[NEW] ' + trigger + ': ' + hookFile);
+    } else {
+      // EXISTS: check for missing/low properties
+      if (want.timeout != null && found.timeout == null) {
+        found.timeout = want.timeout;
+        changes.push('[UPDATED] ' + hookFile + ': added timeout=' + want.timeout + 's');
+      } else if (want.timeout != null && found.timeout != null && found.timeout < want.timeout) {
+        changes.push('[ENFORCED] ' + hookFile + ': timeout raised from ' + found.timeout + 's to ' + want.timeout + 's (manifest minimum)');
+        found.timeout = want.timeout;
+      }
+      if (want.matcher && foundIn && !foundIn.matcher) {
+        foundIn.matcher = want.matcher;
+        changes.push('[UPDATED] ' + hookFile + ': added matcher=' + want.matcher);
+      }
+    }
+  }
+}
+
+if (changes.length > 0) {
+  const tmp = settingsPath + '.tmp.' + process.pid;
+  fs.writeFileSync(tmp, JSON.stringify(settings, null, 2) + '\\n');
+  fs.renameSync(tmp, settingsPath);
+}
+
+console.log(JSON.stringify(changes));
+" 2>&1) || {
+    emit "FAIL" "settings-migrate" "node script failed"
+    return 1
+  }
+
+  # Parse and display results
+  local _line
+  while IFS= read -r _line; do
+    [[ -z "$_line" || "$_line" == "[]" ]] && continue
+    emit "INFO" "settings.json" "$_line"
+  done < <(echo "$_result" | node -e "
+    let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+      try{JSON.parse(d).forEach(l=>console.log(l))}catch{console.log(d)}
+    });
+  " 2>/dev/null)
+
+  if echo "$_result" | grep -q '^\[\]$'; then
+    emit "OK" "settings.json" "all hooks match manifest"
+  fi
+
+  return 0
+}
+
 phase_post_update() {
   local from_ver="${1:-}"
   local to_ver="${2:-}"
@@ -1377,6 +1481,9 @@ phase_post_update() {
   echo ""
 
   phase_refresh || overall_exit=1
+  echo ""
+
+  phase_settings_migrate || overall_exit=1
   echo ""
 
   phase_orphans || overall_exit=1
@@ -1423,6 +1530,9 @@ main() {
     remove-orphan)
       phase_remove_orphan "${2:-}"
       ;;
+    settings-migrate)
+      phase_settings_migrate
+      ;;
     verify)
       phase_verify
       ;;
@@ -1442,7 +1552,7 @@ main() {
       phase_post_update "${2:-}" "${3:-}"
       ;;
     *)
-      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|orphans|remove-orphan|verify|mcps|plugins|deps|migrations|post-update"
+      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|settings-migrate|orphans|remove-orphan|verify|mcps|plugins|deps|migrations|post-update"
       exit 2
       ;;
   esac
