@@ -47,6 +47,19 @@ export class RemoteServer {
   private lastTopics = new Map<string, string>();
   private topicInterval: ReturnType<typeof setInterval> | null = null;
 
+  // Bound listeners for proper cleanup (avoid anonymous lambda leaks)
+  private onHookEventMapping = (event: any) => {
+    const desktopId = event.sessionId;
+    const claudeId = event.payload?.session_id as string;
+    if (!desktopId || !claudeId || this.sessionIdMap.has(desktopId)) return;
+    this.sessionIdMap.set(desktopId, claudeId);
+  };
+
+  private onSessionExitMapping = (sessionId: string) => {
+    this.sessionIdMap.delete(sessionId);
+    this.lastTopics.delete(sessionId);
+  };
+
   constructor(
     private sessionManager: SessionManager,
     private hookRelay: HookRelay,
@@ -148,12 +161,7 @@ export class RemoteServer {
     // Topic file watcher — discover desktop→claude session ID mapping from hook events
     // and poll topic files for session:renamed events
     const topicDir = path.join(os.homedir(), '.claude', 'topics');
-    this.hookRelay.on('hook-event', (event: any) => {
-      const desktopId = event.sessionId;
-      const claudeId = event.payload?.session_id as string;
-      if (!desktopId || !claudeId || this.sessionIdMap.has(desktopId)) return;
-      this.sessionIdMap.set(desktopId, claudeId);
-    });
+    this.hookRelay.on('hook-event', this.onHookEventMapping);
 
     this.topicInterval = setInterval(() => {
       for (const [desktopId, claudeId] of this.sessionIdMap) {
@@ -168,10 +176,7 @@ export class RemoteServer {
     }, 2000);
 
     // Clean up topic tracking when sessions exit
-    this.sessionManager.on('session-exit', (sessionId: string) => {
-      this.sessionIdMap.delete(sessionId);
-      this.lastTopics.delete(sessionId);
-    });
+    this.sessionManager.on('session-exit', this.onSessionExitMapping);
 
     return new Promise<void>((resolve) => {
       this.httpServer!.listen(this.config.port, () => {
@@ -189,7 +194,9 @@ export class RemoteServer {
     this.transcriptBuffers.clear();
     this.sessionManager.off('pty-output', this.onPtyOutput);
     this.hookRelay.off('hook-event', this.onHookEvent);
+    this.hookRelay.off('hook-event', this.onHookEventMapping);
     this.sessionManager.off('session-exit', this.onSessionExit);
+    this.sessionManager.off('session-exit', this.onSessionExitMapping);
     this.sessionManager.off('session-created', this.onSessionCreated);
 
     for (const client of this.clients) {
