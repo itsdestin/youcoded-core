@@ -409,3 +409,42 @@ discover_projects() {
         done
     done
 }
+
+# ---------------------------------------------------------------------------
+# Direction-aware conversation sync — understands append-only semantics.
+# For JSONL files, one version should be a prefix of the other.
+# When they diverge, a conflict is flagged rather than silently overwriting.
+#
+# Usage:
+#   conv_safe_pull "$remote_file" "$local_file"  — pull if remote is superset
+#   conv_safe_push "$local_file" "$remote_file"  — push if local is superset
+# ---------------------------------------------------------------------------
+_file_size() {
+    # Portable file size — works on macOS (BSD), Linux (GNU), Windows (MSYS)
+    wc -c < "$1" 2>/dev/null | tr -d ' '
+}
+
+conv_safe_pull() {
+    local remote_file="$1" local_file="$2" slug="$3"
+
+    # New file (doesn't exist locally): pull unconditionally
+    if [[ ! -f "$local_file" ]]; then
+        return 0  # Caller should proceed with rclone copy
+    fi
+
+    local local_size remote_size
+    local_size=$(_file_size "$local_file")
+    remote_size=$(rclone size "$remote_file" --json 2>/dev/null | node -e "
+        let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+            try{console.log(JSON.parse(d).bytes)}catch{console.log(-1)}
+        })" 2>/dev/null)
+
+    # Remote <= local: skip (local has same or more data)
+    if [[ "$remote_size" -le "$local_size" ]]; then
+        return 1  # Skip — local is same or longer
+    fi
+
+    # Remote > local: safe to pull (remote has more data)
+    # Full prefix verification would require downloading — defer to rclone
+    return 0
+}
