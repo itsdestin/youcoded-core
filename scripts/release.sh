@@ -44,6 +44,15 @@ fi
 
 echo "Releasing v$VERSION (currently v$CURRENT)"
 
+# Capture upstream Claude Code version
+CLAUDE_VERSION=""
+if command -v claude >/dev/null 2>&1; then
+    CLAUDE_VERSION=$(claude --version 2>/dev/null | head -1 || echo "unknown")
+    echo "Claude Code version: $CLAUDE_VERSION"
+else
+    echo "Warning: claude CLI not found — Claude Code version will not be recorded"
+fi
+
 # 1. Bump VERSION
 echo "$VERSION" > VERSION
 
@@ -55,12 +64,26 @@ node -e "var p='desktop/package.json',pkg=JSON.parse(require('fs').readFileSync(
 
 # 4. Add CHANGELOG header (portable: awk instead of GNU-only sed 0,/ADDR/ syntax)
 TODAY=$(date +%Y-%m-%d)
-awk -v ver="$VERSION" -v today="$TODAY" 'BEGIN{done=0} /^## / && !done {printf "## v%s (%s)\n\n_(fill in release notes)_\n\n", ver, today; done=1} {print}' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
+if [[ -n "$CLAUDE_VERSION" ]]; then
+    CLAUDE_NOTE="Built on $CLAUDE_VERSION"
+else
+    CLAUDE_NOTE=""
+fi
+awk -v ver="$VERSION" -v today="$TODAY" -v cnote="$CLAUDE_NOTE" 'BEGIN{done=0} /^## / && !done {printf "## [%s] - %s\n\n", ver, today; if (cnote != "") printf "_(%s)_\n\n", cnote; printf "_(fill in release notes)_\n\n"; done=1} {print}' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
 # 5. Commit, tag, push
 git add VERSION plugin.json desktop/package.json CHANGELOG.md
 git commit -m "release: v$VERSION"
-git tag "v$VERSION"
+if [[ -n "$CLAUDE_VERSION" ]]; then
+    git tag -a "v$VERSION" -m "$(cat <<TAGEOF
+Release v$VERSION
+
+Built on $CLAUDE_VERSION
+TAGEOF
+)"
+else
+    git tag -a "v$VERSION" -m "Release v$VERSION"
+fi
 git push origin master --tags
 
 echo ""
