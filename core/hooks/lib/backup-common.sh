@@ -129,7 +129,11 @@ debounce_check() {
     now=$(date +%s)
     diff_seconds=$((now - last_sync))
     interval_seconds=$((interval_minutes * 60))
-    [[ $diff_seconds -ge $interval_seconds ]]
+    if [[ $diff_seconds -lt $interval_seconds ]]; then
+        log_backup "DEBUG" "Debounced (${diff_seconds}s/${interval_seconds}s elapsed)" "${_CURRENT_OP:-sync}"
+        return 1
+    fi
+    return 0
 }
 
 # Update debounce marker with current epoch timestamp.
