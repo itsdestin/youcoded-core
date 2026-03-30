@@ -96,7 +96,10 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCo
   }, [text, autoResize]);
 
   const send = useCallback(() => {
-    sendMessage(text, attachments);
+    // Read directly from the DOM element to avoid stale-closure races
+    // where paste + immediate Enter outrun React's render cycle
+    const currentText = inputRef.current?.value ?? text;
+    sendMessage(currentText, attachments);
     setText('');
     setAttachments([]);
     // Reset height after clearing
