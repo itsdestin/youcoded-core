@@ -165,26 +165,39 @@ sync_drive() {
         done
     fi
 
-    # Conversations — push per-slug (Design ref: D3, D4)
+    # Conversations — snapshot then upload per-slug (Design ref: D3, D4)
+    # Snapshot eliminates race with MCP servers and subagents writing to JSONL files
     if [[ -d "$CLAUDE_DIR/projects" ]]; then
+        local _snap_dir
+        _snap_dir=$(mktemp -d)
+        register_cleanup "rm -rf '$_snap_dir'"
+
         for slug_dir in "$CLAUDE_DIR"/projects/*/; do
             [[ ! -d "$slug_dir" ]] && continue
             # Skip symlinked slug directories (foreign device slugs)
             [[ -L "${slug_dir%/}" ]] && continue
             local slug_name
             slug_name=$(basename "$slug_dir")
-            # Check if this slug has any real (non-symlink) .jsonl files
-            local has_jsonl=false
-            for f in "$slug_dir"*.jsonl; do
-                [[ -f "$f" && ! -L "$f" ]] && { has_jsonl=true; break; }
+
+            # Check if this slug has any JSONL files worth syncing
+            local _has_jsonl=false
+            for _f in "$slug_dir"*.jsonl; do
+                [[ -f "$_f" && ! -L "$_f" ]] && _has_jsonl=true && break
             done
-            if [[ "$has_jsonl" == true ]]; then
-                if ! _capture_err "rclone push conversations/$slug_name" \
-                    rclone copy "$slug_dir" "$REMOTE_BASE/conversations/$slug_name/" \
-                    --checksum --include '*.jsonl' --skip-links ; then
-                    log_backup "WARN" "Failed to sync conversations for $slug_name" "sync.push.drive"
-                    ERRORS=$((ERRORS + 1))
-                fi
+            [[ "$_has_jsonl" == "false" ]] && continue
+
+            # Recursive discovery — includes subagent files in subdirectories
+            find "$slug_dir" -name '*.jsonl' -not -type l 2>/dev/null | while IFS= read -r _f; do
+                local _rel="${_f#$slug_dir}"
+                mkdir -p "$_snap_dir/$slug_name/$(dirname "$_rel")"
+                cp "$_f" "$_snap_dir/$slug_name/$_rel" 2>/dev/null
+            done
+
+            if ! _capture_err "rclone push conversations/$slug_name" \
+                rclone copy "$_snap_dir/$slug_name/" "$REMOTE_BASE/conversations/$slug_name/" \
+                --checksum --include '*.jsonl'; then
+                log_backup "WARN" "Failed to sync conversations for $slug_name" "sync.push.drive"
+                ERRORS=$((ERRORS + 1))
             fi
         done
     fi
