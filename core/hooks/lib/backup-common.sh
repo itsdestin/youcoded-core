@@ -241,8 +241,10 @@ rewrite_project_slugs() {
                     log_backup "WARN" "Skipping symlink outside projects dir: $abs_source"
                     continue
                 fi
-                ln -sf "$abs_source" "$target" 2>/dev/null || \
+                if ! ln -sf "$abs_source" "$target" 2>/dev/null; then
                     cp -r "$subdir" "$target" 2>/dev/null || true
+                    log_backup "WARN" "Symlink failed for $(basename "$target") — using copy (may be stale). Enable Developer Mode for live links." "sync.aggregate"
+                fi
             fi
             # If local version exists, don't overwrite — user may have newer data
         done
@@ -326,9 +328,11 @@ aggregate_conversations() {
                 # Skip if already exists (real file = local conversation, symlink = already aggregated)
                 [[ -e "$target" || -L "$target" ]] && continue
 
-                # Create relative symlink
-                ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null || \
+                # Create relative symlink (cp fallback for Windows without Developer Mode)
+                if ! ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null; then
                     cp "$jsonl_file" "$target" 2>/dev/null || true
+                    log_backup "WARN" "Symlink failed for $basename_jsonl — using copy (may be stale). Enable Developer Mode for live links." "sync.aggregate"
+                fi
                 aggregated=$((aggregated + 1))
             done
         done
