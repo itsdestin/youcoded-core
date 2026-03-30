@@ -9,6 +9,7 @@ import type { SessionManager } from './session-manager';
 import type { HookRelay } from './hook-relay';
 import type { RemoteConfig } from './remote-config';
 import { readTranscriptMeta } from './transcript-utils';
+import { listPastSessions, loadHistory } from './session-browser';
 
 const PTY_BUFFER_SIZE = 4 * 1024 * 1024; // 4MB per session — enough for full conversation replay
 const HOOK_BUFFER_SIZE = 10_000; // ~10MB max, covers full conversations without excessive memory
@@ -521,6 +522,34 @@ export class RemoteServer {
       case 'session:list': {
         const sessions = this.sessionManager.listSessions();
         this.respond(client.ws, type, id, sessions);
+        break;
+      }
+      case 'session:browse': {
+        const activeIds = new Set(this.sessionManager.listSessions().map(s => s.id));
+        const sessions = await listPastSessions(activeIds);
+        this.respond(client.ws, type, id, sessions);
+        break;
+      }
+      case 'session:history': {
+        const { sessionId: histSessionId, count, all } = payload;
+        // Find the JSONL file across all project slugs
+        const projectsDir = path.join(os.homedir(), '.claude', 'projects');
+        const slugs = await fs.promises.readdir(projectsDir).catch(() => [] as string[]);
+        let foundSlug = '';
+        for (const slug of slugs) {
+          const candidate = path.join(projectsDir, slug, histSessionId + '.jsonl');
+          try {
+            await fs.promises.access(candidate);
+            foundSlug = slug;
+            break;
+          } catch {}
+        }
+        if (!foundSlug) {
+          this.respond(client.ws, type, id, []);
+          break;
+        }
+        const history = await loadHistory(histSessionId, foundSlug, count, all);
+        this.respond(client.ws, type, id, history);
         break;
       }
       case 'permission:respond': {
