@@ -124,6 +124,7 @@ export default function TerminalView({ sessionId, visible }: Props) {
   return (
     <div
       ref={containerRef}
+      className={visible ? undefined : 'terminal-hidden'}
       style={{
         position: 'absolute',
         top: 0,

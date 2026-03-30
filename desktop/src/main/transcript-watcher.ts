@@ -357,10 +357,10 @@ export class TranscriptWatcher extends EventEmitter {
     this.stopPolling(session);
   }
 
-  private readNewLines(session: WatchedSession): void {
+  private async readNewLines(session: WatchedSession): Promise<void> {
     let stat: fs.Stats;
     try {
-      stat = fs.statSync(session.jsonlPath);
+      stat = await fs.promises.stat(session.jsonlPath);
     } catch {
       return; // File doesn't exist (yet)
     }
@@ -371,17 +371,17 @@ export class TranscriptWatcher extends EventEmitter {
     const bytesToRead = fileSize - session.offset;
     const buffer = Buffer.alloc(bytesToRead);
 
-    let fd: number;
+    let handle: fs.promises.FileHandle;
     try {
-      fd = fs.openSync(session.jsonlPath, 'r');
+      handle = await fs.promises.open(session.jsonlPath, 'r');
     } catch {
       return;
     }
 
     try {
-      fs.readSync(fd, buffer, 0, bytesToRead, session.offset);
+      await handle.read(buffer, 0, bytesToRead, session.offset);
     } finally {
-      fs.closeSync(fd);
+      await handle.close();
     }
 
     session.offset = fileSize;
@@ -414,7 +414,14 @@ export class TranscriptWatcher extends EventEmitter {
       // - user-message: EMIT (reducer has its own text-based dedup)
       const lineUuid = events[0].uuid;
       const isRepeat = lineUuid && session.seenUuids.has(lineUuid);
-      if (lineUuid) session.seenUuids.add(lineUuid);
+      if (lineUuid) {
+        session.seenUuids.add(lineUuid);
+        // Sliding window: prune to last 500 UUIDs to prevent unbounded memory growth
+        if (session.seenUuids.size > 500) {
+          const entries = [...session.seenUuids];
+          session.seenUuids = new Set(entries.slice(-500));
+        }
+      }
 
       for (const event of events) {
         if (isRepeat && event.type === 'assistant-text') continue;

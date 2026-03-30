@@ -8,6 +8,7 @@ type Callback = (...args: any[]) => void;
 interface PendingRequest {
   resolve: (value: any) => void;
   reject: (reason: any) => void;
+  timeout: ReturnType<typeof setTimeout>;
 }
 
 export type RemoteConnectionState = 'disconnected' | 'connecting' | 'authenticating' | 'connected';
@@ -49,15 +50,14 @@ function send(msg: any): void {
 function invoke(type: string, payload?: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const id = `msg-${++messageId}`;
-    pending.set(id, { resolve, reject });
-    send({ type, id, payload });
-    // Timeout after 30 seconds
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       if (pending.has(id)) {
         pending.delete(id);
         reject(new Error(`Request ${type} timed out`));
       }
     }, 30_000);
+    pending.set(id, { resolve, reject, timeout });
+    send({ type, id, payload });
   });
 }
 
@@ -107,16 +107,18 @@ function handleMessage(data: string): void {
 
   // Response to a pending request
   if (type?.endsWith(':response') && id && pending.has(id)) {
-    const { resolve } = pending.get(id)!;
+    const entry = pending.get(id)!;
+    clearTimeout(entry.timeout);
     pending.delete(id);
-    resolve(payload);
+    entry.resolve(payload);
     return;
   }
 
   // Push events — dispatch to registered listeners
   switch (type) {
     case 'pty:output':
-      dispatchEvent('pty:output', payload.sessionId, payload.data);
+      dispatchEvent('pty:output', payload.sessionId, payload.data);              // global (App.tsx mode detection)
+      dispatchEvent(`pty:output:${payload.sessionId}`, payload.data);            // per-session (TerminalView)
       break;
     case 'hook:event':
       dispatchEvent('hook:event', payload);
@@ -134,7 +136,7 @@ function handleMessage(data: string): void {
       dispatchEvent('status:data', payload);
       break;
     case 'ui:action':
-      dispatchEvent('ui:action', payload);
+      dispatchEvent('ui:action:received', payload);
       break;
     case 'transcript:event':
       dispatchEvent('transcript:event', payload);
@@ -232,6 +234,9 @@ export function installShim(): void {
       create: (opts: any) => invoke('session:create', opts),
       destroy: (sessionId: string) => invoke('session:destroy', { sessionId }),
       list: () => invoke('session:list'),
+      browse: () => invoke('session:browse'),
+      loadHistory: (sessionId: string, count?: number, all?: boolean) =>
+        invoke('session:history', { sessionId, count, all }),
       sendInput: (sessionId: string, text: string) => fire('session:input', { sessionId, text }),
       resize: (sessionId: string, cols: number, rows: number) => fire('session:resize', { sessionId, cols, rows }),
       signalReady: (sessionId: string) => fire('session:terminal-ready', { sessionId }),
@@ -241,10 +246,15 @@ export function installShim(): void {
       sessionCreated: (cb: Callback) => addListener('session:created', cb),
       sessionDestroyed: (cb: Callback) => addListener('session:destroyed', cb),
       ptyOutput: (cb: Callback) => addListener('pty:output', cb),
+      ptyOutputForSession: (sessionId: string, cb: (data: string) => void) => {
+        const channel = `pty:output:${sessionId}`;
+        const handler = addListener(channel, cb);
+        return () => removeListener(channel, handler);
+      },
       hookEvent: (cb: Callback) => addListener('hook:event', cb),
       statusData: (cb: Callback) => addListener('status:data', cb),
       sessionRenamed: (cb: Callback) => addListener('session:renamed', cb),
-      uiAction: (cb: Callback) => addListener('ui:action', cb),
+      uiAction: (cb: Callback) => addListener('ui:action:received', cb),
       transcriptEvent: (cb: Callback) => addListener('transcript:event', cb),
     },
     skills: {

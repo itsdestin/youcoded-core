@@ -21,10 +21,10 @@ function slugToDisplayPath(slug: string): string {
   return '/' + slug.replace(/-/g, '/');
 }
 
-function readTopic(sessionId: string): string {
+async function readTopic(sessionId: string): Promise<string> {
   try {
-    const content = fs.readFileSync(path.join(TOPICS_DIR, `topic-${sessionId}`), 'utf8').trim();
-    return content || 'Untitled';
+    const content = await fs.promises.readFile(path.join(TOPICS_DIR, `topic-${sessionId}`), 'utf8');
+    return content.trim() || 'Untitled';
   } catch {
     return 'Untitled';
   }
@@ -34,100 +34,105 @@ function readTopic(sessionId: string): string {
  * Scans all project directories for JSONL transcript files.
  * Returns sessions sorted by last modified (most recent first).
  * Excludes sessions that are currently active (matching activeSessionIds).
+ * Uses async I/O with Promise.all for parallelism.
  */
-export function listPastSessions(activeSessionIds?: Set<string>): PastSession[] {
-  const sessions: PastSession[] = [];
-
+export async function listPastSessions(activeSessionIds?: Set<string>): Promise<PastSession[]> {
   let slugs: string[];
   try {
-    slugs = fs.readdirSync(PROJECTS_DIR).filter((f) => {
-      try { return fs.statSync(path.join(PROJECTS_DIR, f)).isDirectory(); } catch { return false; }
-    });
+    const entries = await fs.promises.readdir(PROJECTS_DIR);
+    const statResults = await Promise.all(
+      entries.map(async (f) => {
+        try {
+          const stat = await fs.promises.stat(path.join(PROJECTS_DIR, f));
+          return stat.isDirectory() ? f : null;
+        } catch { return null; }
+      })
+    );
+    slugs = statResults.filter((s): s is string => s !== null);
   } catch {
     return [];
   }
+
+  const allSessions: PastSession[] = [];
 
   for (const slug of slugs) {
     const slugDir = path.join(PROJECTS_DIR, slug);
     let files: string[];
     try {
-      files = fs.readdirSync(slugDir).filter((f) => f.endsWith('.jsonl'));
-    } catch {
-      continue;
-    }
+      files = (await fs.promises.readdir(slugDir)).filter((f) => f.endsWith('.jsonl'));
+    } catch { continue; }
 
-    for (const file of files) {
+    const sessionPromises = files.map(async (file) => {
       const sessionId = file.replace('.jsonl', '');
-      if (activeSessionIds?.has(sessionId)) continue;
+      if (activeSessionIds?.has(sessionId)) return null;
 
       try {
-        const stat = fs.statSync(path.join(slugDir, file));
-        if (stat.size < 500) continue;
+        const stat = await fs.promises.stat(path.join(slugDir, file));
+        if (stat.size < 500) return null;
+        const name = await readTopic(sessionId);
 
-        sessions.push({
+        return {
           sessionId,
-          name: readTopic(sessionId),
+          name,
           projectSlug: slug,
           projectPath: slugToDisplayPath(slug),
           lastModified: stat.mtimeMs,
           size: stat.size,
-        });
-      } catch {
-        continue;
-      }
-    }
+        } as PastSession;
+      } catch { return null; }
+    });
+
+    const results = await Promise.all(sessionPromises);
+    allSessions.push(...results.filter((s): s is PastSession => s !== null));
   }
 
-  sessions.sort((a, b) => b.lastModified - a.lastModified);
-  return sessions;
+  allSessions.sort((a, b) => b.lastModified - a.lastModified);
+  return allSessions;
 }
 
 /**
  * Loads the last N conversational messages from a session's JSONL file.
  * "Conversational" = user prompts (with promptId, not meta) and assistant
  * end_turn responses (text content only, no tool calls).
+ *
+ * Uses async I/O with single-pass deduplication (Map overwrite pattern)
+ * and null-byte line filtering.
  */
-export function loadHistory(
+export async function loadHistory(
   sessionId: string,
   projectSlug: string,
   count: number = 10,
   all: boolean = false,
-): HistoryMessage[] {
+): Promise<HistoryMessage[]> {
   if (!SAFE_ID_RE.test(projectSlug) || !SAFE_ID_RE.test(sessionId)) return [];
   const jsonlPath = path.join(PROJECTS_DIR, projectSlug, `${sessionId}.jsonl`);
 
   let content: string;
   try {
-    content = fs.readFileSync(jsonlPath, 'utf8');
+    content = await fs.promises.readFile(jsonlPath, 'utf8');
   } catch {
     return [];
   }
 
-  const lines = content.trim().split('\n');
-  const messages: HistoryMessage[] = [];
+  // Filter null-byte corrupted lines (NTFS pre-allocation gaps from process kills)
+  const lines = content.trim().split('\n').filter(line =>
+    line.trim() && !line.includes('\x00')
+  );
 
-  // Track last occurrence per UUID to handle incremental writes
-  const lastLineByUuid = new Map<string, string>();
+  // Single-pass: overwrite Map by UUID (last occurrence wins for dedup)
+  const lastParsedByUuid = new Map<string, any>();
   for (const line of lines) {
     try {
       const parsed = JSON.parse(line);
       if (parsed.uuid && (parsed.type === 'user' || parsed.type === 'assistant')) {
-        lastLineByUuid.set(parsed.uuid, line);
+        lastParsedByUuid.set(parsed.uuid, parsed);
       }
     } catch {}
   }
 
-  const seenUuids = new Set<string>();
-  for (const line of lines) {
-    let parsed: any;
-    try { parsed = JSON.parse(line); } catch { continue; }
-    if (!parsed.uuid) continue;
-    if (parsed.type !== 'user' && parsed.type !== 'assistant') continue;
-
-    if (lastLineByUuid.get(parsed.uuid) !== line) continue;
-    if (seenUuids.has(parsed.uuid)) continue;
-    seenUuids.add(parsed.uuid);
-
+  // Extract conversational messages from deduplicated set (preserves insertion order)
+  const messages: HistoryMessage[] = [];
+  for (const parsed of lastParsedByUuid.values()) {
     const message = parsed.message;
     if (!message) continue;
 

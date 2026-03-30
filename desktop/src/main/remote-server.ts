@@ -8,6 +8,8 @@ import { EventEmitter } from 'events';
 import type { SessionManager } from './session-manager';
 import type { HookRelay } from './hook-relay';
 import type { RemoteConfig } from './remote-config';
+import { readTranscriptMeta } from './transcript-utils';
+import { listPastSessions, loadHistory } from './session-browser';
 
 const PTY_BUFFER_SIZE = 4 * 1024 * 1024; // 4MB per session — enough for full conversation replay
 const HOOK_BUFFER_SIZE = 10_000; // ~10MB max, covers full conversations without excessive memory
@@ -44,6 +46,19 @@ export class RemoteServer {
   private sessionIdMap = new Map<string, string>(); // desktopId → claudeId
   private lastTopics = new Map<string, string>();
   private topicInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Bound listeners for proper cleanup (avoid anonymous lambda leaks)
+  private onHookEventMapping = (event: any) => {
+    const desktopId = event.sessionId;
+    const claudeId = event.payload?.session_id as string;
+    if (!desktopId || !claudeId || this.sessionIdMap.has(desktopId)) return;
+    this.sessionIdMap.set(desktopId, claudeId);
+  };
+
+  private onSessionExitMapping = (sessionId: string) => {
+    this.sessionIdMap.delete(sessionId);
+    this.lastTopics.delete(sessionId);
+  };
 
   constructor(
     private sessionManager: SessionManager,
@@ -146,12 +161,7 @@ export class RemoteServer {
     // Topic file watcher — discover desktop→claude session ID mapping from hook events
     // and poll topic files for session:renamed events
     const topicDir = path.join(os.homedir(), '.claude', 'topics');
-    this.hookRelay.on('hook-event', (event: any) => {
-      const desktopId = event.sessionId;
-      const claudeId = event.payload?.session_id as string;
-      if (!desktopId || !claudeId || this.sessionIdMap.has(desktopId)) return;
-      this.sessionIdMap.set(desktopId, claudeId);
-    });
+    this.hookRelay.on('hook-event', this.onHookEventMapping);
 
     this.topicInterval = setInterval(() => {
       for (const [desktopId, claudeId] of this.sessionIdMap) {
@@ -166,10 +176,7 @@ export class RemoteServer {
     }, 2000);
 
     // Clean up topic tracking when sessions exit
-    this.sessionManager.on('session-exit', (sessionId: string) => {
-      this.sessionIdMap.delete(sessionId);
-      this.lastTopics.delete(sessionId);
-    });
+    this.sessionManager.on('session-exit', this.onSessionExitMapping);
 
     return new Promise<void>((resolve) => {
       this.httpServer!.listen(this.config.port, () => {
@@ -187,7 +194,9 @@ export class RemoteServer {
     this.transcriptBuffers.clear();
     this.sessionManager.off('pty-output', this.onPtyOutput);
     this.hookRelay.off('hook-event', this.onHookEvent);
+    this.hookRelay.off('hook-event', this.onHookEventMapping);
     this.sessionManager.off('session-exit', this.onSessionExit);
+    this.sessionManager.off('session-exit', this.onSessionExitMapping);
     this.sessionManager.off('session-created', this.onSessionCreated);
 
     for (const client of this.clients) {
@@ -522,6 +531,34 @@ export class RemoteServer {
         this.respond(client.ws, type, id, sessions);
         break;
       }
+      case 'session:browse': {
+        const activeIds = new Set(this.sessionManager.listSessions().map(s => s.id));
+        const sessions = await listPastSessions(activeIds);
+        this.respond(client.ws, type, id, sessions);
+        break;
+      }
+      case 'session:history': {
+        const { sessionId: histSessionId, count, all } = payload;
+        // Find the JSONL file across all project slugs
+        const projectsDir = path.join(os.homedir(), '.claude', 'projects');
+        const slugs = await fs.promises.readdir(projectsDir).catch(() => [] as string[]);
+        let foundSlug = '';
+        for (const slug of slugs) {
+          const candidate = path.join(projectsDir, slug, histSessionId + '.jsonl');
+          try {
+            await fs.promises.access(candidate);
+            foundSlug = slug;
+            break;
+          } catch {}
+        }
+        if (!foundSlug) {
+          this.respond(client.ws, type, id, []);
+          break;
+        }
+        const history = await loadHistory(histSessionId, foundSlug, count, all);
+        this.respond(client.ws, type, id, history);
+        break;
+      }
       case 'permission:respond': {
         const { requestId, decision } = payload;
         const result = this.hookRelay.respond(requestId, decision);
@@ -537,9 +574,24 @@ export class RemoteServer {
         this.respond(client.ws, type, id, os.homedir());
         break;
       }
+      case 'favorites:get': {
+        const favPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        try {
+          const data = await fs.promises.readFile(favPath, 'utf8');
+          this.respond(client.ws, type, id, JSON.parse(data));
+        } catch {
+          this.respond(client.ws, type, id, { favorites: [] });
+        }
+        break;
+      }
+      case 'favorites:set': {
+        const favPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        await fs.promises.writeFile(favPath, JSON.stringify(payload, null, 2));
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
       case 'transcript:read-meta': {
         const transcriptPath = payload.path || payload;
-        // Validate path is within ~/.claude/projects/ to prevent arbitrary file reads
         const claudeProjects = path.join(os.homedir(), '.claude', 'projects');
         const resolvedPath = path.resolve(transcriptPath);
         if (!resolvedPath.startsWith(claudeProjects)) {
@@ -547,19 +599,8 @@ export class RemoteServer {
           break;
         }
         try {
-          const content = fs.readFileSync(transcriptPath, 'utf8');
-          const lines = content.trim().split('\n');
-          let model = 'unknown';
-          let contextPercent = 100;
-          for (const line of lines) {
-            try {
-              const obj = JSON.parse(line);
-              if (obj.model) model = obj.model.display_name || obj.model.id || obj.model;
-              if (obj.costInfo?.contextRemaining != null) contextPercent = Math.round(obj.costInfo.contextRemaining * 100);
-              if (obj.context_window?.remaining_percentage != null) contextPercent = Math.round(obj.context_window.remaining_percentage);
-            } catch { /* skip non-JSON lines */ }
-          }
-          this.respond(client.ws, type, id, { model, contextPercent });
+          const meta = await readTranscriptMeta(transcriptPath);
+          this.respond(client.ws, type, id, meta);
         } catch {
           this.respond(client.ws, type, id, null);
         }

@@ -1,4 +1,8 @@
 #!/bin/bash
+# Source shared infrastructure (trap handlers, error capture, rotation)
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "$HOOK_DIR/lib/hook-preamble.sh" ]] && source "$HOOK_DIR/lib/hook-preamble.sh"
+
 # PostToolUse hook for Write|Edit
 # Commits changes to Git, pushes every 15 min (Drive archive removed — personal-sync.sh handles all backend replication)
 # Tracks the ~/.claude/ project repo
@@ -100,7 +104,7 @@ if [[ -n "$PPID" ]]; then
         console.log(JSON.stringify(reg, null, 2));
     " "$REG_CONTENT" "$NORM_PATH" "$PPID" "$TIMESTAMP" "$CONTENT_HASH" 2>/dev/null) || true
 
-    echo "$REG_CONTENT" > "$REGISTRY"
+    atomic_write "$REGISTRY" "$REG_CONTENT"
 fi
 
 # --- Debounced push (every 15 min) ---
@@ -120,9 +124,11 @@ fi
 STASHED=false
 if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
     git stash push -q --include-untracked -m "git-sync: auto-stash before pull" 2>/dev/null && STASHED=true
+    register_cleanup 'cd "'"$REPO_DIR"'" && git stash pop -q 2>/dev/null || true'
 fi
 
 # Pull + rebase
+register_cleanup 'cd "'"$REPO_DIR"'" && git rebase --abort 2>/dev/null || true'
 if ! git pull --rebase origin "$PUSH_BRANCH" 2>/dev/null; then
     git rebase --abort 2>/dev/null || true
 
@@ -152,14 +158,18 @@ else
     [[ -f "$REBASE_FAIL_COUNT_FILE" ]] && rm -f "$REBASE_FAIL_COUNT_FILE"
 
     # Push
-    git push origin "$PUSH_BRANCH" 2>/dev/null || true
+    if _capture_err "git push" git push origin "$PUSH_BRANCH"; then
+        echo "OK: System Changes Synced" > "$CLAUDE_DIR/.sync-status"
+        log_backup "INFO" "Push completed" "sync.push.git"
+    else
+        echo "ERR: Git push failed" > "$CLAUDE_DIR/.sync-status"
+        log_backup "WARN" "Git push failed" "sync.push.git"
+    fi
 
     # Drive archive removed — personal-sync.sh handles all backend replication (D4)
 
-    # Update push marker and sync status
+    # Update push marker
     date +%s > "$PUSH_MARKER"
-    echo "OK: System Changes Synced" > "$CLAUDE_DIR/.sync-status"
-    log_backup "INFO" "Push completed to $(git remote get-url origin 2>/dev/null || echo 'origin')"
 
     # Restore stashed changes on success path
     if [[ "$STASHED" == "true" ]]; then

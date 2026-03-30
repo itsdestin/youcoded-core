@@ -17,12 +17,19 @@ FILE_PATH=$(echo "$INPUT" | node -e "
 
 # Source shared backup utilities
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source shared infrastructure (trap handlers, error capture, rotation)
+[[ -f "$HOOK_DIR/lib/hook-preamble.sh" ]] && source "$HOOK_DIR/lib/hook-preamble.sh"
+
 if [[ -f "$HOOK_DIR/lib/backup-common.sh" ]]; then
     source "$HOOK_DIR/lib/backup-common.sh"
 fi
 if [[ -f "$HOOK_DIR/lib/migrate.sh" ]]; then
     source "$HOOK_DIR/lib/migrate.sh"
 fi
+
+# Ensure is_toolkit_owned() has TOOLKIT_ROOT to check against
+TOOLKIT_ROOT=$(config_get "toolkit_root" "")
 
 # --- Path filter: only sync personal data files ---
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
@@ -67,6 +74,19 @@ fi
 
 [[ -z "$BACKEND" || "$BACKEND" == "none" ]] && exit 0
 
+# --- Mutex: prevent concurrent personal-sync instances ---
+LOCK_DIR="$CLAUDE_DIR/toolkit-state/.personal-sync-lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    _lock_pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || echo 0)
+    if kill -0 "$_lock_pid" 2>/dev/null; then
+        exit 0  # Another sync is running
+    fi
+    rm -rf "$LOCK_DIR"
+    mkdir "$LOCK_DIR" 2>/dev/null || exit 0
+fi
+echo $$ > "$LOCK_DIR/pid"
+register_cleanup "rm -rf '$LOCK_DIR'"
+
 # --- Debounce: 15 minutes ---
 MARKER_FILE="$CLAUDE_DIR/toolkit-state/.personal-sync-marker"
 
@@ -99,10 +119,11 @@ sync_drive() {
             [[ ! -d "$MEMORY_DIR" ]] && continue
             local PROJECT_KEY
             PROJECT_KEY=$(basename "$PROJECT_DIR")
-            rclone copy "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update 2>/dev/null || {
-                log_backup "WARN" "Failed to sync memory for project $PROJECT_KEY"
+            if ! _capture_err "rclone push memory/$PROJECT_KEY" \
+                rclone copy "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update --skip-links ; then
+                log_backup "WARN" "Failed to sync memory for project $PROJECT_KEY" "sync.push.memory"
                 ERRORS=$((ERRORS + 1))
-            }
+            fi
         done
     fi
 
@@ -153,25 +174,39 @@ sync_drive() {
         done
     fi
 
-    # Conversations — push per-slug (Design ref: D3, D4)
+    # Conversations — snapshot then upload per-slug (Design ref: D3, D4)
+    # Snapshot eliminates race with MCP servers and subagents writing to JSONL files
     if [[ -d "$CLAUDE_DIR/projects" ]]; then
+        local _snap_dir
+        _snap_dir=$(mktemp -d)
+        register_cleanup "rm -rf '$_snap_dir'"
+
         for slug_dir in "$CLAUDE_DIR"/projects/*/; do
             [[ ! -d "$slug_dir" ]] && continue
             # Skip symlinked slug directories (foreign device slugs)
             [[ -L "${slug_dir%/}" ]] && continue
             local slug_name
             slug_name=$(basename "$slug_dir")
-            # Check if this slug has any real (non-symlink) .jsonl files
-            local has_jsonl=false
-            for f in "$slug_dir"*.jsonl; do
-                [[ -f "$f" && ! -L "$f" ]] && { has_jsonl=true; break; }
+
+            # Check if this slug has any JSONL files worth syncing
+            local _has_jsonl=false
+            for _f in "$slug_dir"*.jsonl; do
+                [[ -f "$_f" && ! -L "$_f" ]] && _has_jsonl=true && break
             done
-            if [[ "$has_jsonl" == true ]]; then
-                rclone copy "$slug_dir" "$REMOTE_BASE/conversations/$slug_name/" \
-                    --checksum --include '*.jsonl' --skip-links 2>/dev/null || {
-                    log_backup "WARN" "Failed to sync conversations for $slug_name"
-                    ERRORS=$((ERRORS + 1))
-                }
+            [[ "$_has_jsonl" == "false" ]] && continue
+
+            # Recursive discovery — includes subagent files in subdirectories
+            find "$slug_dir" -name '*.jsonl' -not -type l 2>/dev/null | while IFS= read -r _f; do
+                local _rel="${_f#$slug_dir}"
+                mkdir -p "$_snap_dir/$slug_name/$(dirname "$_rel")"
+                cp "$_f" "$_snap_dir/$slug_name/$_rel" 2>/dev/null
+            done
+
+            if ! _capture_err "rclone push conversations/$slug_name" \
+                rclone copy "$_snap_dir/$slug_name/" "$REMOTE_BASE/conversations/$slug_name/" \
+                --checksum --include '*.jsonl'; then
+                log_backup "WARN" "Failed to sync conversations for $slug_name" "sync.push.drive"
+                ERRORS=$((ERRORS + 1))
             fi
         done
     fi
@@ -248,7 +283,7 @@ sync_github() (
         done
     fi
 
-    # Conversations — copy per-slug (Design ref: D3, D4)
+    # Conversations — copy per-slug with recursive discovery (Design ref: D3, D4)
     if [[ -d "$CLAUDE_DIR/projects" ]]; then
         for slug_dir in "$CLAUDE_DIR"/projects/*/; do
             [[ ! -d "$slug_dir" ]] && continue
@@ -260,9 +295,10 @@ sync_github() (
                 [[ -f "$f" && ! -L "$f" ]] && { has_jsonl=true; break; }
             done
             if [[ "$has_jsonl" == true ]]; then
-                mkdir -p "$REPO_DIR/conversations/$slug_name"
-                for f in "$slug_dir"*.jsonl; do
-                    [[ -f "$f" && ! -L "$f" ]] && cp "$f" "$REPO_DIR/conversations/$slug_name/" 2>/dev/null || true
+                find "$slug_dir" -name '*.jsonl' -not -type l 2>/dev/null | while IFS= read -r _f; do
+                    local _rel="${_f#$slug_dir}"
+                    mkdir -p "$REPO_DIR/conversations/$slug_name/$(dirname "$_rel")"
+                    cp "$_f" "$REPO_DIR/conversations/$slug_name/$_rel" 2>/dev/null
                 done
             fi
         done
@@ -351,7 +387,7 @@ sync_icloud() {
         done
     fi
 
-    # Conversations — copy per-slug, skip symlinks (Design ref: D3, D4)
+    # Conversations — copy per-slug with recursive discovery, skip symlinks (Design ref: D3, D4)
     if [[ -d "$CLAUDE_DIR/projects" ]]; then
         for slug_dir in "$CLAUDE_DIR"/projects/*/; do
             [[ ! -d "$slug_dir" ]] && continue
@@ -363,12 +399,11 @@ sync_icloud() {
                 [[ -f "$f" && ! -L "$f" ]] && { has_jsonl=true; break; }
             done
             if [[ "$has_jsonl" == true ]]; then
-                mkdir -p "$ICLOUD_PATH/conversations/$slug_name"
-                for f in "$slug_dir"*.jsonl; do
-                    [[ -f "$f" && ! -L "$f" ]] && {
-                        rsync -a --update "$f" "$ICLOUD_PATH/conversations/$slug_name/" 2>/dev/null || \
-                            cp "$f" "$ICLOUD_PATH/conversations/$slug_name/" 2>/dev/null || true
-                    }
+                find "$slug_dir" -name '*.jsonl' -not -type l 2>/dev/null | while IFS= read -r _f; do
+                    local _rel="${_f#$slug_dir}"
+                    mkdir -p "$ICLOUD_PATH/conversations/$slug_name/$(dirname "$_rel")"
+                    rsync -a --update "$_f" "$ICLOUD_PATH/conversations/$slug_name/$_rel" 2>/dev/null || \
+                        cp "$_f" "$ICLOUD_PATH/conversations/$slug_name/$_rel" 2>/dev/null || true
                 done
             fi
         done

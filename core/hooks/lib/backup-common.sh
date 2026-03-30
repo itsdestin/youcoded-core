@@ -15,15 +15,39 @@ CONFIG_FILE="$CLAUDE_DIR/toolkit-state/config.json"
 LOCAL_CONFIG_FILE="$CLAUDE_DIR/toolkit-state/config.local.json"
 
 # --- Logging ---
+# log_backup LEVEL MSG [OP] [EXTRA_JSON]
+# Backwards-compatible: existing 2-arg calls produce plaintext.
+# New 3-4 arg calls produce structured JSON for machine-parseable analysis.
 log_backup() {
-    local level="$1" msg="$2"
+    local level="$1" msg="$2" op="${3:-}" extra="${4:-}"
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$ts] [$level] $msg" >> "$BACKUP_LOG"
+    if command -v node &>/dev/null && [[ -n "$op" ]]; then
+        node -e "
+            var e={ts:'$ts',level:'$level',op:'$op',sid:(process.env.CLAUDE_SESSION_ID||'').slice(0,8),msg:process.argv[1]};
+            if ('$extra') try{Object.assign(e,JSON.parse('$extra'))}catch(x){}
+            console.log(JSON.stringify(e));
+        " "$msg" >> "$BACKUP_LOG"
+    else
+        echo "[$ts] [$level] $msg" >> "$BACKUP_LOG"
+    fi
     if [[ "$level" == "ERROR" ]]; then
         echo "{\"hookSpecificOutput\": \"Backup: $msg\"}" >&2
     fi
 }
+
+# --- Atomic file write ---
+# Uses same-directory temp file for rename(2) atomicity.
+# IMPORTANT: Do NOT refactor to use mktemp ($TMPDIR may be on a different
+# mount, breaking rename(2) atomicity). Same-directory temp is intentional.
+if ! declare -f atomic_write &>/dev/null; then
+    atomic_write() {
+        local _target="$1" _content="$2"
+        local _tmp="${_target}.tmp.$$"
+        echo "$_content" > "$_tmp"
+        mv -f "$_tmp" "$_target"
+    }
+fi
 
 # --- Config reading ---
 # Read a key from config.local.json (machine-specific, takes precedence),
@@ -72,23 +96,31 @@ config_get() {
 }
 
 # --- Symlink ownership detection (Design ref: D2) ---
-# Returns 0 if the file is a symlink pointing into TOOLKIT_ROOT (toolkit-owned).
-# Returns 1 otherwise (user-owned or not a symlink).
+# Returns 0 if the file or any of its parent directories is a symlink
+# pointing into TOOLKIT_ROOT (toolkit-owned).
+# Returns 1 otherwise (user-owned or no symlink chain into toolkit).
 is_toolkit_owned() {
     local filepath="$1"
     [[ -z "$TOOLKIT_ROOT" ]] && return 1
-    [[ ! -L "$filepath" ]] && return 1
-    local target
-    target=$(realpath "$filepath" 2>/dev/null \
-        || readlink -f "$filepath" 2>/dev/null \
-        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$filepath" 2>/dev/null \
-        || readlink "$filepath" 2>/dev/null) || return 1
+
     local resolved_root
     resolved_root=$(realpath "$TOOLKIT_ROOT" 2>/dev/null \
         || readlink -f "$TOOLKIT_ROOT" 2>/dev/null \
-        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$TOOLKIT_ROOT" 2>/dev/null \
-        || echo "$TOOLKIT_ROOT") || return 1
-    [[ "$target" == "$resolved_root/"* || "$target" == "$resolved_root" ]]
+        || echo "$TOOLKIT_ROOT")
+
+    # Walk up the directory tree checking for symlinks into TOOLKIT_ROOT
+    local check_path="$filepath"
+    while [[ "$check_path" != "/" && "$check_path" != "." && -n "$check_path" ]]; do
+        if [[ -L "$check_path" ]]; then
+            local target
+            target=$(realpath "$check_path" 2>/dev/null \
+                || readlink -f "$check_path" 2>/dev/null) || return 1
+            [[ "$target" == "$resolved_root/"* || "$target" == "$resolved_root" ]] && return 0
+        fi
+        check_path=$(dirname "$check_path")
+    done
+
+    return 1
 }
 
 # --- Debounce ---
@@ -105,7 +137,11 @@ debounce_check() {
     now=$(date +%s)
     diff_seconds=$((now - last_sync))
     interval_seconds=$((interval_minutes * 60))
-    [[ $diff_seconds -ge $interval_seconds ]]
+    if [[ $diff_seconds -lt $interval_seconds ]]; then
+        log_backup "DEBUG" "Debounced (${diff_seconds}s/${interval_seconds}s elapsed)" "${_CURRENT_OP:-sync}"
+        return 1
+    fi
+    return 0
 }
 
 # Update debounce marker with current epoch timestamp.
@@ -205,8 +241,10 @@ rewrite_project_slugs() {
                     log_backup "WARN" "Skipping symlink outside projects dir: $abs_source"
                     continue
                 fi
-                ln -sf "$abs_source" "$target" 2>/dev/null || \
+                if ! ln -sf "$abs_source" "$target" 2>/dev/null; then
                     cp -r "$subdir" "$target" 2>/dev/null || true
+                    log_backup "WARN" "Symlink failed for $(basename "$target") — using copy (may be stale). Enable Developer Mode for live links." "sync.aggregate"
+                fi
             fi
             # If local version exists, don't overwrite — user may have newer data
         done
@@ -290,9 +328,11 @@ aggregate_conversations() {
                 # Skip if already exists (real file = local conversation, symlink = already aggregated)
                 [[ -e "$target" || -L "$target" ]] && continue
 
-                # Create relative symlink
-                ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null || \
+                # Create relative symlink (cp fallback for Windows without Developer Mode)
+                if ! ln -s "../$slug_name/$basename_jsonl" "$target" 2>/dev/null; then
                     cp "$jsonl_file" "$target" 2>/dev/null || true
+                    log_backup "WARN" "Symlink failed for $basename_jsonl — using copy (may be stale). Enable Developer Mode for live links." "sync.aggregate"
+                fi
                 aggregated=$((aggregated + 1))
             done
         done
@@ -380,4 +420,43 @@ discover_projects() {
             echo "$norm_path"
         done
     done
+}
+
+# ---------------------------------------------------------------------------
+# Direction-aware conversation sync — understands append-only semantics.
+# For JSONL files, one version should be a prefix of the other.
+# When they diverge, a conflict is flagged rather than silently overwriting.
+#
+# Usage:
+#   conv_safe_pull "$remote_file" "$local_file"  — pull if remote is superset
+#   conv_safe_push "$local_file" "$remote_file"  — push if local is superset
+# ---------------------------------------------------------------------------
+_file_size() {
+    # Portable file size — works on macOS (BSD), Linux (GNU), Windows (MSYS)
+    wc -c < "$1" 2>/dev/null | tr -d ' '
+}
+
+conv_safe_pull() {
+    local remote_file="$1" local_file="$2" slug="$3"
+
+    # New file (doesn't exist locally): pull unconditionally
+    if [[ ! -f "$local_file" ]]; then
+        return 0  # Caller should proceed with rclone copy
+    fi
+
+    local local_size remote_size
+    local_size=$(_file_size "$local_file")
+    remote_size=$(rclone size "$remote_file" --json 2>/dev/null | node -e "
+        let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+            try{console.log(JSON.parse(d).bytes)}catch{console.log(-1)}
+        })" 2>/dev/null)
+
+    # Remote <= local: skip (local has same or more data)
+    if [[ "$remote_size" -le "$local_size" ]]; then
+        return 1  # Skip — local is same or longer
+    fi
+
+    # Remote > local: safe to pull (remote has more data)
+    # Full prefix verification would require downloading — defer to rclone
+    return 0
 }

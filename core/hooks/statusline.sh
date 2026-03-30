@@ -6,11 +6,16 @@
 # Line 4: Rate limit info (from usage-fetch.js)
 # Line 5: Toolkit version + announcement (if active)
 
+# Source shared infrastructure (trap handlers, error capture, rotation)
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "$HOOK_DIR/lib/hook-preamble.sh" ]] && source "$HOOK_DIR/lib/hook-preamble.sh"
+
 STATUS_FILE="$HOME/.claude/.sync-status"
 
 # Read session JSON from stdin and extract fields
 SESSION=$(cat)
 
+STATUSLINE_LOG="$HOME/.claude/statusline.log"
 PARSED=$(echo "$SESSION" | node -e "
 const SEP='\x1f';
 let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
@@ -21,7 +26,7 @@ let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
     const rem=j.context_window?.remaining_percentage!=null?Math.round(j.context_window.remaining_percentage):100;
     console.log(name+SEP+m+SEP+rem+SEP+sid);
   }catch(e){console.error('statusline parse error: '+e.message);console.log(SEP+'unknown'+SEP+'100'+SEP)}
-})" 2>>"$HOME/.claude/statusline.log")
+})" 2>>"$STATUSLINE_LOG")
 
 IFS=$(printf '\037') read -r SESSION_NAME MODEL REMAINING SESSION_ID <<< "$PARSED"
 
@@ -90,6 +95,10 @@ if [[ -f "$WARNINGS_FILE" ]]; then
             PERSONAL:STALE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}WARN: No Recent Personal Sync (>24h)${RESET}" ;;
             SKILLS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: Unsynced Skills${RESET}" ;;
             PROJECTS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: Projects Excluded From Sync${RESET}" ;;
+            GIT:PULL_FAILED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}WARN: Git Pull Failed${RESET}" ;;
+            GIT:NOT_INITIALIZED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}WARN: Git Not Initialized${RESET}" ;;
+            PERSONAL:PULL_FAILED:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}WARN: Personal Pull Failed (${_LINE##*:})${RESET}" ;;
+            MIGRATION:FAILED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: Migration Failed${RESET}" ;;
         esac
     done < "$WARNINGS_FILE"
 fi
@@ -142,7 +151,7 @@ fi
 USAGE_FETCH="$HOOKS_DIR/usage-fetch.js"
 
 if [[ -f "$USAGE_FETCH" ]] && command -v node &>/dev/null; then
-    USAGE_JSON=$(node "$USAGE_FETCH" 2>/dev/null) || USAGE_JSON=""
+    USAGE_JSON=$(node "$USAGE_FETCH" 2>>"$STATUSLINE_LOG") || USAGE_JSON=""
     if [[ -n "$USAGE_JSON" ]]; then
         # Each timer gets its own ANSI color based on its own utilization percentage
         USAGE_LINE=$(node -e "

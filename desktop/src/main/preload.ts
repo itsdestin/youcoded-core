@@ -72,6 +72,12 @@ contextBridge.exposeInMainWorld('claude', {
       ipcRenderer.on(IPC.PTY_OUTPUT, handler);
       return handler;
     },
+    ptyOutputForSession: (sessionId: string, cb: (data: string) => void) => {
+      const channel = `pty:output:${sessionId}`;
+      const handler = (_event: IpcRendererEvent, data: string) => cb(data);
+      ipcRenderer.on(channel, handler);
+      return () => ipcRenderer.removeListener(channel, handler);
+    },
     hookEvent: (cb: (event: any) => void) => {
       const handler = (_e: IpcRendererEvent, event: any) => cb(event);
       ipcRenderer.on(IPC.HOOK_EVENT, handler);
