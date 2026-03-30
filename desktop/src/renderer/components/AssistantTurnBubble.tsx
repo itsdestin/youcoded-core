@@ -34,7 +34,7 @@ function CollapsedToolGroup({ tools, sessionId }: { tools: ToolCallState[]; sess
     <div className="border border-gray-700 rounded-lg overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-left hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left hover:bg-gray-800/50 transition-colors"
       >
         {runningCount > 0 ? (
           <BrailleSpinner size="sm" />
@@ -109,14 +109,14 @@ export default function AssistantTurnBubble({ turn, toolGroups, toolCalls, sessi
         const toolsOnly = hasTools && !bubble.text;
         return (
           <div key={bubble.key} className="flex justify-start px-4 py-1">
-            <div className={`max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-800 text-sm text-gray-200 ${hasTools ? 'px-2' : 'px-4'} ${toolsOnly ? 'py-1' : 'py-3'}`}>
+            <div className={`max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-800 text-sm text-gray-200 ${hasTools ? 'px-2' : 'px-4'} ${toolsOnly ? 'py-1' : hasTools ? 'pt-3 pb-1' : 'py-3'}`}>
               {bubble.text && (
                 <div className={hasTools ? 'px-2' : ''}>
                   <MarkdownContent content={bubble.text.content} />
                 </div>
               )}
               {hasTools && (
-                <div className={bubble.text ? 'mt-2' : ''}>
+                <div className={bubble.text ? 'mt-1' : ''}>
                   {bubble.toolGroupIds.map((groupId) => (
                     <ToolGroupInline
                       key={groupId}

@@ -268,7 +268,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-left hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left hover:bg-gray-800/50 transition-colors"
       >
         {/* Status indicator */}
         {tool.status === 'running' && (
