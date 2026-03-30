@@ -90,7 +90,9 @@ fi
 process_alive() {
     local pid="$1"
     case "$(uname -s)" in
-        MINGW*|MSYS*|CYGWIN*) tasklist //FI "PID eq $pid" //NH 2>/dev/null | grep -q "$pid" ;;
+        MINGW*|MSYS*|CYGWIN*)
+            # Use exact PID filter — tasklist "PID eq" already filters, just check non-empty output
+            tasklist //FI "PID eq $pid" //NH 2>/dev/null | grep -qv "INFO: No tasks" ;;
         *) kill -0 "$pid" 2>/dev/null ;;
     esac
 }
