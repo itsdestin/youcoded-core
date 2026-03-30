@@ -347,7 +347,7 @@ _session_sync_background() {
                             mkdir -p "$CLAUDE_DIR/projects/$_mem_key/memory"
                             rclone copy "$DRIVE_SOURCE/memory/$_mem_key/" \
                                 "$CLAUDE_DIR/projects/$_mem_key/memory/" \
-                                --update --exclude '.DS_Store' 2>/dev/null || {
+                                --update --skip-links --exclude '.DS_Store' 2>/dev/null || {
                                 log_backup "WARN" "Drive pull (memory/$_mem_key) failed"
                                 _drive_pull_ok=false
                             }

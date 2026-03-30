@@ -111,7 +111,7 @@ sync_drive() {
             local PROJECT_KEY
             PROJECT_KEY=$(basename "$PROJECT_DIR")
             if ! _capture_err "rclone push memory/$PROJECT_KEY" \
-                rclone copy "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update ; then
+                rclone copy "$MEMORY_DIR/" "$REMOTE_BASE/memory/$PROJECT_KEY/" --update --skip-links ; then
                 log_backup "WARN" "Failed to sync memory for project $PROJECT_KEY" "sync.push.memory"
                 ERRORS=$((ERRORS + 1))
             fi
