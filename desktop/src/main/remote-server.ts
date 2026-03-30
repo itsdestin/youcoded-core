@@ -567,6 +567,22 @@ export class RemoteServer {
         this.respond(client.ws, type, id, os.homedir());
         break;
       }
+      case 'favorites:get': {
+        const favPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        try {
+          const data = await fs.promises.readFile(favPath, 'utf8');
+          this.respond(client.ws, type, id, JSON.parse(data));
+        } catch {
+          this.respond(client.ws, type, id, { favorites: [] });
+        }
+        break;
+      }
+      case 'favorites:set': {
+        const favPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        await fs.promises.writeFile(favPath, JSON.stringify(payload, null, 2));
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
       case 'transcript:read-meta': {
         const transcriptPath = payload.path || payload;
         const claudeProjects = path.join(os.homedir(), '.claude', 'projects');
