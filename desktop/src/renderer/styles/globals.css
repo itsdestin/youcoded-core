@@ -48,11 +48,24 @@ html, body, #root {
   height: 100%;
 }
 
-/* Hide scrollbars on horizontal scroll containers (quick chips, etc.) */
-.overflow-x-auto::-webkit-scrollbar {
+/* Hide xterm scrollbar when terminal is not the active view.
+   Without this, xterm's scrollbar can bleed through and overlap ChatView's
+   because TerminalView uses visibility:hidden (not display:none) to keep
+   xterm's buffer alive. */
+.terminal-hidden .xterm-viewport::-webkit-scrollbar {
   display: none;
 }
-.overflow-x-auto {
+.terminal-hidden .xterm-viewport {
+  scrollbar-width: none;
+}
+
+/* Hide scrollbars on pure-horizontal scroll containers (quick chips, session strip) */
+.scrollbar-none::-webkit-scrollbar,
+.overflow-x-auto:not(.overflow-y-auto)::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none,
+.overflow-x-auto:not(.overflow-y-auto) {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

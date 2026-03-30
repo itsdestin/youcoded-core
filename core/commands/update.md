@@ -108,7 +108,13 @@ Check for and install updates to the DestinClaude toolkit.
     ```
     Present output. Highlight `[NEW]` items ("This version adds:") and `[WARN]` items ("Converted from copies:").
 
-14. **Handle orphans.**
+14. **Reconcile hook settings.**
+    ```bash
+    bash "$TOOLKIT_ROOT/scripts/post-update.sh" settings-migrate
+    ```
+    Present any `[NEW]`, `[UPDATED]`, or `[ENFORCED]` changes. These represent hooks that were added or had properties (timeouts, matchers) updated to match the manifest. User customizations are preserved — timeouts use MAX(user, manifest) so users can raise but not lower below the safety minimum.
+
+15. **Handle orphans.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" orphans
     ```
@@ -118,32 +124,32 @@ Check for and install updates to the DestinClaude toolkit.
     ```
     Never delete without explicit per-file approval.
 
-15. **Check MCPs.**
+16. **Check MCPs.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" mcps
     ```
     If `[NEW]` auto-install MCPs found: "New MCP servers available — run /health to register them."
     If `[INFO]` manual MCPs found: note they need `/setup-wizard`.
 
-16. **Register missing plugins.**
+17. **Register missing plugins.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" plugins
     ```
     If `[NEW]` plugins found: add them to `settings.json`'s `enabledPlugins` (zero-config, no approval needed). Tell the user which ones were added.
 
-17. **Verify everything.**
+18. **Verify everything.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" verify
     ```
     Present results as a verification table. For any `[FAIL]`: explain the problem, offer to fix it. After fix, re-run just that verification. For `[FAIL]` items suggesting missing dependencies, suggest `/setup-wizard` or `/health`.
 
-18. **Check plugin dependencies.**
+19. **Check plugin dependencies.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" deps
     ```
     For any `[MISSING]` dependencies: explain which plugin needs it, what symptoms the user will see (e.g., "hook error on every tool call"), show the install command, and offer to install. This is especially important after updates since new plugin versions may introduce new dependencies.
 
-19. **Desktop app update.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, ask if the user wants to update the desktop app. If yes:
+20. **Desktop app update.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, ask if the user wants to update the desktop app. If yes:
     ```bash
     bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh"
     ```
