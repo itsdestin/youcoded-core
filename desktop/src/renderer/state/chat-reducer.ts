@@ -75,14 +75,14 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Deduplicate — if the last timeline entry is a user message with the
-      // same content (InputBar optimistic + hook event arriving later), skip
-      const lastEntry = session.timeline[session.timeline.length - 1];
-      if (
-        lastEntry &&
-        lastEntry.kind === 'user' &&
-        lastEntry.message.content === action.content
-      ) {
+      // Deduplicate — if any of the last 3 timeline entries is a user message
+      // with the same content (InputBar optimistic + hook/transcript event
+      // arriving later, possibly with intervening entries), skip
+      const lastFew = session.timeline.slice(-3);
+      const isDuplicate = lastFew.some(entry =>
+        entry.kind === 'user' && 'message' in entry && entry.message.content === action.content
+      );
+      if (isDuplicate) {
         if (!session.isThinking) {
           next.set(action.sessionId, {
             ...session, isThinking: true, currentGroupId: null, currentTurnId: null,
@@ -191,13 +191,13 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Dedup against last timeline entry (optimistic USER_PROMPT)
-      const lastEntry = session.timeline[session.timeline.length - 1];
-      if (
-        lastEntry &&
-        lastEntry.kind === 'user' &&
-        lastEntry.message.content === action.text
-      ) {
+      // Dedup against last 3 timeline entries (optimistic USER_PROMPT may
+      // have intervening assistant-turn or tool entries before transcript arrives)
+      const lastFewT = session.timeline.slice(-3);
+      const isDuplicateT = lastFewT.some(entry =>
+        entry.kind === 'user' && 'message' in entry && entry.message.content === action.text
+      );
+      if (isDuplicateT) {
         if (!session.isThinking) {
           next.set(action.sessionId, {
             ...session, isThinking: true, currentGroupId: null, currentTurnId: null,
