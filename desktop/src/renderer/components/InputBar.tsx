@@ -77,7 +77,9 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCo
         timestamp: Date.now(),
       });
 
-      window.claude.session.sendInput(sessionId, combined + '\r');
+      // Replace newlines with spaces so multi-line pastes don't get split
+      // into separate PTY inputs (each \n would act as Enter)
+      window.claude.session.sendInput(sessionId, combined.replace(/[\r\n]+/g, ' ') + '\r');
     },
     [sessionId, disabled, dispatch],
   );
