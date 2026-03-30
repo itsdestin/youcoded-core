@@ -58,6 +58,11 @@ function LoginScreen({ onLogin }: { onLogin: (password: string) => Promise<void>
 // Capture before any shim can modify window.claude
 const isElectron = !!(window as any).claude;
 
+// Set default platform for Electron path (browser/remote path sets it via remote-shim auth:ok)
+if (isElectron && !(window as any).__PLATFORM__) {
+  (window as any).__PLATFORM__ = 'electron';
+}
+
 function Root() {
   const [connected, setConnected] = useState(isElectron);
   const [hasConnectedOnce, setHasConnectedOnce] = useState(isElectron);

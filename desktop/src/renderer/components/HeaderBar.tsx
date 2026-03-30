@@ -3,6 +3,7 @@ import { ChatIcon, TerminalIcon, GamepadIcon } from './Icons';
 import SessionStrip from './SessionStrip';
 import type { SessionStatusColor } from './StatusDot';
 import type { PermissionMode } from '../../shared/types';
+import { isAndroid } from '../platform';
 
 interface SessionEntry {
   id: string;
@@ -59,7 +60,7 @@ export default function HeaderBar({
       <div className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
         <button
           onClick={onToggleSettings}
-          className={`relative p-1 rounded hover:bg-gray-800 transition-colors shrink-0 ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
+          className={`relative ${isAndroid() ? 'p-2' : 'p-1'} rounded hover:bg-gray-800 transition-colors shrink-0 ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
           title="Settings"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +121,7 @@ export default function HeaderBar({
             }`}
             title="Chat"
           >
-            <ChatIcon className="w-3.5 h-3.5" />
+            <ChatIcon className={isAndroid() ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
             <span className="text-xs font-medium hidden sm:inline">Chat</span>
           </button>
           <button
@@ -132,7 +133,7 @@ export default function HeaderBar({
             }`}
             title="Terminal"
           >
-            <TerminalIcon className="w-3.5 h-3.5" />
+            <TerminalIcon className={isAndroid() ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
             <span className="text-xs font-medium hidden sm:inline">Terminal</span>
           </button>
         </div>

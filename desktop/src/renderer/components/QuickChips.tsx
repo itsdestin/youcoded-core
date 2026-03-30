@@ -1,4 +1,5 @@
 import React from 'react';
+import { isAndroid } from '../platform';
 
 export interface QuickChip {
   label: string;
@@ -24,7 +25,7 @@ export default function QuickChips({ onChipTap }: Props) {
         <button
           key={chip.label}
           onClick={() => onChipTap(chip)}
-          className="shrink-0 h-6 px-2.5 rounded bg-gray-900 border border-gray-700/50 text-[11px] text-gray-300 hover:bg-gray-800 hover:text-gray-200 transition-colors"
+          className={`shrink-0 ${isAndroid() ? 'h-8 px-3' : 'h-6 px-2.5'} rounded bg-gray-900 border border-gray-700/50 text-[11px] text-gray-300 hover:bg-gray-800 hover:text-gray-200 transition-colors`}
         >
           {chip.label}
         </button>
