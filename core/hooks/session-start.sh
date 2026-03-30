@@ -647,13 +647,6 @@ VEREOF
     wait
 
     # -----------------------------------------------------------------------
-    # Sync health check runs AFTER network operations so it can merge
-    # failure warnings from git pull, personal data pull, and migrations
-    # into .sync-warnings for statusline and /sync visibility.
-    # -----------------------------------------------------------------------
-    _bg_sync_health
-
-    # -----------------------------------------------------------------------
     # Sequential post-pull operations (depend on data pulled above)
     # -----------------------------------------------------------------------
 
@@ -674,6 +667,13 @@ VEREOF
             echo "MIGRATION:FAILED" >> "$SYNC_ERRORS_FILE"
         }
     fi
+
+    # -----------------------------------------------------------------------
+    # Sync health check runs AFTER all operations (including migrations)
+    # so it can merge ALL failure warnings into .sync-warnings.
+    # Previously ran before migrations, causing migration errors to be lost.
+    # -----------------------------------------------------------------------
+    _bg_sync_health
 
     # -----------------------------------------------------------------------
     # Self-heal missing symlinks (e.g., after git pull removes tracked
