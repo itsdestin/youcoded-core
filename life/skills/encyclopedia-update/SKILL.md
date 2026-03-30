@@ -49,6 +49,7 @@ When processing a journal entry, evaluate each substantive piece of information 
 | Is this a permanent identity fact (origin, values, education history, career arc, family structure, social structure overview)? | Core Identity | High bar. Almost never write. Explicit approval required for any change. |
 | Is this about the user's present-tense status (current role, school, relationship dynamics, finances, health, emotional state, active interests, living situation)? | Status Snapshot | Replace the relevant section with the most current state. |
 | Is this about a specific person (new info, changed situation, contact, relationship dynamics)? | People Database | Patch that person's entry. Create new entry if threshold met. |
+| Does this contain a phone number or email address for a known person? | People Database | Add to that person's `Email` or `Phone` field immediately. |
 | Is this about a friend group's dynamics (how a group functions, what it means to the user, membership changes)? | People Database | Patch that group's entry. |
 | Is this a significant life event (milestone, decision, turning point, first-time experience, notable event)? | Chronicle | Append a new dated, tagged entry. |
 | Is this a political position, worldview element, or admired figure? | Beliefs & Positions | Preserve existing content. Append to evolution log with reasoning. |
@@ -205,6 +206,7 @@ This is the most frequently updated file. Most journal entries will produce at l
 **Update rule: Patch individual entries.**
 
 - **Updating existing entries:** When a journal entry mentions a person already in the database, update only the fields with new information. Always update `Last Known Contact` and `Last Updated` when there's a new interaction. Update `Current Situation` when circumstances change. Append to `Narrative` when something reveals new texture about the relationship. Update `Notes` for practical tracking items.
+- **Contact info capture:** Proactively add `Email` and `Phone` fields whenever an email address or phone number surfaces in conversation or journal entries — even if the person's entry wasn't otherwise being updated. Contact info is reference-durable and should never be lost to journal scroll-off.
 - **Creating new entries:** Only create a new entry when the person is mentioned with enough context to fill the Narrative field meaningfully, appears across multiple entries, or plays a clear role in an ongoing arc. Peripheral mentions ("had lunch with someone named Alex") do not warrant an entry unless they recur.
 - **Tier assignment:** When creating a new entry, assign a Tier (1-4) based on the holistic rubric — not just contact frequency, but emotional significance, intellectual depth, role in ongoing arcs, and how the user describes them. Default to Tier 3 if uncertain. Include the tier in the approval step so the user can override.
 - **Tier changes:** If the pattern of mentions suggests a tier no longer fits, propose a change in the approval step.
@@ -220,6 +222,8 @@ This is the most frequently updated file. Most journal entries will produce at l
 - Tier: [1-4]
 - Birthday: [if known]
 - Known Since: [context]
+- Email: [if known]
+- Phone: [if known]
 - Current Situation: [what they're doing now]
 - Interests/Hobbies: [if known]
 - Last Known Contact: [date and context]
