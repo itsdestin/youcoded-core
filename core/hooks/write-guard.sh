@@ -1,6 +1,7 @@
 #!/bin/bash
 # PreToolUse hook: blocks writes to tracked files when another active
 # Claude session last modified the file (same-machine concurrency guard).
+set -euo pipefail
 
 LOG="$HOME/.claude/backup.log"
 # Use Windows-native path for Node.js compatibility (Git Bash $HOME = /c/Users/... which Node misreads)
