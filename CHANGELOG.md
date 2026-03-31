@@ -2,6 +2,19 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.2.1] - 2026-03-30
+
+### Fixed
+- **Connect 4 multiplayer** — Resolved lobby, challenge, and join failures. Added reconnection handling (players reconnecting get their seat back instead of being rejected), room-full detection (joining a full room shows an error instead of looping), a "Joining" screen while connecting, opponent disconnect banner with leave option, and challenge-decline now returns the challenger to the lobby.
+- **Unix project slug** — Preserved leading dash in `cwdToProjectSlug` so Unix paths (e.g., `/home/user/project` → `-home-user-project`) correctly map to Claude Code's project directories. Fixes session resume and transcript watching on macOS/Linux.
+- **Desktop update prompt** — Made the `/update` desktop app update prompt visually prominent as the final output block.
+
+### Changed
+- **Session strip** — Removed colored indicator bar from active session tab (status dot is sufficient).
+
+### Documentation
+- Updated transcript-watcher spec to v1.2 reflecting the Unix slug leading-dash fix.
+
 ## [2.2.0] - 2026-03-30
 
 ### Added
