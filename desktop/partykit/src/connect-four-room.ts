@@ -1,8 +1,9 @@
 // partykit/src/connect-four-room.ts
 import type * as Party from "partykit/server";
 
+const MAX_PLAYERS = 2;
+
 export default class ConnectFourRoom implements Party.Server {
-  readonly options = { hibernate: true };
   private players = new Map<string, string>(); // connectionId → username
 
   constructor(readonly room: Party.Room) {}
@@ -15,18 +16,47 @@ export default class ConnectFourRoom implements Party.Server {
       return;
     }
 
+    // Handle reconnection: if this username is already in the room,
+    // replace the stale connection instead of adding a duplicate
+    let isReconnect = false;
+    for (const [connId, name] of this.players) {
+      if (name === username && connId !== connection.id) {
+        this.players.delete(connId);
+        for (const conn of this.room.getConnections()) {
+          if (conn.id === connId) {
+            conn.close(4001, "Superseded by reconnection");
+            break;
+          }
+        }
+        isReconnect = true;
+        break;
+      }
+    }
+
+    // Reject if room is full (2 different players already present)
+    if (!isReconnect && this.players.size >= MAX_PLAYERS) {
+      connection.send(JSON.stringify({ type: "room-full" }));
+      connection.close(4002, "Room is full");
+      return;
+    }
+
     this.players.set(connection.id, username);
 
-    // Notify the new player of who's already in the room
+    // Tell the new/reconnecting player about everyone already in the room
     for (const [connId, name] of this.players) {
       if (connId !== connection.id) {
         connection.send(JSON.stringify({ type: "player-joined", username: name }));
       }
     }
 
-    // Notify existing players that someone joined
+    // Notify existing players — but mark reconnections so clients
+    // can differentiate a new opponent from a socket blip
     this.room.broadcast(
-      JSON.stringify({ type: "player-joined", username }),
+      JSON.stringify({
+        type: "player-joined",
+        username,
+        reconnect: isReconnect,
+      }),
       [connection.id],
     );
   }

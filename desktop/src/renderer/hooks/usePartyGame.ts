@@ -25,6 +25,7 @@ export function usePartyGame(
   const boardRef = useRef<number[][]>([]);
   const turnRef = useRef<'red' | 'yellow'>('red');
   const rematchRequestedRef = useRef(false);
+  const opponentRef = useRef<string | null>(null);
 
   // Clean up game connection on unmount
   useEffect(() => {
@@ -44,18 +45,26 @@ export function usePartyGame(
       onMessage: (data) => {
         switch (data.type) {
           case 'player-joined': {
-            if (data.username !== username) {
-              const board = createBoard();
-              boardRef.current = board;
-              turnRef.current = 'red';
-              dispatch({
-                type: 'GAME_START',
-                board,
-                you: myColorRef.current!,
-                opponent: data.username,
-              });
-              lobbyStatusUpdate('in-game');
+            if (data.username === username) break;
+
+            // If this is a reconnection of our known opponent, don't reset the board
+            if (data.reconnect && opponentRef.current === data.username) {
+              dispatch({ type: 'OPPONENT_RECONNECTED', username: data.username });
+              break;
             }
+
+            // New opponent joining — start the game
+            const board = createBoard();
+            boardRef.current = board;
+            turnRef.current = 'red';
+            opponentRef.current = data.username;
+            dispatch({
+              type: 'GAME_START',
+              board,
+              you: myColorRef.current!,
+              opponent: data.username,
+            });
+            lobbyStatusUpdate('in-game');
             break;
           }
 
@@ -63,6 +72,14 @@ export function usePartyGame(
             if (data.username !== username) {
               dispatch({ type: 'OPPONENT_DISCONNECTED' });
             }
+            break;
+          }
+
+          case 'room-full': {
+            // Close the client to prevent partysocket auto-reconnect loop
+            clientRef.current?.close();
+            clientRef.current = null;
+            dispatch({ type: 'ROOM_FULL' });
             break;
           }
 
@@ -146,6 +163,7 @@ export function usePartyGame(
     const code = generateCode();
     myColorRef.current = 'red';
     rematchRequestedRef.current = false;
+    opponentRef.current = null;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
     connectToRoom(code, state.username);
   }, [state.username, dispatch, connectToRoom]);
@@ -154,8 +172,10 @@ export function usePartyGame(
     if (!state.username) return;
     myColorRef.current = 'yellow';
     rematchRequestedRef.current = false;
+    opponentRef.current = null;
+    dispatch({ type: 'JOINING_GAME', code });
     connectToRoom(code, state.username);
-  }, [state.username, connectToRoom]);
+  }, [state.username, dispatch, connectToRoom]);
 
   const makeMove = useCallback((column: number) => {
     if (!clientRef.current || !state.username) return;
@@ -223,6 +243,7 @@ export function usePartyGame(
     boardRef.current = [];
     turnRef.current = 'red';
     rematchRequestedRef.current = false;
+    opponentRef.current = null;
     lobbyStatusUpdate('idle');
   }, [state.username, lobbyStatusUpdate]);
 
@@ -231,18 +252,11 @@ export function usePartyGame(
     const code = generateCode();
     myColorRef.current = 'red';
     rematchRequestedRef.current = false;
+    opponentRef.current = null;
     dispatch({ type: 'ROOM_CREATED', code, color: 'red' });
     connectToRoom(code, state.username);
     lobbyChallenge(target, 'connect-four', code);
   }, [state.username, dispatch, connectToRoom, lobbyChallenge]);
 
-  const respondToChallenge = useCallback((_from: string, _accept: boolean) => {
-    // This is handled by the lobby hook — forward the response
-    // If accepted, also join the game
-    // Note: The challenge message includes the game code, but we need it here
-    // For now, the lobby forwards the response. The accept-and-join flow
-    // will need the code from the challenge. This is handled in the UI layer.
-  }, []);
-
-  return { createGame, joinGame, makeMove, sendChat, requestRematch, leaveGame, challengePlayer, respondToChallenge };
+  return { createGame, joinGame, makeMove, sendChat, requestRematch, leaveGame, challengePlayer };
 }

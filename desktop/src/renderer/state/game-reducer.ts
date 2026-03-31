@@ -40,6 +40,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         screen: 'waiting',
       };
 
+    case 'JOINING_GAME':
+      return {
+        ...state,
+        roomCode: action.code,
+        screen: 'joining',
+      };
+
     case 'GAME_START':
       return {
         ...state,
@@ -53,6 +60,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chatMessages: [],
         lastMove: null,
         rematchRequested: false,
+        opponentDisconnected: false,
       };
 
     case 'GAME_STATE': {
@@ -86,7 +94,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'OPPONENT_DISCONNECTED':
-      return { ...state, opponent: null };
+      return { ...state, opponentDisconnected: true };
+
+    case 'OPPONENT_RECONNECTED':
+      return { ...state, opponentDisconnected: false, opponent: action.username };
+
+    case 'ROOM_FULL':
+      // Tried to join a full room — return to lobby with a message
+      return {
+        ...state,
+        screen: 'lobby',
+        roomCode: null,
+        myColor: null,
+        partyError: 'That room is full. Try a different code.',
+      };
 
     case 'TOGGLE_PANEL':
       return { ...state, panelOpen: !state.panelOpen };
@@ -105,16 +126,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastMove: null,
         challengeCode: null,
         rematchRequested: false,
+        opponentDisconnected: false,
+        partyError: null,
       };
 
     case 'CHALLENGE_RECEIVED':
       return { ...state, challengeFrom: action.from, challengeCode: action.code, panelOpen: true };
 
     case 'CHALLENGE_DECLINED':
+      // If challenger is on the waiting screen, return them to lobby
+      if (state.screen === 'waiting') {
+        return {
+          ...state,
+          screen: 'lobby',
+          roomCode: null,
+          myColor: null,
+          challengeDeclinedBy: action.by,
+        };
+      }
       return { ...state, challengeDeclinedBy: action.by };
 
     case 'CLEAR_CHALLENGE':
-      return { ...state, challengeFrom: null, challengeCode: null, challengeDeclinedBy: null };
+      return { ...state, challengeFrom: null, challengeCode: null, challengeDeclinedBy: null, partyError: null };
 
     case 'REMATCH_REQUESTED':
       return { ...state, rematchRequested: true };

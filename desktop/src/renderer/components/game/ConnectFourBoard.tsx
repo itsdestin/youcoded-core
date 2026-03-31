@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGameState } from '../../state/game-context';
+import { useGameState, useGameDispatch } from '../../state/game-context';
 import { GameConnection } from '../../state/game-types';
 
 const COLS = 7;
@@ -22,11 +22,12 @@ function isWinCell(winLine: [number, number][] | null, col: number, row: number)
 
 export default function ConnectFourBoard({ connection }: Props) {
   const state = useGameState();
+  const dispatch = useGameDispatch();
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
 
   const isMyTurn = state.myColor !== null && state.turn === state.myColor;
   const isPlaying = state.screen === 'playing';
-  const canMove = isMyTurn && isPlaying;
+  const canMove = isMyTurn && isPlaying && !state.opponentDisconnected;
 
   const handleColClick = (col: number) => {
     if (!canMove) return;
@@ -44,6 +45,22 @@ export default function ConnectFourBoard({ connection }: Props) {
 
   return (
     <div className="flex flex-col gap-2 p-3">
+      {/* Disconnect banner */}
+      {state.opponentDisconnected && (
+        <div className="bg-red-900/30 border border-red-800/50 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+            <span className="text-xs text-red-300 flex-1">Opponent disconnected — waiting for reconnection...</span>
+          </div>
+          <button
+            onClick={() => { connection.leaveGame(); dispatch({ type: 'RETURN_TO_LOBBY' }); }}
+            className="mt-2 w-full text-xs text-gray-400 hover:text-gray-200 bg-gray-800 rounded-lg py-1.5 transition-colors"
+          >
+            Leave Game
+          </button>
+        </div>
+      )}
+
       {/* Turn indicator */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5">

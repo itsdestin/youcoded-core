@@ -243,8 +243,8 @@ describe('cwdToProjectSlug', () => {
     expect(cwdToProjectSlug('C:\\Users\\alice')).toBe('C--Users-alice');
   });
 
-  it('converts Unix path: /home/user/project → home-user-project', () => {
-    expect(cwdToProjectSlug('/home/user/project')).toBe('home-user-project');
+  it('converts Unix path: /home/user/project → -home-user-project', () => {
+    expect(cwdToProjectSlug('/home/user/project')).toBe('-home-user-project');
   });
 
   it('converts nested Windows path: C:\\Users\\alice\\destinclaude\\desktop → C--Users-alice-destinclaude-desktop', () => {

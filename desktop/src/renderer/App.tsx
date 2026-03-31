@@ -64,7 +64,7 @@ function AppInner() {
   const lobby = usePartyLobby();
   const game = usePartyGame(lobby.updateStatus, lobby.challengePlayer);
 
-  const gameConnection = {
+  const gameConnection = useMemo(() => ({
     createGame: game.createGame,
     joinGame: game.joinGame,
     makeMove: game.makeMove,
@@ -73,7 +73,7 @@ function AppInner() {
     leaveGame: game.leaveGame,
     challengePlayer: game.challengePlayer,
     respondToChallenge: lobby.respondToChallenge,
-  };
+  }), [game.createGame, game.joinGame, game.makeMove, game.sendChat, game.requestRematch, game.leaveGame, game.challengePlayer, lobby.respondToChallenge]);
 
   // Derive session status colors for status dots.
   // chatStateMap is a new Map reference on every dispatch, so we stabilize with
@@ -420,7 +420,7 @@ function AppInner() {
   const handleResumeSession = useCallback(async (claudeSessionId: string, projectSlug: string) => {
     const slugToPath = (s: string) => {
       if (/^[A-Z]--/.test(s)) return s.replace(/^([A-Z])--/, '$1:\\').replace(/-/g, '\\');
-      return '/' + s.replace(/-/g, '/');
+      return s.replace(/-/g, '/');
     };
     const cwd = slugToPath(projectSlug);
 
