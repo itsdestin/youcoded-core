@@ -50,7 +50,7 @@ echo "=== Drive Connectivity ===" && if command -v rclone &>/dev/null; then time
 ## 7. File Integrity
 
 ```bash
-echo "=== JSONL Integrity ===" && corrupt=0; total=0; for f in ~/.claude/projects/*/*.jsonl; do [ -f "$f" ] || continue; total=$((total+1)); if grep -Pq '\x00' "$f" 2>/dev/null; then echo "  NULL BYTES: $(basename $f)"; corrupt=$((corrupt+1)); fi; done; echo "  Scanned: $total files, $corrupt with null bytes"
+echo "=== JSONL Integrity ===" && corrupt=0; total=0; for f in ~/.claude/projects/*/*.jsonl; do [ -f "$f" ] || continue; total=$((total+1)); if tr -d '\0' < "$f" | cmp -s - "$f"; then :; else echo "  NULL BYTES: $(basename $f)"; corrupt=$((corrupt+1)); fi; done; echo "  Scanned: $total files, $corrupt with null bytes"
 ```
 
 ## 8. Desktop App
