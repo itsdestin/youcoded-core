@@ -2,6 +2,64 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.2.0] - 2026-03-30
+
+### Added
+- **Hook preamble system** — Shared infrastructure (`hook-preamble.sh`) sourced by all hooks, providing trap handlers, cleanup registration, error capture, portable timeout, log rotation, and atomic file writes.
+- **Hooks manifest** — `hooks-manifest.json` declares desired state for settings.json hook registrations. The `/update` command reconciles user settings against it, preserving user customizations (timeouts use MAX of user and manifest values).
+- **Session-end sync** — New `session-end-sync.sh` hook ensures all conversation JSONL files are backed up when a session exits.
+- **`/diagnose` command** — Full system diagnostic covering sync health, git status, Drive connectivity, JSONL file integrity, debounce state, active sessions, desktop errors, and log sizes.
+- **StatusPoller** — Centralized async status file polling for the desktop app, replacing scattered sync reads.
+- **Structured logger** — `logger.ts` replaces `console.*` calls in the desktop main process with structured JSON logging and log rotation.
+- **Transcript utilities** — Shared async transcript reader (`transcript-utils.ts`) extracted for reuse across IPC handlers and remote server.
+- **Premium session strip** — Drag-reorder session tabs with polished styling, replacing the old session selector.
+- **Human-friendly tool card labels** — Tool cards now show readable labels (e.g., "Read File" instead of raw tool names).
+- **Build-time tests** — IPC channel consistency test and remote-shim parity test catch channel mismatches at build time.
+- **Self-hosted integration icons** — 18 SVG icons for integrations (Gmail, Todoist, Google Drive, etc.) self-hosted in `docs/icons/` instead of external CDNs.
+- **Encyclopedia contact capture** — Proactive contact info (email, phone) capture for People Database entries.
+- **Migration 2.2.0** — Stops tracking toolkit-managed symlinks in git, preventing cross-device deletion cascades.
+
+### Changed
+- **Declarative settings reconciliation** — `phase_settings_migrate` in post-update.sh reconciles settings.json against the hooks manifest instead of relying on hardcoded lists.
+- **Direction-aware conversation sync** — Personal sync now compares local and remote file sizes before overwriting, preventing longer files from being replaced by shorter ones.
+- **Snapshot-before-upload** — Conversation JSONL files are copied to a temp directory before rclone upload, preventing concurrent-write corruption.
+- **Sync mutex** — Personal sync now uses an atomic `mkdir`-based mutex with PID-based stale lock detection.
+
+### Fixed
+- **Write-guard PID check** — Windows `tasklist` PID liveness check now uses exact match instead of substring grep (PID 123 no longer matches PID 1234).
+- **Write-guard robustness** — Added `set -euo pipefail` for strict error handling.
+- **Personal-sync config parsing** — Handles spaces in DRIVE_ROOT path by splitting config reads into separate `node` calls.
+- **Session-start reliability** — Auto-repair git index, stash-before-pull, subshell scoping fix, self-healing symlinks, staleness catch-up.
+- **Git-sync trap handlers** — Registered cleanup for stash pop and rebase abort; differentiated push success/failure status messages.
+- **Hook silent failures** — All remaining hooks now use `_capture_err` instead of `2>/dev/null || true`, logging errors to `backup.log`.
+- **Remote mode fixes** — Session resume, favorites, and ui:action channel alignment all work correctly in remote browser mode.
+- **Desktop event listener cleanup** — Anonymous event listeners converted to bound methods with proper cleanup on window close.
+- **Remote-shim timeout clearing** — Invoke timeouts are now cleared on successful response, preventing stale timeout fires.
+- **Memory sync symlink following** — Added `--skip-links` to rclone to prevent following aggregation symlinks during memory backup.
+- **Subagent JSONL sync** — GitHub and iCloud backends now discover and sync subagent `.jsonl` files recursively.
+- **Chat dedup** — User messages are deduped against the last 3 timeline entries instead of 1, reducing duplicates from fast typing.
+- **Permission request matching** — Prefers `requestId` match over first-running-tool fallback for more accurate tool card targeting.
+- **Desktop scrollbar overlap** — Fixed overlapping scrollbars in the desktop app.
+- **Paste handling** — Fixed pasted text not sending on Enter, paste blocked when clipboard contains image data, and multi-line paste now collapses newlines.
+- **Orphan detector** — Distinguishes user-managed skills from stale symlinks, preventing false orphan warnings.
+- **Portable null-byte detection** — `/diagnose` JSONL integrity check now uses `tr`/`cmp` instead of GNU-only `grep -P`.
+- **Hook-preamble temp path** — `_capture_err` now uses `$TMPDIR` fallback instead of hardcoded `/tmp`.
+- **Linux PATH augmentation** — Desktop app now augments PATH on Linux (Snap/Flatpak/DE support) in addition to macOS.
+
+### Removed
+- **`scripts/release.sh`** — The `/release` skill is now the sole release mechanism.
+- **Dead desktop components** — Removed `SessionSelector`, `ToolGroup`, and `AssistantMessage` (replaced by `SessionStrip`, `CollapsedToolGroup`, and `AssistantTurnBubble`).
+
+### Performance
+- **Async I/O conversions** — IPC handlers (transcript meta, clipboard), session browser, and transcript watcher `readNewLines` converted to async I/O.
+- **Per-session PTY channels** — Each session gets its own `pty:output:{id}` channel, reducing callback amplification from the shared `pty:output` bus.
+- **Chat reducer fast-path** — `TERMINAL_ACTIVITY` actions short-circuit before cloning the session Map.
+- **Async transcript reader** — Remote server shares the same async reader as IPC handlers, eliminating duplicate file reads.
+
+### Documentation
+- **System architecture** — Updated with session-end-sync hook, hook-preamble library, hooks-manifest, /diagnose command, and new desktop modules.
+- **User configurability plan** — Design document for making skills adaptive to all users.
+
 ## [2.1.8] - 2026-03-27
 
 ### Added
