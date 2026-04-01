@@ -47,8 +47,11 @@ export function usePartyGame(
           case 'player-joined': {
             if (data.username === username) break;
 
-            // If this is a reconnection of our known opponent, don't reset the board
-            if (data.reconnect && opponentRef.current === data.username) {
+            // If this is a reconnection of our known opponent, don't reset the board.
+            // Check opponentRef regardless of data.reconnect — the server only sets
+            // reconnect:true on broadcasts to OTHER players, not on the direct send
+            // to the reconnecting player itself.
+            if (opponentRef.current === data.username) {
               dispatch({ type: 'OPPONENT_RECONNECTED', username: data.username });
               break;
             }

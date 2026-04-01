@@ -133,22 +133,29 @@ app.whenReady().then(async () => {
 
   const FAVORITES_PATH = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
 
-  ipcMain.handle('favorites:get', async () => {
-    try {
-      const data = JSON.parse(fs.readFileSync(FAVORITES_PATH, 'utf8'));
-      return data.favorites ?? [];
-    } catch {
-      return [];
-    }
-  });
+  function readGamePrefs(): Record<string, any> {
+    try { return JSON.parse(fs.readFileSync(FAVORITES_PATH, 'utf8')); }
+    catch { return {}; }
+  }
+  function writeGamePrefs(data: Record<string, any>): boolean {
+    try { fs.writeFileSync(FAVORITES_PATH, JSON.stringify(data, null, 2)); return true; }
+    catch { return false; }
+  }
+
+  ipcMain.handle('favorites:get', async () => readGamePrefs().favorites ?? []);
 
   ipcMain.handle('favorites:set', async (_event, favorites: string[]) => {
-    try {
-      fs.writeFileSync(FAVORITES_PATH, JSON.stringify({ favorites }, null, 2));
-      return true;
-    } catch {
-      return false;
-    }
+    const data = readGamePrefs();
+    data.favorites = favorites;
+    return writeGamePrefs(data);
+  });
+
+  ipcMain.handle('game:getIncognito', async () => readGamePrefs().incognito ?? false);
+
+  ipcMain.handle('game:setIncognito', async (_event, incognito: boolean) => {
+    const data = readGamePrefs();
+    data.incognito = incognito;
+    return writeGamePrefs(data);
   });
 
   ipcMain.handle('github:auth', async () => {

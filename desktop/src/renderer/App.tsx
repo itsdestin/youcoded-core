@@ -524,6 +524,7 @@ function AppInner() {
               gamePanelOpen={gameState.panelOpen}
               onToggleGamePanel={() => gameDispatch({ type: 'TOGGLE_PANEL' })}
               gameConnected={gameState.connected}
+              challengePending={gameState.challengeFrom !== null}
               permissionMode={currentPermissionMode}
               onCyclePermission={cyclePermission}
               model={statusData.model}
@@ -614,7 +615,7 @@ function AppInner() {
       {/* Game panel (conditional) */}
       {gameState.panelOpen && (
         <ErrorBoundary name="Game">
-          <GamePanel connection={gameConnection} />
+          <GamePanel connection={gameConnection} incognito={lobby.incognito} onToggleIncognito={lobby.toggleIncognito} />
         </ErrorBoundary>
       )}
       <SettingsPanel

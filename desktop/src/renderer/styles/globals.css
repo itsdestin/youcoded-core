@@ -123,6 +123,11 @@ html, body, #root {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes challenge-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
 @keyframes braille-burst {
   0% {
     transform: translate(-50%, -50%) translate(0, 0);

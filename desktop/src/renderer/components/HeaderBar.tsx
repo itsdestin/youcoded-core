@@ -29,6 +29,7 @@ interface Props {
   gamePanelOpen: boolean;
   onToggleGamePanel: () => void;
   gameConnected: boolean;
+  challengePending: boolean;
   permissionMode: PermissionMode;
   onCyclePermission: () => void;
   model: string | null;
@@ -45,7 +46,7 @@ interface Props {
 export default function HeaderBar({
   sessions, activeSessionId, onSelectSession, onCreateSession, onCloseSession,
   viewMode, onToggleView,
-  gamePanelOpen, onToggleGamePanel, gameConnected,
+  gamePanelOpen, onToggleGamePanel, gameConnected, challengePending,
   permissionMode, onCyclePermission, model, announcement,
   settingsOpen, onToggleSettings, settingsBadge, sessionStatuses, onResumeSession,
   onOpenResumeBrowser, onReorderSessions,
@@ -141,13 +142,18 @@ export default function HeaderBar({
             className={`px-2 py-1 rounded transition-colors flex items-center gap-1 ${
               gamePanelOpen
                 ? 'bg-gray-300 text-gray-950'
-                : 'text-gray-400 hover:text-gray-300'
+                : challengePending && !gamePanelOpen
+                  ? 'text-orange-400'
+                  : 'text-gray-400 hover:text-gray-300'
             }`}
-            title="Connect 4"
+            style={challengePending && !gamePanelOpen ? {
+              animation: 'challenge-pulse 2.5s ease-in-out infinite',
+            } : undefined}
+            title={challengePending ? 'Incoming challenge!' : 'Connect 4'}
           >
             <GamepadIcon className="w-4 h-4" />
           {gameConnected && (
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+            <span className={`w-1.5 h-1.5 rounded-full ${challengePending && !gamePanelOpen ? 'bg-orange-400' : 'bg-green-400'}`} />
           )}
           </button>
         </div>

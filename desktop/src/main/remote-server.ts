@@ -586,7 +586,29 @@ export class RemoteServer {
       }
       case 'favorites:set': {
         const favPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
-        await fs.promises.writeFile(favPath, JSON.stringify(payload, null, 2));
+        let existing: Record<string, any> = {};
+        try { existing = JSON.parse(await fs.promises.readFile(favPath, 'utf8')); } catch {}
+        existing.favorites = payload.favorites ?? payload;
+        await fs.promises.writeFile(favPath, JSON.stringify(existing, null, 2));
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'game:getIncognito': {
+        const gPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        try {
+          const data = JSON.parse(await fs.promises.readFile(gPath, 'utf8'));
+          this.respond(client.ws, type, id, data.incognito ?? false);
+        } catch {
+          this.respond(client.ws, type, id, false);
+        }
+        break;
+      }
+      case 'game:setIncognito': {
+        const gPath = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
+        let existing: Record<string, any> = {};
+        try { existing = JSON.parse(await fs.promises.readFile(gPath, 'utf8')); } catch {}
+        existing.incognito = payload;
+        await fs.promises.writeFile(gPath, JSON.stringify(existing, null, 2));
         this.respond(client.ws, type, id, { ok: true });
         break;
       }

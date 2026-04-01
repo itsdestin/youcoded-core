@@ -11,6 +11,8 @@ interface LeaderboardEntry {
 
 interface Props {
   connection: GameConnection;
+  incognito?: boolean;
+  onToggleIncognito?: () => void;
 }
 
 function ErrorScreen() {
@@ -38,7 +40,7 @@ function ErrorScreen() {
   );
 }
 
-function LobbyScreen({ connection }: Props) {
+function LobbyScreen({ connection, incognito, onToggleIncognito }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
   const [joinCode, setJoinCode] = useState('');
@@ -63,9 +65,23 @@ function LobbyScreen({ connection }: Props) {
       {/* Player info bar */}
       <div className="px-3 py-2 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-400" />
+          <div className={`w-2 h-2 rounded-full ${incognito ? 'bg-gray-600' : 'bg-green-400'}`} />
           <span className="text-sm font-medium text-gray-200">{state.username}</span>
+          {incognito && <span className="text-[10px] text-gray-500">Incognito</span>}
         </div>
+        {onToggleIncognito && (
+          <button
+            onClick={onToggleIncognito}
+            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+              incognito
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+            title={incognito ? 'Go online — appear in player lists' : 'Go incognito — hide from player lists'}
+          >
+            {incognito ? 'Go Online' : 'Go Incognito'}
+          </button>
+        )}
       </div>
 
       {/* Incoming challenge */}
@@ -202,6 +218,19 @@ function LobbyScreen({ connection }: Props) {
 function JoiningScreen({ connection }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), 120_000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (timedOut) {
+      connection.leaveGame();
+      dispatch({ type: 'RETURN_TO_LOBBY' });
+    }
+  }, [timedOut, connection, dispatch]);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-8">
@@ -275,10 +304,10 @@ function WaitingScreen({ connection }: Props) {
   );
 }
 
-export default function GameLobby({ connection }: Props) {
+export default function GameLobby({ connection, incognito, onToggleIncognito }: Props) {
   const state = useGameState();
-  if (state.partyError) return <ErrorScreen />;
+  if (state.partyError && !incognito) return <ErrorScreen />;
   if (state.screen === 'joining') return <JoiningScreen connection={connection} />;
   if (state.screen === 'waiting') return <WaitingScreen connection={connection} />;
-  return <LobbyScreen connection={connection} />;
+  return <LobbyScreen connection={connection} incognito={incognito} onToggleIncognito={onToggleIncognito} />;
 }

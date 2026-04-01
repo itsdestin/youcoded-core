@@ -76,14 +76,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return next;
     }
 
-    case 'GAME_OVER':
-      return {
-        ...state,
-        winner: action.winner,
-        winLine: action.line ?? null,
-        screen: 'game-over',
-      };
-
     case 'CHAT_MESSAGE':
       return {
         ...state,

@@ -1,13 +1,41 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useGameDispatch } from '../state/game-context';
 import { PartyClient } from '../game/party-client';
+
+const PING_INTERVAL = 30_000; // 30s — matches server sweep interval
 
 export function usePartyLobby() {
   const dispatch = useGameDispatch();
   const clientRef = useRef<PartyClient | null>(null);
+  const pingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [incognito, setIncognitoState] = useState(false);
+  const incognitoLoadedRef = useRef(false);
 
-  // Initialize: get GitHub auth, connect to lobby
+  // Load incognito preference on mount
   useEffect(() => {
+    (window as any).claude?.getIncognito?.().then((val: boolean) => {
+      setIncognitoState(val ?? false);
+      incognitoLoadedRef.current = true;
+    }).catch(() => {
+      incognitoLoadedRef.current = true;
+    });
+  }, []);
+
+  // Connect/disconnect lobby based on incognito state
+  useEffect(() => {
+    // Don't act until we've loaded the preference
+    if (!incognitoLoadedRef.current) return;
+
+    if (incognito) {
+      // Disconnect from lobby if connected
+      pingRef.current && clearInterval(pingRef.current);
+      pingRef.current = null;
+      clientRef.current?.close();
+      clientRef.current = null;
+      dispatch({ type: 'PARTY_DISCONNECTED' });
+      return;
+    }
+
     let cancelled = false;
     const w = window as any;
 
@@ -58,6 +86,11 @@ export function usePartyLobby() {
         });
 
         clientRef.current = client;
+
+        // Start heartbeat pings
+        pingRef.current = setInterval(() => {
+          clientRef.current?.send({ type: 'ping' });
+        }, PING_INTERVAL);
       })
       .catch(() => {
         if (!cancelled) {
@@ -67,10 +100,12 @@ export function usePartyLobby() {
 
     return () => {
       cancelled = true;
+      pingRef.current && clearInterval(pingRef.current);
+      pingRef.current = null;
       clientRef.current?.close();
       clientRef.current = null;
     };
-  }, [dispatch]);
+  }, [dispatch, incognito]);
 
   const updateStatus = useCallback((status: 'idle' | 'in-game') => {
     clientRef.current?.send({ type: 'status', status });
@@ -84,5 +119,13 @@ export function usePartyLobby() {
     clientRef.current?.send({ type: 'challenge-response', from, accept });
   }, []);
 
-  return { updateStatus, challengePlayer, respondToChallenge };
+  const toggleIncognito = useCallback(() => {
+    setIncognitoState(prev => {
+      const next = !prev;
+      (window as any).claude?.setIncognito?.(next);
+      return next;
+    });
+  }, []);
+
+  return { updateStatus, challengePlayer, respondToChallenge, incognito, toggleIncognito };
 }

@@ -286,5 +286,7 @@ export function installShim(): void {
     getHomePath: () => invoke('get-home-path'),
     getFavorites: () => invoke('favorites:get'),
     setFavorites: (favorites: string[]) => invoke('favorites:set', favorites),
+    getIncognito: () => invoke('game:getIncognito'),
+    setIncognito: (incognito: boolean) => invoke('game:setIncognito', incognito),
   };
 }

@@ -52,7 +52,6 @@ export type GameAction =
   | { type: 'JOINING_GAME'; code: string }
   | { type: 'GAME_START'; board: number[][]; you: PlayerColor; opponent: string }
   | { type: 'GAME_STATE'; board: number[][]; turn: PlayerColor; lastMove: { col: number; row: number }; winner?: PlayerColor | 'draw'; winLine?: [number, number][] }
-  | { type: 'GAME_OVER'; winner: PlayerColor | 'draw'; line?: [number, number][] }
   | { type: 'CHAT_MESSAGE'; from: string; text: string }
   | { type: 'OPPONENT_DISCONNECTED' }
   | { type: 'OPPONENT_RECONNECTED'; username: string }

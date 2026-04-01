@@ -8,9 +8,11 @@ import { GameConnection } from '../../state/game-types';
 
 interface Props {
   connection: GameConnection;
+  incognito?: boolean;
+  onToggleIncognito?: () => void;
 }
 
-export default function GamePanel({ connection }: Props) {
+export default function GamePanel({ connection, incognito, onToggleIncognito }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
   const isPlaying = state.screen === 'playing' || state.screen === 'game-over';
@@ -21,7 +23,13 @@ export default function GamePanel({ connection }: Props) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800">
         <span className="text-sm font-semibold text-gray-200">Connect 4</span>
         <button
-          onClick={() => dispatch({ type: 'TOGGLE_PANEL' })}
+          onClick={() => {
+            if (state.screen !== 'lobby' && state.screen !== 'setup') {
+              connection.leaveGame();
+              dispatch({ type: 'RETURN_TO_LOBBY' });
+            }
+            dispatch({ type: 'TOGGLE_PANEL' });
+          }}
           className="text-gray-500 hover:text-gray-300 transition-colors"
         >
           ✕
@@ -39,7 +47,7 @@ export default function GamePanel({ connection }: Props) {
             )}
           </div>
         ) : (
-          <GameLobby connection={connection} />
+          <GameLobby connection={connection} incognito={incognito} onToggleIncognito={onToggleIncognito} />
         )}
       </div>
     </div>
