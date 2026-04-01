@@ -252,6 +252,7 @@ export function installShim(): void {
       browse: () => invoke('session:browse'),
       loadHistory: (sessionId: string, count?: number, all?: boolean) =>
         invoke('session:history', { sessionId, count, all }),
+      switch: (sessionId: string) => invoke('session:switch', { sessionId }),
       sendInput: (sessionId: string, text: string) => fire('session:input', { sessionId, text }),
       resize: (sessionId: string, cols: number, rows: number) => fire('session:resize', { sessionId, cols, rows }),
       signalReady: (sessionId: string) => fire('session:terminal-ready', { sessionId }),
@@ -297,6 +298,21 @@ export function installShim(): void {
       getClientList: () => invoke('remote:get-client-list'),
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
       broadcastAction: (action: any) => fire('ui:action', action),
+    },
+    // Android-only bridge methods — only called when isAndroid() is true
+    android: {
+      getTier: () => invoke('android:get-tier'),
+      setTier: (tier: string) => invoke('android:set-tier', { tier }),
+      getDirectories: () => invoke('android:get-directories'),
+      addDirectory: (path: string, label: string) => invoke('android:add-directory', { path, label }),
+      removeDirectory: (path: string) => invoke('android:remove-directory', { path }),
+      getAbout: () => invoke('android:get-about'),
+      getPairedDevices: () => invoke('android:get-paired-devices'),
+      savePairedDevice: (device: { name: string; host: string; port: number; password: string }) =>
+        invoke('android:save-paired-device', device),
+      removePairedDevice: (host: string, port: number) =>
+        invoke('android:remove-paired-device', { host, port }),
+      scanQr: () => invoke('android:scan-qr'),
     },
     off: (channel: string, handler: Callback) => removeListener(channel, handler),
     removeAllListeners: (channel: string) => removeAllListeners(channel),
