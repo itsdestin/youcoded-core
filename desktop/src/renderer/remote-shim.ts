@@ -324,8 +324,8 @@ export function installShim(): void {
       destroy: (sessionId: string) => invoke('session:destroy', { sessionId }),
       list: () => invoke('session:list'),
       browse: () => invoke('session:browse'),
-      loadHistory: (sessionId: string, count?: number, all?: boolean) =>
-        invoke('session:history', { sessionId, count, all }),
+      loadHistory: (sessionId: string, count?: number, all?: boolean, projectSlug?: string) =>
+        invoke('session:history', { sessionId, count, all, projectSlug }),
       switch: (sessionId: string) => invoke('session:switch', { sessionId }),
       sendInput: (sessionId: string, text: string) => fire('session:input', { sessionId, text }),
       resize: (sessionId: string, cols: number, rows: number) => fire('session:resize', { sessionId, cols, rows }),
