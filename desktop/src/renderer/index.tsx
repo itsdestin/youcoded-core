@@ -58,6 +58,11 @@ function LoginScreen({ onLogin }: { onLogin: (password: string) => Promise<void>
 // Capture before any shim can modify window.claude
 const isElectron = !!(window as any).claude;
 
+// Set default platform for Electron path (browser/remote path sets it via remote-shim auth:ok)
+if (isElectron && !(window as any).__PLATFORM__) {
+  (window as any).__PLATFORM__ = 'electron';
+}
+
 function Root() {
   const [connected, setConnected] = useState(isElectron);
   const [hasConnectedOnce, setHasConnectedOnce] = useState(isElectron);
@@ -75,6 +80,14 @@ function Root() {
         setConnected(isConnected);
         if (isConnected) setHasConnectedOnce(true);
       });
+
+      // Android WebView: auto-connect (LocalBridgeServer accepts without password)
+      if (location.protocol === 'file:') {
+        connect('android-local', false).catch((err) => {
+          console.error('Android auto-connect failed:', err);
+        });
+        return;
+      }
 
       // Auto-login with stored token
       const storedToken = localStorage.getItem('destincode-remote-token');

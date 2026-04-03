@@ -78,8 +78,11 @@ export default function BrailleSpinner({ size = 'sm', colorCycle = true }: Props
 
   return (
     <span
-      className={`${sizeClass[size]} leading-none shrink-0`}
-      style={{ color: colorCycle ? COLORS[colorIndex] : COLORS[0] }}
+      className={`${sizeClass[size]} leading-none shrink-0 inline-block text-center`}
+      style={{
+        color: colorCycle ? COLORS[colorIndex] : COLORS[0],
+        width: '1em',  // Fixed width prevents layout reflow from variable-width braille glyphs
+      }}
     >
       {FRAMES[frameIndex]}
     </span>

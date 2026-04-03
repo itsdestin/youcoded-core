@@ -3,6 +3,7 @@ import { ChatIcon, TerminalIcon, GamepadIcon } from './Icons';
 import SessionStrip from './SessionStrip';
 import type { SessionStatusColor } from './StatusDot';
 import type { PermissionMode } from '../../shared/types';
+import { isAndroid, isRemoteMode } from '../platform';
 
 interface SessionEntry {
   id: string;
@@ -51,7 +52,7 @@ export default function HeaderBar({
   settingsOpen, onToggleSettings, settingsBadge, sessionStatuses, onResumeSession,
   onOpenResumeBrowser, onReorderSessions,
 }: Props) {
-  const cfg = MODE_CONFIG[permissionMode];
+  const cfg = MODE_CONFIG[permissionMode] || MODE_CONFIG['normal'];
 
   return (
     <div className="flex items-center h-10 px-2 sm:px-3 border-b border-gray-800 shrink-0">
@@ -59,7 +60,7 @@ export default function HeaderBar({
       <div className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
         <button
           onClick={onToggleSettings}
-          className={`relative p-1 rounded hover:bg-gray-800 transition-colors shrink-0 ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
+          className={`relative ${isAndroid() ? 'p-2' : 'p-1'} rounded hover:bg-gray-800 transition-colors shrink-0 ${settingsOpen ? 'text-gray-200' : 'text-gray-500'}`}
           title="Settings"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,6 +84,11 @@ export default function HeaderBar({
           <span className="sm:hidden">{cfg.shortLabel}</span>
           <span className="hidden sm:inline">{cfg.label}</span>
         </button>
+        {isRemoteMode() && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 shrink-0">
+            REMOTE
+          </span>
+        )}
         {model && (
           <span className="text-[10px] text-gray-500 truncate max-w-[120px] hidden sm:inline">
             {model}
@@ -110,32 +116,35 @@ export default function HeaderBar({
 
       {/* Right — view toggles */}
       <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
-        <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
-          <button
-            onClick={() => onToggleView('chat')}
-            className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
-              viewMode === 'chat'
-                ? 'bg-gray-300 text-gray-950'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-            title="Chat"
-          >
-            <ChatIcon className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium hidden sm:inline">Chat</span>
-          </button>
-          <button
-            onClick={() => onToggleView('terminal')}
-            className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
-              viewMode === 'terminal'
-                ? 'bg-gray-300 text-gray-950'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-            title="Terminal"
-          >
-            <TerminalIcon className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium hidden sm:inline">Terminal</span>
-          </button>
-        </div>
+        {/* Chat/Terminal toggle */}
+        {(
+          <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
+            <button
+              onClick={() => onToggleView('chat')}
+              className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                viewMode === 'chat'
+                  ? 'bg-gray-300 text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+              title="Chat"
+            >
+              <ChatIcon className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium hidden sm:inline">Chat</span>
+            </button>
+            <button
+              onClick={() => onToggleView('terminal')}
+              className={`px-1.5 sm:px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                viewMode === 'terminal'
+                  ? 'bg-gray-300 text-gray-950'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+              title="Terminal"
+            >
+              <TerminalIcon className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium hidden sm:inline">Terminal</span>
+            </button>
+          </div>
+        )}
         <div className="bg-gray-800 rounded-md p-0.5 hidden sm:block">
           <button
             onClick={onToggleGamePanel}

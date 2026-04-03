@@ -385,7 +385,7 @@ export class RemoteServer {
       this.tokens.set(token, true);
       this.saveTokens();
       this.addClient(ws, token, ip);
-      ws.send(JSON.stringify({ type: 'auth:ok', token }));
+      ws.send(JSON.stringify({ type: 'auth:ok', token, platform: 'desktop' }));
       this.replayBuffers(ws);
       return;
     }
@@ -429,7 +429,7 @@ export class RemoteServer {
           this.tokens.set(token, true);
           this.saveTokens();
           this.addClient(ws, token, ip);
-          ws.send(JSON.stringify({ type: 'auth:ok', token }));
+          ws.send(JSON.stringify({ type: 'auth:ok', token, platform: 'desktop' }));
           this.replayBuffers(ws);
         } else {
           this.recordFailedAttempt(ip);

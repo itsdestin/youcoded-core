@@ -3,6 +3,7 @@ import { ToolCallState } from '../../shared/types';
 import { useChatDispatch } from '../state/chat-context';
 import { CheckIcon, FailIcon, QuestionIcon, ChevronIcon } from './Icons';
 import BrailleSpinner from './BrailleSpinner';
+import { isAndroid } from '../platform';
 
 // --- Helpers for friendly display ---
 
@@ -229,7 +230,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
       <button
         disabled={responding}
         onClick={() => handleRespond({ decision: { behavior: 'allow' } })}
-        className="px-3 py-1 text-xs font-medium rounded bg-green-600/60 hover:bg-green-600/80 text-green-100 transition-colors disabled:opacity-50"
+        className={`px-3 ${isAndroid() ? 'py-2' : 'py-1'} text-xs font-medium rounded bg-green-600/60 hover:bg-green-600/80 text-green-100 transition-colors disabled:opacity-50`}
       >
         Yes
       </button>
@@ -237,7 +238,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
         <button
           disabled={responding}
           onClick={() => handleRespond({ decision: { behavior: 'allow' }, updatedPermissions: [suggestions[0]] })}
-          className="px-3 py-1 text-xs font-medium rounded bg-blue-600/60 hover:bg-blue-600/80 text-blue-100 transition-colors disabled:opacity-50"
+          className={`px-3 ${isAndroid() ? 'py-2' : 'py-1'} text-xs font-medium rounded bg-blue-600/60 hover:bg-blue-600/80 text-blue-100 transition-colors disabled:opacity-50`}
         >
           Always Allow
         </button>
@@ -245,7 +246,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
       <button
         disabled={responding}
         onClick={() => handleRespond({ decision: { behavior: 'deny' } })}
-        className="px-3 py-1 text-xs font-medium rounded bg-red-600/60 hover:bg-red-600/80 text-red-100 transition-colors disabled:opacity-50"
+        className={`px-3 ${isAndroid() ? 'py-2' : 'py-1'} text-xs font-medium rounded bg-red-600/60 hover:bg-red-600/80 text-red-100 transition-colors disabled:opacity-50`}
       >
         No
       </button>
