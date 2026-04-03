@@ -623,7 +623,22 @@ Install external tools required by the selected layers. For each dependency, fol
 
 Use the platform detected in Phase 1 to choose install commands.
 
-**Note:** On macOS, the bootstrap installer already installs Homebrew before launching the setup wizard. All `brew install` commands below can be run directly without checking for Homebrew first.
+**Note:** Homebrew may or may not be installed at this point. Before running any `brew install` command on macOS, first check if Homebrew is available. If missing, install it:
+
+1. Tell the user: "Several tools we need are installed through Homebrew — a package manager for Mac. I'll install it now. Your computer will ask for your password — nothing will appear as you type, which is normal. Just type it and press Enter."
+2. Run: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+3. After install, ensure Homebrew is on PATH:
+   ```bash
+   if [[ -f /opt/homebrew/bin/brew ]]; then
+       eval "$(/opt/homebrew/bin/brew shellenv)"
+   elif [[ -f /usr/local/bin/brew ]]; then
+       eval "$(/usr/local/bin/brew shellenv)"
+   fi
+   ```
+4. Verify: `brew --version`
+5. If it fails, tell the user: "Homebrew installation needs a terminal restart. Close and reopen this session, then run `/setup-wizard` again."
+
+Only run this check once — after Homebrew is confirmed, all subsequent `brew install` commands can proceed directly.
 
 ### Core Dependencies
 
