@@ -142,4 +142,11 @@ export const IPC = {
   SESSION_BROWSE: 'session:browse',
   SESSION_HISTORY: 'session:history',
   SESSION_RESUME: 'session:resume',
+  // First-run
+  FIRST_RUN_STATE: 'first-run:state',
+  FIRST_RUN_RETRY: 'first-run:retry',
+  FIRST_RUN_START_AUTH: 'first-run:start-auth',
+  FIRST_RUN_SUBMIT_API_KEY: 'first-run:submit-api-key',
+  FIRST_RUN_DEV_MODE_DONE: 'first-run:dev-mode-done',
+  FIRST_RUN_SKIP: 'first-run:skip',
 } as const;
