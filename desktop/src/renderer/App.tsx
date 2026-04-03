@@ -18,6 +18,7 @@ import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
+import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
 import type { SessionStatusColor } from './components/StatusDot';
 
 type ViewMode = 'chat' | 'terminal';
@@ -293,7 +294,18 @@ function AppInner() {
 
     // UI action sync — receive actions broadcast from other devices
     const uiActionHandler = (window.claude.on as any).uiAction?.((action: any) => {
-      if (!action?.type) return;
+      if (!action) return;
+      // Handle view switching from native side (e.g. Chat button in TerminalKeyboardRow)
+      if (action.action === 'switch-view' && action.mode) {
+        setSessionId((currentSid) => {
+          if (currentSid) {
+            setViewModes((prev) => new Map(prev).set(currentSid, action.mode));
+          }
+          return currentSid;
+        });
+        return;
+      }
+      if (!action.type) return;
       // Handle session initialization sync (not a chat reducer action)
       if (action.type === '_SESSION_INITIALIZED' && action.sessionId) {
         setInitializedSessions((prev) => {
@@ -307,6 +319,39 @@ function AppInner() {
       dispatch(action);
     });
 
+    // Prompt events — Android bridge broadcasts Ink menu prompts detected from PTY screen
+    const promptShowHandler = (window.claude.on as any).promptShow?.((payload: any) => {
+      // A prompt arriving proves the session is alive — dismiss "Initializing" overlay
+      setInitializedSessions((prev) => {
+        if (prev.has(payload.sessionId)) return prev;
+        const next = new Set(prev);
+        next.add(payload.sessionId);
+        return next;
+      });
+      dispatch({
+        type: 'SHOW_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+        title: payload.title,
+        buttons: payload.buttons || [],
+      });
+    });
+    const promptDismissHandler = (window.claude.on as any).promptDismiss?.((payload: any) => {
+      dispatch({
+        type: 'DISMISS_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+      });
+    });
+    const promptCompleteHandler = (window.claude.on as any).promptComplete?.((payload: any) => {
+      dispatch({
+        type: 'COMPLETE_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+        selection: payload.selection || '',
+      });
+    });
+
     return () => {
       transcriptBatchCancelled = true;
       if (transcriptRafId !== null) cancelAnimationFrame(transcriptRafId);
@@ -318,6 +363,9 @@ function AppInner() {
       window.claude.off('status:data', statusHandler);
       if (transcriptHandler) window.claude.off('transcript:event', transcriptHandler);
       if (uiActionHandler) window.claude.off('ui:action:received', uiActionHandler);
+      if (promptShowHandler) window.claude.off('prompt:show', promptShowHandler);
+      if (promptDismissHandler) window.claude.off('prompt:dismiss', promptDismissHandler);
+      if (promptCompleteHandler) window.claude.off('prompt:complete', promptCompleteHandler);
     };
   }, [dispatch]);
 
@@ -363,6 +411,37 @@ function AppInner() {
       setSkills([resumeSkill, ...list]);
     }).catch(console.error);
   }, []);
+
+  // Flush and reload session state when connection mode changes (local ↔ remote).
+  // On Android, switching to remote means the WebSocket now talks to the desktop server —
+  // all local session state is stale and must be replaced with the desktop's sessions.
+  useEffect(() => {
+    const unsub = onConnectionModeChange((mode) => {
+      // Flush all session state
+      setSessions([]);
+      setSessionId(null);
+      setViewModes(new Map());
+      setPermissionModes(new Map());
+      setInitializedSessions(new Set());
+      setViewedSessions(new Set());
+      dispatch({ type: 'RESET' });
+
+      // Reload session list from the new server
+      window.claude.session.list().then((list: any[]) => {
+        if (!list || list.length === 0) return;
+        setSessions(list);
+        for (const s of list) {
+          dispatch({ type: 'SESSION_INIT', sessionId: s.id });
+          setViewModes((vm) => new Map(vm).set(s.id, 'chat'));
+          setPermissionModes((pm) => new Map(pm).set(s.id, s.permissionMode || 'normal'));
+        }
+        setSessionId(list[0].id);
+        // Mark existing sessions as initialized (already running)
+        setInitializedSessions(new Set(list.map((s) => s.id)));
+      }).catch(() => {});
+    });
+    return unsub;
+  }, [dispatch]);
 
   // Mark session as viewed when the user switches to it
   useEffect(() => {
@@ -488,6 +567,10 @@ function AppInner() {
     (mode: ViewMode) => {
       if (!sessionId) return;
       setViewModes((prev) => new Map(prev).set(sessionId, mode));
+      // On Android, tell the native side to switch views
+      if (getPlatform() === 'android') {
+        (window as any).claude?.remote?.broadcastAction?.({ action: 'switch-view', mode });
+      }
     },
     [sessionId],
   );
@@ -539,7 +622,11 @@ function AppInner() {
             <HeaderBar
               sessions={sessions}
               activeSessionId={sessionId}
-              onSelectSession={setSessionId}
+              onSelectSession={(id: string) => {
+                setSessionId(id);
+                // Notify Android/remote bridge so the native terminal view switches too
+                (window as any).claude?.session?.switch?.(id);
+              }}
               onCreateSession={createSession}
               onCloseSession={(id) => window.claude.session.destroy(id)}
               onReorderSessions={(fromIndex: number, toIndex: number) => {
@@ -577,12 +664,15 @@ function AppInner() {
                       resumeInfo={resumeInfo}
                     />
                   </ErrorBoundary>
-                  <ErrorBoundary name="Terminal">
-                    <TerminalView
-                      sessionId={s.id}
-                      visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
-                    />
-                  </ErrorBoundary>
+                  {/* On Android, native Termux handles terminal — don't mount xterm.js */}
+                  {getPlatform() !== 'android' && (
+                    <ErrorBoundary name="Terminal">
+                      <TerminalView
+                        sessionId={s.id}
+                        visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
+                      />
+                    </ErrorBoundary>
+                  )}
                 </React.Fragment>
               ))}
               {/* Initializing overlay — shown before Claude is ready */}

@@ -141,3 +141,17 @@ html, body, #root {
     opacity: 0;
   }
 }
+
+/* Android safe area handling */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top { padding-top: env(safe-area-inset-top); }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Touch device: make hover-revealed elements always visible */
+@media (pointer: coarse) {
+  .group:hover .hover-reveal,
+  .group\/row:hover .hover-reveal {
+    opacity: 1;
+  }
+}

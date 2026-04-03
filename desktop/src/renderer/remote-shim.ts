@@ -23,6 +23,11 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectDelay = 1000;
 const MAX_RECONNECT_DELAY = 30_000;
 
+/** Override WebSocket target — set by connectToHost(), cleared by disconnectFromHost() */
+let targetUrl: string | null = null;
+/** Whether to preserve __PLATFORM__ on next auth:ok (prevents desktop overwriting 'android') */
+let preservePlatform = false;
+
 function setConnectionState(state: RemoteConnectionState) {
   connectionState = state;
   stateChangeCallback?.(state);
@@ -37,6 +42,12 @@ export function onConnectionStateChange(cb: (state: RemoteConnectionState) => vo
 }
 
 function getWsUrl(): string {
+  // If a remote host override is set, use it (connectToHost sets this)
+  if (targetUrl) return targetUrl;
+  // Android WebView loads from file:// — connect to local bridge server
+  if (location.protocol === 'file:') {
+    return 'ws://localhost:9901';
+  }
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${proto}//${location.host}/ws`;
 }
@@ -141,6 +152,15 @@ function handleMessage(data: string): void {
     case 'transcript:event':
       dispatchEvent('transcript:event', payload);
       break;
+    case 'prompt:show':
+      dispatchEvent('prompt:show', payload);
+      break;
+    case 'prompt:dismiss':
+      dispatchEvent('prompt:dismiss', payload);
+      break;
+    case 'prompt:complete':
+      dispatchEvent('prompt:complete', payload);
+      break;
   }
 }
 
@@ -171,6 +191,12 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
           // Store token for reconnection
           const token = msg.token;
           localStorage.setItem('destincode-remote-token', token);
+          // Preserve __PLATFORM__ when connecting to a remote desktop from Android —
+          // the desktop server responds with platform:"electron" but we're still on a phone
+          if (!preservePlatform) {
+            const platform = msg.platform || 'browser';
+            (window as any).__PLATFORM__ = platform;
+          }
           resolve(token);
           // Switch to normal message handling
           ws!.onmessage = (e) => handleMessage(e.data as string);
@@ -227,16 +253,80 @@ export function disconnect(): void {
   localStorage.removeItem('destincode-remote-token');
 }
 
+/**
+ * Connect to a remote desktop server. Disconnects from the current server first.
+ * __PLATFORM__ is preserved as 'android' so touch adaptations stay active.
+ */
+export async function connectToHost(host: string, port: number, password: string): Promise<void> {
+  const { setConnectionMode } = await import('./platform');
+
+  // Disconnect from current server (local bridge or previous remote)
+  disconnect();
+
+  // Reject any pending requests from the old server
+  for (const [id, entry] of pending) {
+    clearTimeout(entry.timeout);
+    entry.reject(new Error('Server switched'));
+  }
+  pending.clear();
+
+  // Point at the desktop server
+  targetUrl = `ws://${host}:${port}/ws`;
+  localStorage.setItem('destincode-remote-target', targetUrl);
+  preservePlatform = true;
+
+  // Connect with password auth
+  await connect(password, false);
+
+  preservePlatform = false;
+  setConnectionMode('remote');
+}
+
+/**
+ * Disconnect from a remote desktop and reconnect to the local bridge server.
+ */
+export async function disconnectFromHost(): Promise<void> {
+  const { setConnectionMode } = await import('./platform');
+
+  disconnect();
+
+  for (const [id, entry] of pending) {
+    clearTimeout(entry.timeout);
+    entry.reject(new Error('Server switched'));
+  }
+  pending.clear();
+
+  // Clear remote target — getWsUrl() falls back to localhost:9901
+  targetUrl = null;
+  localStorage.removeItem('destincode-remote-target');
+  preservePlatform = false;
+
+  // Reconnect to local bridge
+  await connect('android-local', false);
+
+  setConnectionMode('local');
+}
+
 /** Install the window.claude shim. Call once on app startup in browser mode. */
 export function installShim(): void {
+  // Restore remote target from previous session (e.g., page reload while in remote mode)
+  const savedTarget = localStorage.getItem('destincode-remote-target');
+  if (savedTarget) {
+    targetUrl = savedTarget;
+    preservePlatform = true; // Will be set on next auth:ok
+    // Restore connection mode synchronously so components render correctly on first paint
+    import('./platform').then(({ setConnectionMode }) => setConnectionMode('remote'));
+  }
+
   (window as any).claude = {
     session: {
       create: (opts: any) => invoke('session:create', opts),
       destroy: (sessionId: string) => invoke('session:destroy', { sessionId }),
       list: () => invoke('session:list'),
       browse: () => invoke('session:browse'),
-      loadHistory: (sessionId: string, count?: number, all?: boolean) =>
-        invoke('session:history', { sessionId, count, all }),
+      loadHistory: (sessionId: string, count?: number, all?: boolean, projectSlug?: string) =>
+        invoke('session:history', { sessionId, count, all, projectSlug }),
+      switch: (sessionId: string) => invoke('session:switch', { sessionId }),
       sendInput: (sessionId: string, text: string) => fire('session:input', { sessionId, text }),
       resize: (sessionId: string, cols: number, rows: number) => fire('session:resize', { sessionId, cols, rows }),
       signalReady: (sessionId: string) => fire('session:terminal-ready', { sessionId }),
@@ -256,6 +346,9 @@ export function installShim(): void {
       sessionRenamed: (cb: Callback) => addListener('session:renamed', cb),
       uiAction: (cb: Callback) => addListener('ui:action:received', cb),
       transcriptEvent: (cb: Callback) => addListener('transcript:event', cb),
+      promptShow: (cb: Callback) => addListener('prompt:show', cb),
+      promptDismiss: (cb: Callback) => addListener('prompt:dismiss', cb),
+      promptComplete: (cb: Callback) => addListener('prompt:complete', cb),
     },
     skills: {
       list: () => invoke('skills:list'),
@@ -279,6 +372,21 @@ export function installShim(): void {
       getClientList: () => invoke('remote:get-client-list'),
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
       broadcastAction: (action: any) => fire('ui:action', action),
+    },
+    // Android-only bridge methods — only called when isAndroid() is true
+    android: {
+      getTier: () => invoke('android:get-tier'),
+      setTier: (tier: string) => invoke('android:set-tier', { tier }),
+      getDirectories: () => invoke('android:get-directories'),
+      addDirectory: (path: string, label: string) => invoke('android:add-directory', { path, label }),
+      removeDirectory: (path: string) => invoke('android:remove-directory', { path }),
+      getAbout: () => invoke('android:get-about'),
+      getPairedDevices: () => invoke('android:get-paired-devices'),
+      savePairedDevice: (device: { name: string; host: string; port: number; password: string }) =>
+        invoke('android:save-paired-device', device),
+      removePairedDevice: (host: string, port: number) =>
+        invoke('android:remove-paired-device', { host, port }),
+      scanQr: () => invoke('android:scan-qr'),
     },
     off: (channel: string, handler: Callback) => removeListener(channel, handler),
     removeAllListeners: (channel: string) => removeAllListeners(channel),
