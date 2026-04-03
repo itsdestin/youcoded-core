@@ -97,6 +97,7 @@ INSTALL_PREREQUISITES
     |
 CLONE_TOOLKIT
     -> git clone the toolkit repo to ~/.claude/plugins/destinclaude/
+    -> Claude Code auto-discovers the plugin, making the setup-wizard skill available
     |
 ENABLE_DEVELOPER_MODE  (Windows only)
     -> prompt for UAC elevation to enable symlinks
@@ -183,7 +184,7 @@ The app checks if Claude Code is already authenticated:
 Run: claude --version (confirms CLI exists)
 Run: claude auth status (check exit code)
     |
-    +-- Already authenticated -> skip to CLONE_TOOLKIT
+    +-- Already authenticated -> advance to LAUNCH_WIZARD
     |
     +-- Not authenticated -> show auth screen
 ```
