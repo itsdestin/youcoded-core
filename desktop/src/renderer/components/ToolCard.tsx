@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ToolCallState } from '../../shared/types';
 import { useChatDispatch } from '../state/chat-context';
-import { CheckIcon, FailIcon, ChevronIcon } from './Icons';
+import { CheckIcon, FailIcon, QuestionIcon, ChevronIcon } from './Icons';
 import BrailleSpinner from './BrailleSpinner';
 import { isAndroid } from '../platform';
 
@@ -274,6 +274,9 @@ export default function ToolCard({ tool, sessionId }: Props) {
         {/* Status indicator */}
         {tool.status === 'running' && (
           <BrailleSpinner size="sm" />
+        )}
+        {tool.status === 'awaiting-approval' && (
+          <QuestionIcon className="w-3.5 h-3.5 shrink-0 text-gray-400" />
         )}
         {tool.status === 'complete' && (
           <CheckIcon className="w-3.5 h-3.5 shrink-0 text-gray-400" />
