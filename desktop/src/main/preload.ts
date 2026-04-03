@@ -41,6 +41,12 @@ const IPC = {
   THEME_READ_FILE: 'theme:read-file', // Renderer -> Main: read a user theme JSON by slug
   THEME_WRITE_FILE: 'theme:write-file',
   THEME_READ_ASSET: 'theme:read-asset',
+  FIRST_RUN_STATE: 'first-run:state',
+  FIRST_RUN_RETRY: 'first-run:retry',
+  FIRST_RUN_START_AUTH: 'first-run:start-auth',
+  FIRST_RUN_SUBMIT_API_KEY: 'first-run:submit-api-key',
+  FIRST_RUN_DEV_MODE_DONE: 'first-run:dev-mode-done',
+  FIRST_RUN_SKIP: 'first-run:skip',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -160,6 +166,21 @@ contextBridge.exposeInMainWorld('claude', {
       const wrapped = (_event: IpcRendererEvent, slug: string) => handler(slug);
       ipcRenderer.on(IPC.THEME_RELOAD, wrapped);
       return () => ipcRenderer.removeListener(IPC.THEME_RELOAD, wrapped);
+    },
+  },
+  firstRun: {
+    getState: (): Promise<any> => ipcRenderer.invoke(IPC.FIRST_RUN_STATE),
+    retry: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_RETRY),
+    startAuth: (mode: 'oauth' | 'apikey'): Promise<void> =>
+      ipcRenderer.invoke(IPC.FIRST_RUN_START_AUTH, mode),
+    submitApiKey: (key: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.FIRST_RUN_SUBMIT_API_KEY, key),
+    devModeDone: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_DEV_MODE_DONE),
+    skip: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_SKIP),
+    onStateChanged: (cb: (state: any) => void) => {
+      const handler = (_e: IpcRendererEvent, state: any) => cb(state);
+      ipcRenderer.on(IPC.FIRST_RUN_STATE, handler);
+      return handler;
     },
   },
 });

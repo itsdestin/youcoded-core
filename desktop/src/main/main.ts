@@ -13,6 +13,7 @@ import { scanSkills } from './skill-scanner';
 import { IPC } from '../shared/types';
 import { log, rotateLog } from './logger';
 import { registerThemeProtocol } from './theme-protocol';
+import { FirstRunManager } from './first-run';
 
 // macOS and Linux Electron apps may inherit a minimal PATH that's missing
 // common tool locations (Homebrew, nvm, Volta, pipx, cargo). macOS Finder/Dock
@@ -59,7 +60,69 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'theme-asset', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } },
 ]);
 
-function createWindow() {
+function registerFirstRunIpc(
+  ipcMain: Electron.IpcMain,
+  mainWindow: BrowserWindow,
+  firstRunManager: FirstRunManager,
+  sessionManager: SessionManager,
+) {
+  // Push state updates to renderer
+  firstRunManager.on('state-changed', (state) => {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC.FIRST_RUN_STATE, state);
+    }
+  });
+
+  // Handle wizard launch — create a Claude Code session and auto-send setup prompt
+  firstRunManager.on('launch-wizard', () => {
+    const info = sessionManager.createSession({
+      name: 'Setup Wizard',
+      cwd: os.homedir(),
+      skipPermissions: false,
+    });
+    setTimeout(() => {
+      sessionManager.sendInput(info.id, 'I just installed DestinCode. Help me set up.\r');
+    }, 3000);
+  });
+
+  ipcMain.handle(IPC.FIRST_RUN_STATE, async () => firstRunManager.getState());
+
+  ipcMain.handle(IPC.FIRST_RUN_RETRY, async () => {
+    await firstRunManager.retry();
+  });
+
+  ipcMain.handle(IPC.FIRST_RUN_START_AUTH, async (_event, mode: 'oauth' | 'apikey') => {
+    if (mode === 'oauth') {
+      await firstRunManager.handleOAuthLogin();
+    }
+  });
+
+  ipcMain.handle(IPC.FIRST_RUN_SUBMIT_API_KEY, async (_event, key: string) => {
+    await firstRunManager.handleApiKeySubmit(key);
+  });
+
+  ipcMain.handle(IPC.FIRST_RUN_DEV_MODE_DONE, async () => {
+    await firstRunManager.handleDevModeDone();
+  });
+
+  ipcMain.handle(IPC.FIRST_RUN_SKIP, async () => {
+    const stateDir = path.join(os.homedir(), '.claude', 'toolkit-state');
+    fs.mkdirSync(stateDir, { recursive: true });
+    const configPath = path.join(stateDir, 'config.json');
+    try {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      config.setup_completed = true;
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    } catch {
+      fs.writeFileSync(configPath, JSON.stringify({ setup_completed: true }, null, 2));
+    }
+  });
+
+  // Start the first-run flow
+  firstRunManager.run();
+}
+
+function createWindow(firstRunManager?: FirstRunManager) {
   const iconPath = path.join(__dirname, '../../assets/icon.png');
   const icon = nativeImage.createFromPath(iconPath);
 
@@ -81,6 +144,10 @@ function createWindow() {
   }
 
   cleanupIpcHandlers = registerIpcHandlers(ipcMain, sessionManager, mainWindow, hookRelay, remoteConfig, remoteServer);
+
+  if (firstRunManager) {
+    registerFirstRunIpc(ipcMain, mainWindow, firstRunManager, sessionManager);
+  }
 
   // Forward hook events to renderer
   hookRelay.on('hook-event', (event) => {
@@ -116,6 +183,10 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   await rotateLog();
+
+  // --- First-run detection ---
+  const firstRunManager = new FirstRunManager();
+  const isFirstRun = FirstRunManager.isFirstRun();
 
   // Install hook relay entries in Claude Code settings
   try {
@@ -188,7 +259,7 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
   registerThemeProtocol();
-  createWindow();
+  createWindow(isFirstRun ? firstRunManager : undefined);
 });
 
 app.on('window-all-closed', () => {
