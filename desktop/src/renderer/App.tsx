@@ -18,6 +18,7 @@ import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
+import Marketplace from './components/Marketplace';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 import FirstRunView from './components/FirstRunView';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
@@ -819,10 +820,8 @@ function AppInner() {
         onClose={() => setResumeRequested(false)}
         onResume={handleResumeSession}
       />
-      {toast && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-panel border border-edge text-sm text-fg shadow-lg">
-          {toast}
-        </div>
+      {marketplaceOpen && (
+        <Marketplace onClose={() => setMarketplaceOpen(false)} />
       )}
     </div>
   );
