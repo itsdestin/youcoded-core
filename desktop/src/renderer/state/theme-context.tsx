@@ -117,8 +117,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             if (idx >= 0) { const next = [...prev]; next[idx] = loaded; return next; }
             return [...prev, loaded];
           });
-          setActiveSlug(slug);
-          try { localStorage.setItem(STORAGE_KEY, slug); } catch {}
+          // Only switch to the reloaded theme if the user is already viewing it
+          setActiveSlug(prev => {
+            if (prev !== slug) return prev;
+            try { localStorage.setItem(STORAGE_KEY, slug); } catch {}
+            return slug;
+          });
         } catch (e) {
           console.warn(`[ThemeProvider] Hot-reload failed for "${slug}":`, e);
         }
