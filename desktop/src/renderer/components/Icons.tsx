@@ -1,4 +1,6 @@
 import React from 'react';
+import { useThemeMascot } from '../hooks/useThemeMascot';
+import type { MascotVariant } from '../themes/theme-types';
 
 interface IconProps {
   className?: string;
@@ -224,4 +226,21 @@ export function AppIcon({ className = 'w-6 h-6' }: IconProps) {
       <rect x="13.3" y="17" width="3.5" height="4" rx="1.2" />
     </svg>
   );
+}
+
+interface ThemeMascotProps {
+  variant: MascotVariant;
+  fallback: React.ComponentType<IconProps>;
+  className?: string;
+}
+
+/** Renders a themed mascot SVG if the active theme overrides it, otherwise falls back to the default. */
+export function ThemeMascot({ variant, fallback: Fallback, className = 'w-6 h-6' }: ThemeMascotProps) {
+  const overrideSrc = useThemeMascot(variant);
+
+  if (overrideSrc) {
+    return <img src={overrideSrc} className={className} alt="" aria-hidden="true" draggable={false} />;
+  }
+
+  return <Fallback className={className} />;
 }

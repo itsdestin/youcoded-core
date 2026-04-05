@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useChatState, useChatDispatch } from '../state/chat-context';
 import { InteractivePrompt } from '../state/chat-types';
-import { AppIcon } from './Icons';
+import { AppIcon, ThemeMascot } from './Icons';
 
 interface Props {
   sessionId: string;
@@ -69,7 +69,7 @@ export default function TrustGate({ sessionId }: Props) {
 
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-canvas">
-      <AppIcon className="w-16 h-16 text-fg-dim mb-6" />
+      <ThemeMascot variant="idle" fallback={AppIcon} className="w-16 h-16 text-fg-dim mb-6" />
       <p className="text-sm text-fg font-medium mb-1">{trustPrompt.title}</p>
       <p className="text-xs text-fg-muted mb-6 max-w-sm text-center">
         Claude needs your permission before working in this directory.

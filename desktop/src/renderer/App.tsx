@@ -12,7 +12,7 @@ import { hookEventToAction } from './state/hook-dispatcher';
 import { usePromptDetector } from './hooks/usePromptDetector';
 import { usePartyLobby } from './hooks/usePartyLobby';
 import { usePartyGame } from './hooks/usePartyGame';
-import { AppIcon, WelcomeAppIcon } from './components/Icons';
+import { AppIcon, WelcomeAppIcon, ThemeMascot } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
@@ -693,7 +693,7 @@ function AppInner() {
               {/* Initializing overlay — shown before Claude is ready */}
               {!sessionInitialized && sessionId && (
                 <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-canvas">
-                  <AppIcon className="w-16 h-16 text-fg-dim mb-6 animate-pulse" />
+                  <ThemeMascot variant="idle" fallback={AppIcon} className="w-16 h-16 text-fg-dim mb-6 animate-pulse" />
                   <p className="text-sm text-fg-dim font-medium">Initializing session...</p>
                 </div>
               )}
@@ -729,7 +729,7 @@ function AppInner() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-3">
             <p className="text-xl text-fg-muted">No Active Session</p>
-            <WelcomeAppIcon className="w-36 h-36 text-fg-dim" />
+            <ThemeMascot variant="welcome" fallback={WelcomeAppIcon} className="w-36 h-36 text-fg-dim" />
             <div className="flex flex-col items-center gap-2 mt-1">
               <button
                 onClick={() => createSession('', false)}
