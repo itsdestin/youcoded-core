@@ -447,6 +447,8 @@ function AppInner() {
         category: 'personal',
         prompt: '',
         source: 'destinclaude',
+        type: 'prompt',
+        visibility: 'published',
       };
       setSkills([resumeSkill, ...list]);
     }).catch(console.error);
