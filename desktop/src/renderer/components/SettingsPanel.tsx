@@ -258,7 +258,7 @@ function ThemeSelector() {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 340,
+              width: 'min(340px, 85vw)',
               maxHeight: '80vh',
             }}
           >
@@ -426,6 +426,103 @@ function ThemeSelector() {
   );
 }
 
+// ─── Tier selector popup (Android) ────────────────────────────────────────
+
+const TIER_OPTIONS = [
+  { id: 'CORE', name: 'Core', desc: 'Personal assistant — journal, inbox, briefings' },
+  { id: 'DEVELOPER', name: 'Developer', desc: 'Core + git, tests, code review' },
+  { id: 'FULL_DEV', name: 'Full Dev', desc: 'Everything — all dev tools included' },
+];
+
+function TierSelector({ tier, onSetTier }: { tier: string; onSetTier: (t: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const currentTier = TIER_OPTIONS.find(t => t.id === tier) || TIER_OPTIONS[0];
+
+  return (
+    <section>
+      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Package Tier</h3>
+
+      {/* Current tier row */}
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+      >
+        <span className="text-sm shrink-0 leading-none text-fg-dim">⬡</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-fg font-medium">{currentTier.name}</span>
+          <p className="text-[10px] text-fg-muted">{currentTier.desc}</p>
+        </div>
+        <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* Popup overlay */}
+      {open && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            ref={popupRef}
+            className="fixed z-[61] rounded-xl bg-panel border border-edge shadow-2xl overflow-hidden"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 'min(340px, 85vw)',
+              maxHeight: '80vh',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
+              <h3 className="text-sm font-bold text-fg">Package Tier</h3>
+              <button onClick={() => setOpen(false)} className="text-fg-muted hover:text-fg-2 text-lg leading-none">✕</button>
+            </div>
+
+            <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 52px)' }}>
+              {TIER_OPTIONS.map(t => {
+                const isActive = tier === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => { onSetTier(t.id); setOpen(false); }}
+                    className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                      isActive ? 'border-accent bg-accent/10' : 'border-edge-dim hover:border-edge'
+                    }`}
+                  >
+                    <span className={`text-sm shrink-0 mt-0.5 ${isActive ? 'text-accent' : 'text-fg-faint'}`}>
+                      {isActive ? '●' : '○'}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${isActive ? 'text-fg' : 'text-fg-2'}`}>{t.name}</span>
+                        {isActive && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-accent text-on-accent">Active</span>}
+                      </div>
+                      <p className="text-[10px] text-fg-muted mt-0.5">{t.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 // ─── Android Settings ───────────────────────────────────────────────────────
 
 interface PairedDevice {
@@ -563,12 +660,6 @@ function AndroidSettings({ open, onClose }: { open: boolean; onClose: () => void
     }
   }, []);
 
-  const TIERS = [
-    { id: 'CORE', name: 'Core', desc: 'Personal assistant — journal, inbox, briefings' },
-    { id: 'DEVELOPER', name: 'Developer', desc: 'Core + git, tests, code review' },
-    { id: 'FULL_DEV', name: 'Full Dev', desc: 'Everything — all dev tools included' },
-  ];
-
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center text-fg-muted text-sm">
@@ -583,29 +674,7 @@ function AndroidSettings({ open, onClose }: { open: boolean; onClose: () => void
 
         <ThemeSelector />
 
-        {/* Package Tier */}
-        <section>
-          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Package Tier</h3>
-          <div className="space-y-1">
-            {TIERS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => handleSetTier(t.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded text-left transition-colors ${
-                  tier === t.id ? 'bg-inset' : 'hover:bg-inset/50'
-                }`}
-              >
-                <span className={`text-[10px] ${tier === t.id ? 'text-fg' : 'text-fg-faint'}`}>
-                  {tier === t.id ? '●' : '○'}
-                </span>
-                <div>
-                  <span className="text-xs text-fg font-medium">{t.name}</span>
-                  <p className="text-[10px] text-fg-muted">{t.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
+        <TierSelector tier={tier} onSetTier={handleSetTier} />
 
         {/* Project Directories */}
         <section>
