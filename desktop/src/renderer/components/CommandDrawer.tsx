@@ -5,11 +5,9 @@ import SkillCard from './SkillCard';
 interface Props {
   open: boolean;
   searchMode: boolean;
-  skills: SkillEntry[];
+  skills?: SkillEntry[];
   onSelect: (skill: SkillEntry) => void;
   onClose: () => void;
-  /** When defined, the drawer uses this filter instead of its own search input (driven by InputBar "/" typing). */
-  externalFilter?: string;
 }
 
 const categoryOrder = ['personal', 'work', 'development', 'admin', 'other'] as const;
@@ -21,20 +19,19 @@ const categoryLabels: Record<string, string> = {
   other: 'OTHER SKILLS',
 };
 
-export default function CommandDrawer({ open, searchMode, skills, onSelect, onClose, externalFilter }: Props) {
+export default function CommandDrawer({ open, searchMode, skills = [], onSelect, onClose }: Props) {
   const [search, setSearch] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
-  const hasExternalFilter = externalFilter !== undefined;
 
-  // Focus search on open (only when NOT driven by InputBar's "/" typing)
+  // Focus search on open (always in search mode, optionally in browse mode)
   useEffect(() => {
-    if (open && !hasExternalFilter) {
+    if (open) {
       setSearch('');
       // Small delay to let the transition start before focusing
       const t = setTimeout(() => searchRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [open, searchMode, hasExternalFilter]);
+  }, [open, searchMode]);
 
   // Close on Escape
   useEffect(() => {
@@ -46,24 +43,21 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Use external filter (from InputBar "/" typing) when available, otherwise internal search
-  const activeQuery = hasExternalFilter ? (externalFilter || '') : search;
-
   // Filter skills by search query
   const filtered = useMemo(() => {
-    if (!activeQuery.trim()) return skills;
-    const q = activeQuery.toLowerCase();
+    if (!search.trim()) return skills;
+    const q = search.toLowerCase();
     return skills.filter(
       (s) =>
         s.displayName.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q),
     );
-  }, [skills, activeQuery]);
+  }, [skills, search]);
 
   // Group by category (only when not searching)
   const grouped = useMemo(() => {
-    if (activeQuery.trim()) return null;
+    if (search.trim()) return null;
     const groups = new Map<string, SkillEntry[]>();
     for (const s of filtered) {
       const list = groups.get(s.category) || [];
@@ -71,13 +65,13 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
       groups.set(s.category, list);
     }
     return groups;
-  }, [filtered, activeQuery]);
+  }, [filtered, search]);
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 z-40 bg-canvas/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-canvas/60 backdrop-blur-sm transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -85,7 +79,7 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
 
       {/* Drawer */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-50 bg-panel border-t border-edge-dim rounded-t-xl transition-transform duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 z-50 bg-panel border-t border-edge-dim rounded-t-xl transition-transform duration-300 ease-out ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{ maxHeight: '45vh' }}
@@ -95,25 +89,23 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
           <div className="w-8 h-1 rounded-full bg-fg-faint" />
         </div>
 
-        {/* Search bar — hidden when InputBar is driving the search via "/" */}
-        {!hasExternalFilter && (
-          <div className="px-4 pb-3">
-            <div className="flex items-center gap-2 bg-well rounded-lg px-3 py-2 border border-edge-dim">
-              <svg className="w-4 h-4 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-              </svg>
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search skills and commands..."
-                className="flex-1 bg-transparent text-sm text-fg placeholder-fg-muted outline-none"
-              />
-            </div>
+        {/* Search bar */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 bg-well rounded-lg px-3 py-2 border border-edge-dim">
+            <svg className="w-4 h-4 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+            </svg>
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search skills and commands..."
+              className="flex-1 bg-transparent text-sm text-fg placeholder-fg-muted outline-none"
+            />
           </div>
-        )}
+        </div>
 
         {/* Scrollable content */}
         <div className="overflow-y-auto px-4 pb-4" style={{ maxHeight: 'calc(45vh - 80px)' }}>
