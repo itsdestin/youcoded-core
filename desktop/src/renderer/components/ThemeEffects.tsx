@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../state/theme-context';
 
 interface Particle {
-  x: number; y: number; speed: number; opacity: number; length: number;
+  x: number; y: number; speed: number; opacity: number; length: number; size: number;
 }
 
 function drawRain(ctx: CanvasRenderingContext2D, particles: Particle[], w: number, h: number, rainColor: string) {
@@ -38,7 +38,7 @@ function drawDust(ctx: CanvasRenderingContext2D, particles: Particle[], w: numbe
 
 function drawEmber(ctx: CanvasRenderingContext2D, particles: Particle[], w: number, h: number, accent: string) {
   ctx.clearRect(0, 0, w, h);
-  const t = Date.now() * 0.001; // hoisted: one call per frame, not per particle
+  const t = Date.now() * 0.001;
   for (const p of particles) {
     ctx.globalAlpha = p.opacity * 0.8;
     ctx.fillStyle = accent;
@@ -72,16 +72,57 @@ function drawSnow(ctx: CanvasRenderingContext2D, particles: Particle[], w: numbe
   ctx.globalAlpha = 1;
 }
 
-const PARTICLE_COUNT = 60;
+function drawCustom(
+  ctx: CanvasRenderingContext2D,
+  particles: Particle[],
+  w: number, h: number,
+  img: HTMLImageElement,
+  drift: number,
+) {
+  ctx.clearRect(0, 0, w, h);
+  const t = Date.now() * 0.001;
+  for (const p of particles) {
+    ctx.globalAlpha = p.opacity;
+    ctx.drawImage(img, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    p.y -= p.speed * 0.5;
+    p.x += Math.sin(t + p.length) * drift;
+    if (p.y < -p.size) {
+      p.y = h + p.size;
+      p.x = Math.random() * w;
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+const DEFAULT_PARTICLE_COUNT = 60;
 
 export default function ThemeEffects() {
   const { activeTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const preset = activeTheme?.effects?.particles ?? 'none';
+  const effects = activeTheme?.effects;
+  const preset = effects?.particles ?? 'none';
   const accent = activeTheme?.tokens?.accent ?? '#888888';
+  const particleCount = effects?.['particle-count'] ?? DEFAULT_PARTICLE_COUNT;
+  const particleSpeed = effects?.['particle-speed'] ?? 1.0;
+  const particleDrift = effects?.['particle-drift'] ?? 0.5;
+  const sizeRange = effects?.['particle-size-range'] ?? [8, 16] as [number, number];
+  const shapeSrc = effects?.['particle-shape'];
+
+  // Load custom SVG particle image
+  useEffect(() => {
+    if (preset !== 'custom' || !shapeSrc) {
+      imgRef.current = null;
+      return;
+    }
+    const img = new Image();
+    img.src = shapeSrc;
+    img.onload = () => { imgRef.current = img; };
+    img.onerror = () => { imgRef.current = null; };
+  }, [preset, shapeSrc]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,15 +142,16 @@ export default function ThemeEffects() {
     window.addEventListener('resize', resize);
 
     // Initialize particles
-    particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
+    particlesRef.current = Array.from({ length: particleCount }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      speed: Math.random() * 2 + 1,
+      speed: (Math.random() * 2 + 1) * particleSpeed,
       opacity: Math.random() * 0.4 + 0.1,
       length: Math.random() * 15 + 5,
+      size: Math.random() * (sizeRange[1] - sizeRange[0]) + sizeRange[0],
     }));
 
-    const rainColor = accent + '40'; // computed once per effect run, not per-frame
+    const rainColor = accent + '40';
     const draw = () => {
       const w = canvas.width;
       const h = canvas.height;
@@ -117,6 +159,9 @@ export default function ThemeEffects() {
       else if (preset === 'dust') drawDust(ctx, particlesRef.current, w, h, accent);
       else if (preset === 'ember') drawEmber(ctx, particlesRef.current, w, h, accent);
       else if (preset === 'snow') drawSnow(ctx, particlesRef.current, w, h, accent);
+      else if (preset === 'custom' && imgRef.current) {
+        drawCustom(ctx, particlesRef.current, w, h, imgRef.current, particleDrift);
+      }
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
@@ -125,7 +170,7 @@ export default function ThemeEffects() {
       cancelAnimationFrame(animRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [preset, accent]);
+  }, [preset, accent, particleCount, particleSpeed, particleDrift, sizeRange[0], sizeRange[1]]);
 
   if (preset === 'none') return null;
 
@@ -134,10 +179,7 @@ export default function ThemeEffects() {
       ref={canvasRef}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        top: 0, left: 0, right: 0, bottom: 0,
         zIndex: 0,
         pointerEvents: 'none',
         opacity: 0.6,
