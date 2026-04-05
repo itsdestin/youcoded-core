@@ -5,7 +5,7 @@ import SkillCard from './SkillCard';
 interface Props {
   open: boolean;
   searchMode: boolean;
-  skills: SkillEntry[];
+  skills?: SkillEntry[];
   onSelect: (skill: SkillEntry) => void;
   onClose: () => void;
 }
@@ -19,7 +19,7 @@ const categoryLabels: Record<string, string> = {
   other: 'OTHER SKILLS',
 };
 
-export default function CommandDrawer({ open, searchMode, skills, onSelect, onClose }: Props) {
+export default function CommandDrawer({ open, searchMode, skills = [], onSelect, onClose }: Props) {
   const [search, setSearch] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 

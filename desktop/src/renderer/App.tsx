@@ -21,6 +21,7 @@ import type { SkillEntry, PermissionMode } from '../shared/types';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
 import type { SessionStatusColor } from './components/StatusDot';
 import { ThemeProvider, useTheme } from './state/theme-context';
+import { SkillProvider } from './state/skill-context';
 import ThemeEffects from './components/ThemeEffects';
 
 type ViewMode = 'chat' | 'terminal';
@@ -53,7 +54,6 @@ function AppInner() {
   const [drawerSearchMode, setDrawerSearchMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsBadge, setSettingsBadge] = useState(false);
-  const [skills, setSkills] = useState<SkillEntry[]>([]);
   // Track which sessions the user has "seen" (switched to after activity completed)
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
   const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
@@ -398,24 +398,6 @@ function AppInner() {
     }).catch(() => {});
   }, [dispatch]);
 
-  // Load skills once on mount
-  useEffect(() => {
-    window.claude.skills.list().then((list) => {
-      // Inject built-in resume skill at the top
-      const resumeSkill: SkillEntry = {
-        id: '_resume',
-        displayName: 'Resume Session',
-        description: 'Resume a previous conversation',
-        category: 'personal',
-        prompt: '',
-        source: 'destinclaude',
-        type: 'prompt',
-        visibility: 'published',
-      };
-      setSkills([resumeSkill, ...list]);
-    }).catch(console.error);
-  }, []);
-
   // Flush and reload session state when connection mode changes (local ↔ remote).
   // On Android, switching to remote means the WebSocket now talks to the desktop server —
   // all local session state is stale and must be replaced with the desktop's sessions.
@@ -694,7 +676,6 @@ function AppInner() {
                 <CommandDrawer
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
-                  skills={skills}
                   onSelect={handleSelectSkill}
                   onClose={() => setDrawerOpen(false)}
                 />
@@ -778,11 +759,13 @@ export default function App() {
     <ThemeProvider>
       <ThemeBg />
       <ThemeEffects />
-      <GameProvider>
-        <ChatProvider>
-          <AppInner />
-        </ChatProvider>
-      </GameProvider>
+      <SkillProvider>
+        <GameProvider>
+          <ChatProvider>
+            <AppInner />
+          </ChatProvider>
+        </GameProvider>
+      </SkillProvider>
     </ThemeProvider>
   );
 }
