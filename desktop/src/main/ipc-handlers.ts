@@ -12,7 +12,7 @@ import { RemoteServer } from './remote-server';
 import { TranscriptWatcher } from './transcript-watcher';
 import { listPastSessions, loadHistory } from './session-browser';
 import { readTranscriptMeta } from './transcript-utils';
-import { startThemeWatcher, listUserThemes, userThemePath, THEMES_DIR } from './theme-watcher';
+import { startThemeWatcher, listUserThemes, userThemeDir, userThemeManifest, THEMES_DIR } from './theme-watcher';
 
 // Max age for clipboard paste images (1 hour)
 const CLIPBOARD_MAX_AGE_MS = 60 * 60 * 1000;
@@ -39,15 +39,17 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle(IPC.THEME_READ_FILE, async (_event, slug: string) => {
-    const resolved = path.resolve(userThemePath(slug));
-    if (!resolved.startsWith(THEMES_DIR + path.sep)) throw new Error('Invalid theme slug');
-    return fs.promises.readFile(resolved, 'utf-8');
+    const manifestPath = path.resolve(userThemeManifest(slug));
+    if (!manifestPath.startsWith(THEMES_DIR + path.sep)) throw new Error('Invalid theme slug');
+    return fs.promises.readFile(manifestPath, 'utf-8');
   });
 
   ipcMain.handle(IPC.THEME_WRITE_FILE, async (_event, slug: string, content: string) => {
-    const resolved = path.resolve(userThemePath(slug));
-    if (!resolved.startsWith(THEMES_DIR + path.sep)) throw new Error('Invalid theme slug');
-    await fs.promises.writeFile(resolved, content, 'utf-8');
+    const themeDir = path.resolve(userThemeDir(slug));
+    if (!themeDir.startsWith(THEMES_DIR + path.sep)) throw new Error('Invalid theme slug');
+    // Ensure folder structure exists
+    await fs.promises.mkdir(path.join(themeDir, 'assets'), { recursive: true });
+    await fs.promises.writeFile(path.join(themeDir, 'manifest.json'), content, 'utf-8');
   });
 
   // Broadcast session-created events from SessionManager (covers both IPC and remote-created sessions)
