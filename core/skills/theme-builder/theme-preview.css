@@ -39,6 +39,8 @@ body {
 .rounded-sm   { border-radius: var(--radius-sm, 4px); }
 .rounded-md   { border-radius: var(--radius-md, 8px); }
 .rounded-lg   { border-radius: var(--radius-lg, 12px); }
+.rounded-xl   { border-radius: var(--radius-xl, 16px); }
+.rounded-2xl  { border-radius: var(--radius-2xl, 24px); }
 .rounded-full { border-radius: var(--radius-full, 9999px); }
 
 /* Background layer */

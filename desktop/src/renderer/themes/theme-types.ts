@@ -20,6 +20,8 @@ export interface ThemeShape {
   'radius-sm'?: string;
   'radius-md'?: string;
   'radius-lg'?: string;
+  'radius-xl'?: string;
+  'radius-2xl'?: string;
   'radius-full'?: string;
 }
 

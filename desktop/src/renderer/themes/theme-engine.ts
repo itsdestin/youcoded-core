@@ -121,7 +121,7 @@ export function clearThemeFromDom(): void {
   const root = document.documentElement;
   const body = document.body;
   root.removeAttribute('data-panels-blur');
-  const propsToRemove = [...TOKEN_CSS_PROPS, '--panels-blur', '--panel-glass', '--radius-sm', '--radius-md', '--radius-lg', '--radius-full'];
+  const propsToRemove = [...TOKEN_CSS_PROPS, '--panels-blur', '--panel-glass', '--radius-sm', '--radius-md', '--radius-lg', '--radius-xl', '--radius-2xl', '--radius-full'];
   for (const p of propsToRemove) root.style.removeProperty(p);
   for (const a of LAYOUT_ATTRS) body.removeAttribute(a);
   const customEl = document.getElementById('theme-custom') as HTMLStyleElement | null;

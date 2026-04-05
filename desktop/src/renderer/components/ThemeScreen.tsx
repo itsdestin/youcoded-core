@@ -17,7 +17,9 @@ function roundnessToShape(value: number) {
   const sm  = Math.round(value * 8);
   const md  = Math.round(value * 16);
   const lg  = Math.round(value * 24);
-  return { 'radius-sm': `${sm}px`, 'radius-md': `${md}px`, 'radius-lg': `${lg}px`, 'radius-full': '9999px' };
+  const xl  = Math.round(value * 32);
+  const xxl = Math.round(value * 48);
+  return { 'radius-sm': `${sm}px`, 'radius-md': `${md}px`, 'radius-lg': `${lg}px`, 'radius-xl': `${xl}px`, 'radius-2xl': `${xxl}px`, 'radius-full': '9999px' };
 }
 
 interface Props { onClose: () => void; onSendInput?: (text: string) => void; }

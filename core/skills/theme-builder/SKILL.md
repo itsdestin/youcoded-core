@@ -13,7 +13,7 @@ Build a custom DestinCode theme. Claude generates concept options in a browser w
 
 1. Start the visual companion server:
    ```bash
-   bash "~/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh" --project-dir ~/.claude/destinclaude-themes
+   bash "core/skills/theme-builder/scripts/start-server.sh" --project-dir ~/.claude/destinclaude-themes
    ```
    Use `run_in_background: true`. Then read the `server-info` file after 3 seconds.
 
@@ -55,7 +55,7 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
   --fg-muted: #HEX; --fg-faint: #HEX;
   --edge: #HEX; --edge-dim: #HEX80;
   --scrollbar-thumb: #HEX; --scrollbar-hover: #HEX;
-  --radius-sm: Npx; --radius-md: Npx; --radius-lg: Npx; --radius-full: 9999px;
+  --radius-sm: Npx; --radius-md: Npx; --radius-lg: Npx; --radius-xl: Npx; --radius-2xl: Npx; --radius-full: 9999px;
 ">
   <!-- Theme name + vibe -->
   <h2 class="text-fg" style="font-size:16px; font-weight:700;">Theme Name</h2>
@@ -160,7 +160,8 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
     "scrollbar-thumb": "#hex", "scrollbar-hover": "#hex"
   },
   "shape": {
-    "radius-sm": "Npx", "radius-md": "Npx", "radius-lg": "Npx", "radius-full": "9999px"
+    "radius-sm": "Npx", "radius-md": "Npx", "radius-lg": "Npx",
+    "radius-xl": "Npx", "radius-2xl": "Npx", "radius-full": "9999px"
   },
   "background": {
     "type": "solid | gradient | image",
