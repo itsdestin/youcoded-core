@@ -697,10 +697,7 @@ function AppInner() {
                 </div>
               )}
               {trustGateActive && sessionId && <TrustGate sessionId={sessionId} />}
-            </div>
-            {currentViewMode === 'chat' && (
-              <>
-                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
+              {currentViewMode === 'chat' && (
                 <CommandDrawer
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
@@ -709,6 +706,11 @@ function AppInner() {
                   onClose={handleCloseDrawer}
                   externalFilter={drawerFilter}
                 />
+              )}
+            </div>
+            {currentViewMode === 'chat' && (
+              <>
+                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
                 <StatusBar
                   statusData={{
                     usage: statusData.usage,

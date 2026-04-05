@@ -77,7 +77,7 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-40 bg-canvas/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`absolute inset-0 z-40 bg-canvas/60 backdrop-blur-sm transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -85,7 +85,7 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
 
       {/* Drawer */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 bg-panel border-t border-edge-dim rounded-t-xl transition-transform duration-300 ease-out ${
+        className={`absolute bottom-0 left-0 right-0 z-50 bg-panel border-t border-edge-dim rounded-t-xl transition-transform duration-300 ease-out ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{ maxHeight: '45vh' }}
