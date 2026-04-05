@@ -133,11 +133,7 @@
   --color-edge: var(--edge);
   --color-edge-dim: var(--edge-dim);
 
-  /* Border radius scale — driven by theme variables */
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-full: var(--radius-full);
+  /* Border radius scale — driven by theme variables (use --radius-* vars directly in components) */
 
   /* Status colors — constant across all themes */
   --color-green-400: #4CAF50;

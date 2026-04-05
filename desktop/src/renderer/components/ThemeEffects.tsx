@@ -56,6 +56,22 @@ function drawEmber(ctx: CanvasRenderingContext2D, particles: Particle[], w: numb
   ctx.globalAlpha = 1;
 }
 
+function drawSnow(ctx: CanvasRenderingContext2D, particles: Particle[], w: number, h: number, accent: string) {
+  ctx.clearRect(0, 0, w, h);
+  const t = Date.now() * 0.0005;
+  for (const p of particles) {
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.length * 0.15 + 1, 0, Math.PI * 2);
+    ctx.fill();
+    p.y += p.speed * 0.4;
+    p.x += Math.sin(t + p.length) * 0.6;
+    if (p.y > h) { p.y = -5; p.x = Math.random() * w; }
+  }
+  ctx.globalAlpha = 1;
+}
+
 const PARTICLE_COUNT = 60;
 
 export default function ThemeEffects() {
@@ -100,6 +116,7 @@ export default function ThemeEffects() {
       if (preset === 'rain') drawRain(ctx, particlesRef.current, w, h, rainColor);
       else if (preset === 'dust') drawDust(ctx, particlesRef.current, w, h, accent);
       else if (preset === 'ember') drawEmber(ctx, particlesRef.current, w, h, accent);
+      else if (preset === 'snow') drawSnow(ctx, particlesRef.current, w, h, accent);
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
