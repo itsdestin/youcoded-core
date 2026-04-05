@@ -85,11 +85,12 @@ export function parseTranscriptLine(line: string, sessionId: string): Transcript
 
     // User-typed prompt: has a promptId and text content (not tool results)
     if (parsed.promptId) {
-      const text = typeof content === 'string'
+      const raw = typeof content === 'string'
         ? content
         : extractTextFromBlocks(content);
+      const text = stripSystemTags(raw);
       // Skip empty messages (e.g. interrupted tool use placeholders)
-      if (!text.trim()) return [];
+      if (!text) return [];
       events.push({
         type: 'user-message',
         sessionId,
@@ -182,14 +183,23 @@ function extractTextFromBlocks(content: any): string {
 }
 
 /**
- * Strips system XML tags that should never appear in the chat timeline.
- * These are injected by Claude Code's harness and aren't part of the
- * assistant's actual response.
+ * Strips internal XML tags and ANSI escapes that should never appear in
+ * the chat timeline. These are injected by Claude Code's harness and
+ * aren't part of the assistant's actual response.
+ *  - Tags stripped entirely: system-reminder, task-notification, antml_thinking,
+ *    command-name, command-message, command-args
+ *  - Tags unwrapped (inner text kept): local-command-stdout, local-command-stderr
  */
-const SYSTEM_TAG_RE = /<(task-notification|system-reminder|antml_thinking|command-name)>[\s\S]*?<\/\1>/g;
+const STRIP_ENTIRELY_RE = /<(task-notification|system-reminder|antml_thinking|command-name|command-message|command-args)>[\s\S]*?<\/\1>/g;
+const UNWRAP_RE = /<(local-command-stdout|local-command-stderr)>([\s\S]*?)<\/\1>/g;
+const ANSI_RE = /\u001b\[[0-9;]*[a-zA-Z]/g;
 
 function stripSystemTags(text: string): string {
-  return text.replace(SYSTEM_TAG_RE, '').trim();
+  return text
+    .replace(STRIP_ENTIRELY_RE, '')
+    .replace(UNWRAP_RE, (_match, _tag, inner) => inner)
+    .replace(ANSI_RE, '')
+    .trim();
 }
 
 function extractToolResultContent(content: any): string {

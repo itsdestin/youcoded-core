@@ -79,10 +79,10 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Deduplicate — if any of the last 3 timeline entries is a user message
+      // Deduplicate — if any of the last 10 timeline entries is a user message
       // with the same content (InputBar optimistic + hook/transcript event
-      // arriving later, possibly with intervening entries), skip
-      const lastFew = session.timeline.slice(-3);
+      // arriving later, possibly with many intervening entries), skip
+      const lastFew = session.timeline.slice(-10);
       const isDuplicate = lastFew.some(entry =>
         entry.kind === 'user' && 'message' in entry && entry.message.content === action.content
       );
@@ -195,9 +195,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Dedup against last 3 timeline entries (optimistic USER_PROMPT may
-      // have intervening assistant-turn or tool entries before transcript arrives)
-      const lastFewT = session.timeline.slice(-3);
+      // Dedup against last 10 timeline entries (optimistic USER_PROMPT may
+      // have many intervening assistant-turn or tool entries before transcript arrives)
+      const lastFewT = session.timeline.slice(-10);
       const isDuplicateT = lastFewT.some(entry =>
         entry.kind === 'user' && 'message' in entry && entry.message.content === action.text
       );
