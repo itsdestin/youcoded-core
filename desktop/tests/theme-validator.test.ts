@@ -71,3 +71,75 @@ describe('luminance', () => {
     expect(luminance('#FFF')).toBe(0);
   });
 });
+
+describe('validateTheme — new fields', () => {
+  it('accepts theme with background pattern fields', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      background: {
+        type: 'image' as const,
+        value: 'assets/wallpaper.png',
+        opacity: 0.85,
+        'panels-blur': 12,
+        'panels-opacity': 0.75,
+        pattern: 'assets/pattern.svg',
+        'pattern-opacity': 0.06,
+      },
+    };
+    expect(() => validateTheme(theme)).not.toThrow();
+  });
+
+  it('accepts theme with custom particle fields', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      effects: {
+        particles: 'custom' as const,
+        'particle-shape': 'assets/heart.svg',
+        'particle-count': 40,
+        'particle-speed': 1.0,
+        'particle-drift': 0.5,
+        'particle-size-range': [8, 16],
+      },
+    };
+    expect(() => validateTheme(theme)).not.toThrow();
+  });
+
+  it('accepts theme with icon overrides', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      icons: { send: 'assets/icon-send.svg' },
+    };
+    expect(() => validateTheme(theme)).not.toThrow();
+  });
+
+  it('accepts theme with mascot overrides', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      mascot: {
+        idle: 'assets/mascot-idle.svg',
+        welcome: 'assets/mascot-welcome.svg',
+      },
+    };
+    expect(() => validateTheme(theme)).not.toThrow();
+  });
+
+  it('accepts theme with cursor and scrollbar', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      cursor: 'assets/cursor.svg',
+      scrollbar: { 'thumb-image': 'assets/thumb.svg', 'track-color': 'transparent' },
+    };
+    expect(() => validateTheme(theme)).not.toThrow();
+  });
+
+  it('rejects particle-shape when particles is not custom', () => {
+    const theme = {
+      ...MINIMAL_VALID,
+      effects: {
+        particles: 'rain' as const,
+        'particle-shape': 'assets/heart.svg',
+      },
+    };
+    expect(() => validateTheme(theme)).toThrow('particle-shape');
+  });
+});

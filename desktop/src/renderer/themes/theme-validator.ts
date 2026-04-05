@@ -39,5 +39,13 @@ export function validateTheme(raw: unknown): ThemeDefinition {
     }
   }
 
+  // Validate effects consistency
+  const effects = t.effects as Record<string, unknown> | undefined;
+  if (effects) {
+    if (effects['particle-shape'] && effects.particles !== 'custom') {
+      throw new Error('particle-shape requires particles: "custom"');
+    }
+  }
+
   return raw as ThemeDefinition;
 }
