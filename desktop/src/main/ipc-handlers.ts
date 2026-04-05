@@ -42,6 +42,10 @@ export function registerIpcHandlers(
     return fs.promises.readFile(userThemePath(slug), 'utf-8');
   });
 
+  ipcMain.handle(IPC.THEME_WRITE_FILE, async (_event, slug: string, content: string) => {
+    await fs.promises.writeFile(userThemePath(slug), content, 'utf-8');
+  });
+
   // Broadcast session-created events from SessionManager (covers both IPC and remote-created sessions)
   sessionManager.on('session-created', (info) => {
     send(IPC.SESSION_CREATED, info);

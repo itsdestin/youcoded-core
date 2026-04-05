@@ -38,6 +38,7 @@ const IPC = {
   THEME_RELOAD: 'theme:reload',   // Main -> Renderer: a theme file changed
   THEME_LIST: 'theme:list',       // Renderer -> Main: get list of user theme slugs
   THEME_READ_FILE: 'theme:read-file', // Renderer -> Main: read a user theme JSON by slug
+  THEME_WRITE_FILE: 'theme:write-file',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -150,6 +151,7 @@ contextBridge.exposeInMainWorld('claude', {
   theme: {
     list: () => ipcRenderer.invoke(IPC.THEME_LIST),
     readFile: (slug: string) => ipcRenderer.invoke(IPC.THEME_READ_FILE, slug),
+    writeFile: (slug: string, content: string) => ipcRenderer.invoke(IPC.THEME_WRITE_FILE, slug, content),
     onReload: (handler: (slug: string) => void) => {
       const wrapped = (_event: IpcRendererEvent, slug: string) => handler(slug);
       ipcRenderer.on(IPC.THEME_RELOAD, wrapped);

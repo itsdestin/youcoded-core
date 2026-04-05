@@ -146,4 +146,5 @@ export const IPC = {
   THEME_RELOAD: 'theme:reload',   // Main -> Renderer: a theme file changed
   THEME_LIST: 'theme:list',       // Renderer -> Main: get list of user theme slugs
   THEME_READ_FILE: 'theme:read-file', // Renderer -> Main: read a user theme JSON by slug
+  THEME_WRITE_FILE: 'theme:write-file',
 } as const;
