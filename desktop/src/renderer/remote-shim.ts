@@ -22,6 +22,8 @@ let stateChangeCallback: ((state: RemoteConnectionState) => void) | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectDelay = 1000;
 const MAX_RECONNECT_DELAY = 30_000;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 /** Override WebSocket target — set by connectToHost(), cleared by disconnectFromHost() */
 let targetUrl: string | null = null;
@@ -169,7 +171,19 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
     setConnectionState('connecting');
     ws = new WebSocket(getWsUrl());
 
+    // Timeout if WebSocket stays in CONNECTING state (network unreachable, etc.)
+    const connectTimeout = setTimeout(() => {
+      if (ws && ws.readyState === WebSocket.CONNECTING) {
+        console.error('[remote-shim] connect timeout to', getWsUrl());
+        ws.close();
+        ws = null;
+        setConnectionState('disconnected');
+        reject(new Error('Connection timed out'));
+      }
+    }, 15_000);
+
     ws.onopen = () => {
+      clearTimeout(connectTimeout);
       setConnectionState('authenticating');
       const authMsg = isToken
         ? { type: 'auth', token: passwordOrToken }
@@ -187,6 +201,8 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
         if (msg.type === 'auth:ok') {
           authResolved = true;
           reconnectDelay = 1000; // Reset backoff on success
+          reconnectAttempts = 0;
+          console.log('[remote-shim] auth:ok from', getWsUrl());
           setConnectionState('connected');
           // Store token for reconnection
           const token = msg.token;
@@ -202,6 +218,7 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
           ws!.onmessage = (e) => handleMessage(e.data as string);
         } else if (msg.type === 'auth:failed') {
           authResolved = true;
+          console.error('[remote-shim] auth:failed', msg.reason);
           setConnectionState('disconnected');
           reject(new Error(msg.reason || 'Authentication failed'));
           ws!.close();
@@ -213,7 +230,9 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
     };
 
     ws.onclose = () => {
+      clearTimeout(connectTimeout);
       if (!authResolved) {
+        console.error('[remote-shim] ws closed before auth, url=', getWsUrl());
         setConnectionState('disconnected');
         reject(new Error('Connection closed before auth'));
         return;
@@ -234,9 +253,23 @@ export function connect(passwordOrToken: string, isToken = false): Promise<strin
 }
 
 function scheduleReconnect(token: string): void {
+  // After too many failures, give up and fall back to local mode
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    reconnectAttempts = 0;
+    reconnectDelay = 1000;
+    targetUrl = null;
+    localStorage.removeItem('destincode-remote-target');
+    localStorage.removeItem('destincode-remote-token');
+    // Reconnect to local bridge
+    connect('android-local', false).catch(() => {});
+    import('./platform').then(({ setConnectionMode }) => setConnectionMode('local'));
+    return;
+  }
+
   if (reconnectTimer) return;
   reconnectTimer = setTimeout(async () => {
     reconnectTimer = null;
+    reconnectAttempts++;
     try {
       await connect(token, true);
     } catch {
@@ -254,10 +287,35 @@ export function disconnect(): void {
 }
 
 /**
+ * Check if a host IP is in the Tailscale CGNAT range (100.64.0.0/10)
+ * and verify Tailscale VPN is connected before attempting connection.
+ */
+async function checkTailscaleIfNeeded(host: string): Promise<void> {
+  const match = host.match(/^100\.(\d+)\./);
+  if (!match) return;
+  const secondOctet = parseInt(match[1]);
+  if (secondOctet < 64 || secondOctet > 127) return;
+
+  try {
+    const status = await invoke('remote:detect-tailscale');
+    if (!status?.connected) {
+      throw new Error('Tailscale VPN is not connected. Turn on Tailscale and try again.');
+    }
+  } catch (err: any) {
+    // Re-throw Tailscale-specific errors; swallow others (e.g. bridge timeout)
+    if (err.message?.includes('Tailscale')) throw err;
+  }
+}
+
+/**
  * Connect to a remote desktop server. Disconnects from the current server first.
  * __PLATFORM__ is preserved as 'android' so touch adaptations stay active.
  */
 export async function connectToHost(host: string, port: number, password: string): Promise<void> {
+  // Pre-flight: check Tailscale before disconnecting from local bridge
+  // (invoke needs the current WebSocket connection)
+  await checkTailscaleIfNeeded(host);
+
   const { setConnectionMode } = await import('./platform');
 
   // Disconnect from current server (local bridge or previous remote)
@@ -270,16 +328,25 @@ export async function connectToHost(host: string, port: number, password: string
   }
   pending.clear();
 
-  // Point at the desktop server
+  // Point at the desktop server (defer localStorage until auth succeeds)
   targetUrl = `ws://${host}:${port}/ws`;
-  localStorage.setItem('destincode-remote-target', targetUrl);
   preservePlatform = true;
 
-  // Connect with password auth
-  await connect(password, false);
-
-  preservePlatform = false;
-  setConnectionMode('remote');
+  try {
+    await connect(password, false);
+    // Connection succeeded — persist remote target for session restore
+    localStorage.setItem('destincode-remote-target', targetUrl);
+    preservePlatform = false;
+    setConnectionMode('remote');
+  } catch (err) {
+    console.error('[remote-shim] connectToHost failed:', (err as Error)?.message);
+    // Reset remote state and reconnect to local bridge
+    targetUrl = null;
+    preservePlatform = false;
+    localStorage.removeItem('destincode-remote-target');
+    connect('android-local', false).catch(() => {});
+    throw err;
+  }
 }
 
 /**
@@ -309,13 +376,20 @@ export async function disconnectFromHost(): Promise<void> {
 
 /** Install the window.claude shim. Call once on app startup in browser mode. */
 export function installShim(): void {
-  // Restore remote target from previous session (e.g., page reload while in remote mode)
-  const savedTarget = localStorage.getItem('destincode-remote-target');
-  if (savedTarget) {
-    targetUrl = savedTarget;
-    preservePlatform = true; // Will be set on next auth:ok
-    // Restore connection mode synchronously so components render correctly on first paint
-    import('./platform').then(({ setConnectionMode }) => setConnectionMode('remote'));
+  // Android WebView (file://) always starts in local mode — clear any stale remote target
+  // that could redirect connect('android-local') to a dead remote server
+  if (location.protocol === 'file:') {
+    localStorage.removeItem('destincode-remote-target');
+    localStorage.removeItem('destincode-remote-token');
+  } else {
+    // Browser: restore remote target from previous session (e.g., page reload while in remote mode)
+    const savedTarget = localStorage.getItem('destincode-remote-target');
+    if (savedTarget) {
+      targetUrl = savedTarget;
+      preservePlatform = true; // Will be set on next auth:ok
+      // Restore connection mode synchronously so components render correctly on first paint
+      import('./platform').then(({ setConnectionMode }) => setConnectionMode('remote'));
+    }
   }
 
   (window as any).claude = {
@@ -373,20 +447,21 @@ export function installShim(): void {
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
       broadcastAction: (action: any) => fire('ui:action', action),
     },
-    // Android-only bridge methods — only called when isAndroid() is true
+    // Android-only bridge methods — when connected to a remote desktop, these
+    // return immediate defaults since the remote server doesn't handle android:* messages
     android: {
-      getTier: () => invoke('android:get-tier'),
-      setTier: (tier: string) => invoke('android:set-tier', { tier }),
-      getDirectories: () => invoke('android:get-directories'),
-      addDirectory: (path: string, label: string) => invoke('android:add-directory', { path, label }),
-      removeDirectory: (path: string) => invoke('android:remove-directory', { path }),
-      getAbout: () => invoke('android:get-about'),
-      getPairedDevices: () => invoke('android:get-paired-devices'),
+      getTier: () => targetUrl ? Promise.resolve('CORE') : invoke('android:get-tier'),
+      setTier: (tier: string) => targetUrl ? Promise.resolve() : invoke('android:set-tier', { tier }),
+      getDirectories: () => targetUrl ? Promise.resolve([]) : invoke('android:get-directories'),
+      addDirectory: (path: string, label: string) => targetUrl ? Promise.resolve() : invoke('android:add-directory', { path, label }),
+      removeDirectory: (path: string) => targetUrl ? Promise.resolve() : invoke('android:remove-directory', { path }),
+      getAbout: () => targetUrl ? Promise.resolve({ version: '', build: '' }) : invoke('android:get-about'),
+      getPairedDevices: () => targetUrl ? Promise.resolve([]) : invoke('android:get-paired-devices'),
       savePairedDevice: (device: { name: string; host: string; port: number; password: string }) =>
-        invoke('android:save-paired-device', device),
+        targetUrl ? Promise.resolve() : invoke('android:save-paired-device', device),
       removePairedDevice: (host: string, port: number) =>
-        invoke('android:remove-paired-device', { host, port }),
-      scanQr: () => invoke('android:scan-qr'),
+        targetUrl ? Promise.resolve() : invoke('android:remove-paired-device', { host, port }),
+      scanQr: () => targetUrl ? Promise.resolve(null) : invoke('android:scan-qr'),
     },
     off: (channel: string, handler: Callback) => removeListener(channel, handler),
     removeAllListeners: (channel: string) => removeAllListeners(channel),

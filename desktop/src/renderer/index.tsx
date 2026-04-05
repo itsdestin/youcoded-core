@@ -66,6 +66,8 @@ function LoginScreen({ onLogin }: { onLogin: (password: string) => Promise<void>
  */
 // Capture before any shim can modify window.claude
 const isElectron = !!(window as any).claude;
+// Android WebView loads from file:// — always auto-connects, never needs a password screen
+const isAndroid = location.protocol === 'file:';
 
 // Set default platform for Electron path (browser/remote path sets it via remote-shim auth:ok)
 if (isElectron && !(window as any).__PLATFORM__) {
@@ -120,6 +122,12 @@ function Root() {
 
   if (!shimReady) {
     return <div className="flex items-center justify-center h-full bg-panel text-fg text-sm">Loading...</div>;
+  }
+
+  // Android always auto-connects to local bridge — never show the password screen.
+  // shimReady guarantees window.claude is populated before App renders.
+  if (isAndroid) {
+    return <App />;
   }
 
   return <LoginScreen onLogin={handleLogin} />;

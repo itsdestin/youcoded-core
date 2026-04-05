@@ -169,6 +169,9 @@ export class RemoteServer {
           const content = fs.readFileSync(path.join(topicDir, `topic-${claudeId}`), 'utf8').trim();
           if (content && content !== 'New Session' && content !== this.lastTopics.get(desktopId)) {
             this.lastTopics.set(desktopId, content);
+            // Update SessionInfo so session:list returns current names
+            const session = this.sessionManager.getSession(desktopId);
+            if (session) session.name = content;
             this.broadcast({ type: 'session:renamed', payload: { sessionId: desktopId, name: content } });
           }
         } catch { /* file may not exist yet */ }
@@ -467,6 +470,11 @@ export class RemoteServer {
 
     for (const session of sessions) {
       ws.send(JSON.stringify({ type: 'session:created', payload: session }));
+    }
+
+    // Send current topic names for all mapped sessions
+    for (const [desktopId, name] of this.lastTopics) {
+      ws.send(JSON.stringify({ type: 'session:renamed', payload: { sessionId: desktopId, name } }));
     }
 
     // Delay PTY + hook replay to give the client time to process SESSION_INIT.
