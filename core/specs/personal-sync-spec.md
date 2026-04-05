@@ -1,8 +1,14 @@
 # Personal Data Sync — Spec
 
-**Version:** 2.4
-**Last updated:** 2026-04-05
-**Feature location:** `core/hooks/personal-sync.sh`, session-start integration in `core/hooks/session-start.sh`
+> **RETIRED — 2026-04-05**
+> This spec has been superseded by `backup-system-spec.md` v5.0.
+> `personal-sync.sh` was merged into `core/hooks/sync.sh` as part of the sync consolidation.
+> This file is preserved as historical record only. Do not update.
+
+**Version:** 2.3 (final)
+**Last updated:** 2026-03-25
+**Status:** Retired — superseded by backup-system-spec.md v5.0
+**Feature location:** ~~`core/hooks/personal-sync.sh`~~ → now `core/hooks/sync.sh`
 
 ## Purpose
 
@@ -44,7 +50,6 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 | User-created skills | `~/.claude/skills/*/` (non-symlinks) | Skills created by user, not from toolkit repo |
 | Backup metadata | `~/.claude/backup-meta.json` | Schema version for migration framework |
 | Conversations | `~/.claude/projects/*/*.jsonl` | Session transcripts, cross-device /resume |
-| Conversation index | `~/.claude/conversation-index.json` | Session-to-topic mapping for cross-device topic display. See conversation-index-spec.md. |
 
 ### What does NOT get synced
 
@@ -248,7 +253,6 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
-| 2026-04-05 | 2.4 | Added conversation index (`conversation-index.json`) to sync scope. Index built lazily from topic files during sync, pushed to `system-backup/` on all backends, merged on pull, regenerates topic cache files for cross-device sessions. See conversation-index-spec.md. | Update | owner |
 | 2026-03-25 | 2.3 | Cross-device conversation sync: conversations added as synced category (per-slug, --checksum for Drive), home-directory aggregation via symlinks, config.local.json and mcp-config.json excluded, legacy conversation migration (D9), renamed get_primary_backend to get_preferred_backend. See cross-device-sync-design (03-25-2026). | Update | owner |
 | 2026-03-25 | 2.2 | Three fixes: (1) Push operations changed from `rclone sync` to `rclone copy` — sync propagated accidental local deletions to Drive, destroying backup copies. (2) Pull path mapping fixed — memory files were restored to project root instead of `memory/` subdirectory. (3) Windows slug calculation fixed — `cygpath -w` used instead of `realpath` to match Claude Code's slug algorithm. Also fixed git-sync stash pop to emit visible `hookSpecificOutput` warning instead of silent stderr. | Bugfix | owner |
 | 2026-03-24 | 2.1 | Critical fix: session-start Drive pull used `rclone sync` for memory which destroyed local conversation .jsonl files. Changed to `rclone copy --update`. | Bugfix | owner |
