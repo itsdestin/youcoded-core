@@ -17,6 +17,7 @@ import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
+import Marketplace from './components/Marketplace';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
 import type { SessionStatusColor } from './components/StatusDot';
@@ -744,6 +745,9 @@ function AppInner() {
         onClose={() => setResumeRequested(false)}
         onResume={handleResumeSession}
       />
+      {marketplaceOpen && (
+        <Marketplace onClose={() => setMarketplaceOpen(false)} />
+      )}
     </div>
   );
 }
