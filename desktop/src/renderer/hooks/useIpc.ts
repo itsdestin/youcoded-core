@@ -17,6 +17,23 @@ declare global {
       };
       skills: {
         list: () => Promise<import('../../shared/types').SkillEntry[]>;
+        listMarketplace: (filters?: import('../../shared/types').SkillFilters) => Promise<import('../../shared/types').SkillEntry[]>;
+        getDetail: (id: string) => Promise<import('../../shared/types').SkillDetailView>;
+        search: (query: string) => Promise<import('../../shared/types').SkillEntry[]>;
+        install: (id: string) => Promise<void>;
+        uninstall: (id: string) => Promise<void>;
+        getFavorites: () => Promise<string[]>;
+        setFavorite: (id: string, favorited: boolean) => Promise<void>;
+        getChips: () => Promise<import('../../shared/types').ChipConfig[]>;
+        setChips: (chips: import('../../shared/types').ChipConfig[]) => Promise<void>;
+        getOverride: (id: string) => Promise<import('../../shared/types').MetadataOverride | null>;
+        setOverride: (id: string, override: import('../../shared/types').MetadataOverride) => Promise<void>;
+        createPrompt: (skill: any) => Promise<import('../../shared/types').SkillEntry>;
+        deletePrompt: (id: string) => Promise<void>;
+        publish: (id: string) => Promise<{ prUrl: string }>;
+        getShareLink: (id: string) => Promise<string>;
+        importFromLink: (encoded: string) => Promise<import('../../shared/types').SkillEntry>;
+        getCuratedDefaults: () => Promise<string[]>;
       };
       on: {
         sessionCreated: (cb: (info: any) => void) => (...args: any[]) => void;

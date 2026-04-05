@@ -5,8 +5,8 @@ import os from 'os';
 import { execFile } from 'child_process';
 import { SessionManager } from './session-manager';
 import { HookRelay } from './hook-relay';
-import { IPC, SkillEntry } from '../shared/types';
-import { scanSkills } from './skill-scanner';
+import { IPC } from '../shared/types';
+import { LocalSkillProvider } from './skill-provider';
 import { RemoteConfig } from './remote-config';
 import { RemoteServer } from './remote-server';
 import { TranscriptWatcher } from './transcript-watcher';
@@ -21,6 +21,7 @@ export function registerIpcHandlers(
   ipcMain: IpcMain,
   sessionManager: SessionManager,
   mainWindow: BrowserWindow,
+  skillProvider: LocalSkillProvider,
   hookRelay?: HookRelay,
   remoteConfig?: RemoteConfig,
   remoteServer?: RemoteServer,
@@ -141,9 +142,77 @@ export function registerIpcHandlers(
     }
   });
 
-  // --- Skills discovery (shared with RemoteServer) ---
+  // --- Skills discovery & marketplace ---
   ipcMain.handle(IPC.SKILLS_LIST, async () => {
-    return scanSkills();
+    return skillProvider.getInstalled();
+  });
+
+  ipcMain.handle(IPC.SKILLS_LIST_MARKETPLACE, async (_event, filters) => {
+    return skillProvider.listMarketplace(filters);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_DETAIL, async (_event, id: string) => {
+    return skillProvider.getSkillDetail(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_SEARCH, async (_event, query: string) => {
+    return skillProvider.search(query);
+  });
+
+  ipcMain.handle(IPC.SKILLS_INSTALL, async (_event, id: string) => {
+    return skillProvider.install(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_UNINSTALL, async (_event, id: string) => {
+    return skillProvider.uninstall(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_FAVORITES, async () => {
+    return skillProvider.getFavorites();
+  });
+
+  ipcMain.handle(IPC.SKILLS_SET_FAVORITE, async (_event, id: string, favorited: boolean) => {
+    return skillProvider.setFavorite(id, favorited);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_CHIPS, async () => {
+    return skillProvider.getChips();
+  });
+
+  ipcMain.handle(IPC.SKILLS_SET_CHIPS, async (_event, chips) => {
+    return skillProvider.setChips(chips);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_OVERRIDE, async (_event, id: string) => {
+    return skillProvider.getOverrides().then(o => o[id] || null);
+  });
+
+  ipcMain.handle(IPC.SKILLS_SET_OVERRIDE, async (_event, id: string, override) => {
+    return skillProvider.setOverride(id, override);
+  });
+
+  ipcMain.handle(IPC.SKILLS_CREATE_PROMPT, async (_event, skill) => {
+    return skillProvider.createPromptSkill(skill);
+  });
+
+  ipcMain.handle(IPC.SKILLS_DELETE_PROMPT, async (_event, id: string) => {
+    return skillProvider.deletePromptSkill(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_PUBLISH, async (_event, id: string) => {
+    return skillProvider.publish(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_SHARE_LINK, async (_event, id: string) => {
+    return skillProvider.generateShareLink(id);
+  });
+
+  ipcMain.handle(IPC.SKILLS_IMPORT_FROM_LINK, async (_event, encoded: string) => {
+    return skillProvider.importFromLink(encoded);
+  });
+
+  ipcMain.handle(IPC.SKILLS_GET_CURATED_DEFAULTS, async () => {
+    return skillProvider.getCuratedDefaults();
   });
 
   // --- Remote access settings ---

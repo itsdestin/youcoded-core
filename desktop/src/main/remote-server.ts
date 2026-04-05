@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 import type { SessionManager } from './session-manager';
 import type { HookRelay } from './hook-relay';
 import type { RemoteConfig } from './remote-config';
+import type { LocalSkillProvider } from './skill-provider';
 import { readTranscriptMeta } from './transcript-utils';
 import { listPastSessions, loadHistory } from './session-browser';
 
@@ -64,7 +65,7 @@ export class RemoteServer {
     private sessionManager: SessionManager,
     private hookRelay: HookRelay,
     private config: RemoteConfig,
-    private skillScanner?: () => any[],
+    private skillProvider?: LocalSkillProvider,
   ) {
     this.tokensPath = path.join(os.homedir(), '.claude', '.remote-tokens.json');
     this.loadTokens();
@@ -566,8 +567,93 @@ export class RemoteServer {
         break;
       }
       case 'skills:list': {
-        const skills = this.skillScanner ? this.skillScanner() : [];
+        const skills = this.skillProvider ? await this.skillProvider.getInstalled() : [];
         this.respond(client.ws, type, id, skills);
+        break;
+      }
+      case 'skills:list-marketplace': {
+        const result = this.skillProvider ? await this.skillProvider.listMarketplace(payload) : [];
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:get-detail': {
+        const result = this.skillProvider ? await this.skillProvider.getSkillDetail(payload.id) : null;
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:search': {
+        const result = this.skillProvider ? await this.skillProvider.search(payload.query) : [];
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:install': {
+        if (this.skillProvider) await this.skillProvider.install(payload.id);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:uninstall': {
+        if (this.skillProvider) await this.skillProvider.uninstall(payload.id);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:get-favorites': {
+        const result = this.skillProvider ? await this.skillProvider.getFavorites() : [];
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:set-favorite': {
+        if (this.skillProvider) await this.skillProvider.setFavorite(payload.id, payload.favorited);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:get-chips': {
+        const result = this.skillProvider ? await this.skillProvider.getChips() : [];
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:set-chips': {
+        if (this.skillProvider) await this.skillProvider.setChips(payload.chips);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:get-override': {
+        const overrides = this.skillProvider ? await this.skillProvider.getOverrides() : {};
+        this.respond(client.ws, type, id, overrides[payload.id] || null);
+        break;
+      }
+      case 'skills:set-override': {
+        if (this.skillProvider) await this.skillProvider.setOverride(payload.id, payload.override);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:create-prompt': {
+        const result = this.skillProvider ? await this.skillProvider.createPromptSkill(payload) : null;
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:delete-prompt': {
+        if (this.skillProvider) await this.skillProvider.deletePromptSkill(payload.id);
+        this.respond(client.ws, type, id, { ok: true });
+        break;
+      }
+      case 'skills:publish': {
+        const result = this.skillProvider ? await this.skillProvider.publish(payload.id) : null;
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:get-share-link': {
+        const result = this.skillProvider ? await this.skillProvider.generateShareLink(payload.id) : '';
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:import-from-link': {
+        const result = this.skillProvider ? await this.skillProvider.importFromLink(payload.encoded) : null;
+        this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'skills:get-curated-defaults': {
+        const result = this.skillProvider ? await this.skillProvider.getCuratedDefaults() : [];
+        this.respond(client.ws, type, id, result);
         break;
       }
       case 'get-home-path': {

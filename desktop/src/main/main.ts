@@ -9,7 +9,7 @@ import { HookRelay } from './hook-relay';
 import { registerIpcHandlers } from './ipc-handlers';
 import { RemoteServer } from './remote-server';
 import { RemoteConfig } from './remote-config';
-import { scanSkills } from './skill-scanner';
+import { LocalSkillProvider } from './skill-provider';
 import { IPC } from '../shared/types';
 import { log, rotateLog } from './logger';
 
@@ -48,7 +48,9 @@ const pipeName = process.platform === 'win32'
 sessionManager.setPipeName(pipeName);
 const hookRelay = new HookRelay(pipeName);
 const remoteConfig = new RemoteConfig();
-const remoteServer = new RemoteServer(sessionManager, hookRelay, remoteConfig, scanSkills);
+const skillProvider = new LocalSkillProvider();
+skillProvider.ensureMigrated();
+const remoteServer = new RemoteServer(sessionManager, hookRelay, remoteConfig, skillProvider);
 
 // Dev server URL — configurable via env var, defaults to Vite's default
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
@@ -74,7 +76,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  cleanupIpcHandlers = registerIpcHandlers(ipcMain, sessionManager, mainWindow, hookRelay, remoteConfig, remoteServer);
+  cleanupIpcHandlers = registerIpcHandlers(ipcMain, sessionManager, mainWindow, skillProvider, hookRelay, remoteConfig, remoteServer);
 
   // Forward hook events to renderer
   hookRelay.on('hook-event', (event) => {
