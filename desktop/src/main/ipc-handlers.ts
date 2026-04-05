@@ -32,7 +32,7 @@ export function registerIpcHandlers(
   };
 
   // --- Theme file watcher ---
-  startThemeWatcher(mainWindow);
+  const stopThemeWatcher = startThemeWatcher(mainWindow);
 
   ipcMain.handle(IPC.THEME_LIST, async () => {
     return listUserThemes();
@@ -496,6 +496,7 @@ export function registerIpcHandlers(
 
   // Return cleanup function for use during app shutdown
   return function cleanup() {
+    stopThemeWatcher();
     clearInterval(statusInterval);
     clearInterval(usageRefreshInterval);
     transcriptWatcher.stopAll();
