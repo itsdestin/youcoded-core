@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isAndroid } from '../platform';
 import ThemeScreen from './ThemeScreen';
@@ -159,7 +160,7 @@ function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) 
         </svg>
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
           <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
           <div
@@ -175,7 +176,8 @@ function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) 
           >
             <ThemeScreen onClose={() => setOpen(false)} onSendInput={onSendInput} />
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </section>
   );
