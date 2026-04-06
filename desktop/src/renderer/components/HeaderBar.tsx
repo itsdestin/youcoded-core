@@ -12,12 +12,6 @@ interface SessionEntry {
   permissionMode: string;
 }
 
-const MODE_CONFIG: Record<PermissionMode, { label: string; shortLabel: string; color: string; bg: string; border: string }> = {
-  normal:        { label: 'NORMAL',             shortLabel: 'NORMAL',  color: 'var(--fg-muted)', bg: 'var(--inset)',  border: 'var(--edge-dim)' },
-  'auto-accept': { label: 'ACCEPT CHANGES',     shortLabel: 'ACCEPT',  color: 'var(--accent)',   bg: 'var(--well)',   border: 'var(--edge)' },
-  plan:          { label: 'PLAN MODE',           shortLabel: 'PLAN',    color: 'var(--fg-2)',     bg: 'var(--inset)',  border: 'var(--edge)' },
-  bypass:        { label: 'BYPASS PERMISSIONS',  shortLabel: 'BYPASS',  color: '#FA8072', bg: 'rgba(250,128,114,0.15)', border: 'rgba(250,128,114,0.25)' },
-};
 
 interface Props {
   sessions: SessionEntry[];
@@ -51,11 +45,9 @@ export default function HeaderBar({
   settingsOpen, onToggleSettings, settingsBadge, sessionStatuses, onResumeSession,
   onOpenResumeBrowser, onReorderSessions,
 }: Props) {
-  const cfg = MODE_CONFIG[permissionMode] || MODE_CONFIG['normal'];
-
   return (
     <div className="flex items-center h-10 px-2 sm:px-3 border-b border-edge shrink-0">
-      {/* Left — settings + permission badge */}
+      {/* Left — settings + remote/announcement badges */}
       <div className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0">
         <button
           onClick={onToggleSettings}
@@ -69,19 +61,6 @@ export default function HeaderBar({
           {settingsBadge && !settingsOpen && (
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500" />
           )}
-        </button>
-        <button
-          onClick={onCyclePermission}
-          className="text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors cursor-pointer hover:brightness-125 shrink-0"
-          style={{
-            backgroundColor: cfg.bg,
-            color: cfg.color,
-            borderColor: cfg.border,
-          }}
-          title="Click to cycle permission mode (Shift+Tab)"
-        >
-          <span className="sm:hidden">{cfg.shortLabel}</span>
-          <span className="hidden sm:inline">{cfg.label}</span>
         </button>
         {isRemoteMode() && (
           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 shrink-0">

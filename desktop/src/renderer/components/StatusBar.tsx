@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../state/theme-context';
+import type { PermissionMode } from '../../shared/types';
 
 interface StatusData {
   usage: {
@@ -23,6 +24,13 @@ const MODEL_DISPLAY: Record<ModelAlias, { label: string; color: string; bg: stri
   sonnet:      { label: 'Sonnet',   color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
   'opus[1m]':  { label: 'Opus 1M',  color: '#818CF8', bg: 'rgba(129,140,248,0.15)', border: 'rgba(129,140,248,0.25)' },
   haiku:       { label: 'Haiku',    color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
+};
+
+const PERMISSION_DISPLAY: Record<PermissionMode, { label: string; shortLabel: string; color: string; bg: string; border: string }> = {
+  normal:        { label: 'NORMAL',             shortLabel: 'NORMAL',  color: 'var(--fg-muted)', bg: 'var(--inset)',  border: 'var(--edge-dim)' },
+  'auto-accept': { label: 'ACCEPT CHANGES',     shortLabel: 'ACCEPT',  color: 'var(--accent)',   bg: 'var(--well)',   border: 'var(--edge)' },
+  plan:          { label: 'PLAN MODE',           shortLabel: 'PLAN',    color: 'var(--fg-2)',     bg: 'var(--inset)',  border: 'var(--edge)' },
+  bypass:        { label: 'BYPASS PERMISSIONS',  shortLabel: 'BYPASS',  color: '#FA8072', bg: 'rgba(250,128,114,0.15)', border: 'rgba(250,128,114,0.25)' },
 };
 
 function utilizationColor(pct: number): string {
@@ -70,6 +78,8 @@ interface Props {
   onRunSync?: () => void;
   model?: ModelAlias;
   onCycleModel?: () => void;
+  permissionMode?: PermissionMode;
+  onCyclePermission?: () => void;
 }
 
 // Map raw warning codes to the same descriptive text used in the terminal statusline
@@ -158,7 +168,7 @@ function PencilIcon() {
   );
 }
 
-export default function StatusBar({ statusData, onRunSync, model, onCycleModel }: Props) {
+export default function StatusBar({ statusData, onRunSync, model, onCycleModel, permissionMode, onCyclePermission }: Props) {
   const { usage, updateStatus, contextPercent, syncStatus, syncWarnings } = statusData;
   const warnings = parseSyncWarnings(syncWarnings);
   const { activeTheme, cycleTheme } = useTheme();
@@ -221,6 +231,23 @@ export default function StatusBar({ statusData, onRunSync, model, onCycleModel }
           </div>
         )}
       </div>
+
+      {/* Permission mode chip */}
+      {permissionMode && (
+        <button
+          onClick={onCyclePermission}
+          className="px-1.5 py-0.5 rounded border cursor-pointer hover:brightness-125 transition-colors"
+          style={{
+            backgroundColor: PERMISSION_DISPLAY[permissionMode].bg,
+            color: PERMISSION_DISPLAY[permissionMode].color,
+            borderColor: PERMISSION_DISPLAY[permissionMode].border,
+          }}
+          title="Click to cycle permission mode (Shift+Tab)"
+        >
+          <span className="sm:hidden">{PERMISSION_DISPLAY[permissionMode].shortLabel}</span>
+          <span className="hidden sm:inline">{PERMISSION_DISPLAY[permissionMode].label}</span>
+        </button>
+      )}
 
       {/* Rate limits */}
       {show('usage-5h') && usage?.five_hour != null && (

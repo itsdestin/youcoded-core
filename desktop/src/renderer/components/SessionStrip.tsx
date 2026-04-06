@@ -2,6 +2,24 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SessionStatusColor } from './StatusDot';
 import { isAndroid } from '../platform';
 
+/* ── Narrow viewport hook — mirrors Android's single-session behavior ── */
+const NARROW_BREAKPOINT = 640;
+
+function useIsCompact(): boolean {
+  const [narrow, setNarrow] = useState(() =>
+    isAndroid() || (typeof window !== 'undefined' && window.innerWidth < NARROW_BREAKPOINT)
+  );
+  useEffect(() => {
+    if (isAndroid()) return; // always compact on Android
+    const mq = window.matchMedia(`(max-width: ${NARROW_BREAKPOINT - 1}px)`);
+    const handler = (e: MediaQueryListEvent) => setNarrow(e.matches);
+    setNarrow(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return narrow;
+}
+
 interface SessionEntry {
   id: string;
   name: string;
@@ -322,13 +340,15 @@ export default function SessionStrip({
     onSelectSession(id);
   }, [onSelectSession]);
 
+  const isCompact = useIsCompact();
+
   if (sessions.length === 0) return null;
 
-  // On Android: show only the active session pill (single pill + dropdown)
-  const visibleSessions = isAndroid()
+  // Compact mode (Android + narrow desktop): show only the active session pill
+  const visibleSessions = isCompact
     ? sessions.filter(s => s.id === activeSessionId)
     : sessions;
-  const allExpanded = !isAndroid() && sessions.length <= 3;
+  const allExpanded = !isCompact && sessions.length <= 3;
   const dragging = dragIdx !== null && isDragging.current && dragPos !== null;
 
   return (
@@ -367,16 +387,18 @@ export default function SessionStrip({
                     ? 'opacity 150ms, transform 150ms'
                     : 'all 150ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                   transform: (!isBeingDragged && isHovered && !isActive) ? 'scale(1.02)' : undefined,
-                  boxShadow: (!isAndroid() && isActive) ? GLOW_SHADOW[color] : undefined,
+                  boxShadow: (!isCompact && isActive) ? GLOW_SHADOW[color] : undefined,
                   cursor: 'default',
                 }}
                 title={s.name}
               >
                 <SessionDot color={color} isActive={isActive} />
                 <span
-                  className="text-xs font-medium text-fg-2 whitespace-nowrap overflow-hidden"
+                  className="text-xs font-medium text-fg-2 whitespace-nowrap overflow-hidden text-ellipsis"
                   style={{
-                    maxWidth: showName ? (isActive ? 'none' : 120) : 0,
+                    maxWidth: showName
+                      ? (isCompact ? 100 : (isActive ? 'none' : 120))
+                      : 0,
                     opacity: showName ? 1 : 0,
                     transition: allExpanded ? 'none' : 'max-width 200ms ease, opacity 150ms ease',
                   }}

@@ -821,6 +821,8 @@ function AppInner() {
                   } : undefined}
                   model={model}
                   onCycleModel={cycleModel}
+                  permissionMode={currentPermissionMode}
+                  onCyclePermission={cyclePermission}
                 />
               </>
             )}
