@@ -51,13 +51,16 @@ claude
 ## What's Inside
 
 ### Core (Foundation)
-- **Session hooks** — Auto-sync, statusline, write guards, git backup, worktree guard
+- **Session hooks** — Auto-sync, statusline, write guards, worktree guard
 - **Specs system** — Structured documentation that persists across conversations
 - **Memory templates** — Organized persistent memory for Claude
-- **Commands** — `/setup-wizard`, `/update`, `/appupdate`, `/health`, `/sync`, `/diagnose`, `/restore`, `/contribute`, `/toolkit-uninstall`
+- **Commands** — `/setup-wizard`, `/update`, `/appupdate`, `/health`, `/sync`, `/diagnose`, `/restore`, `/contribute`, `/toolkit-uninstall`, `/theme-builder`
 - **Contribution detector** — Notices your improvements, offers to share them upstream
-- **DestinCode desktop app** — Electron GUI wrapper with built-in remote access, session resume, and multi-session management — control Claude Code from any browser on your network
+- **DestinCode desktop app** — Electron GUI with themes, model cycling, skill marketplace, first-run installer, remote access, session resume, and multi-session management
+- **Theme system** — 4 built-in themes + custom theme packs with particles, patterns, mascots, and icon overrides. Build your own with `/theme-builder`
+- **Model cycling** — Switch between Claude models (Opus, Sonnet, Haiku) from the status bar
 - **Remote setup** — Guided `/remote-setup` skill configures Tailscale and remote access for phone/tablet use
+- **Android support** — Platform-aware UI with touch adaptations and remote desktop mode
 
 ### Life (Personal Knowledge)
 - **Journaling assistant** — Conversational daily journaling with Socratic prompts
