@@ -119,6 +119,8 @@ function registerFirstRunIpc(
       config.setup_completed = true;
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     } catch (e) { log('ERROR', 'FirstRun', 'Skip failed', { error: String(e) }); }
+    // Transition the state machine so the renderer's onStateChanged fires
+    firstRunManager.skip();
   });
 
   // Start the first-run flow (async, doesn't block)
@@ -161,51 +163,59 @@ function createWindow(firstRunManager?: FirstRunManager) {
     // first-run flow at the auth step. This handles: user quit mid-auth,
     // user installed toolkit manually but never logged in, corrupted state, etc.
     let lateFirstRunManager: FirstRunManager | null = null;
-    ipcMain.handle(IPC.FIRST_RUN_STATE, async () => {
+    let lateAuthCheck: Promise<any> | null = null;
+    ipcMain.handle(IPC.FIRST_RUN_STATE, () => {
       // If we already spun up a late first-run manager, delegate to it
       if (lateFirstRunManager) {
         try { return lateFirstRunManager.getState(); }
         catch { return { currentStep: 'COMPLETE' }; }
       }
-      // One-time async auth check
-      try {
-        const { detectAuth } = require('./prerequisite-installer');
-        const result = await detectAuth();
-        if (result.installed) return { currentStep: 'COMPLETE' };
-
-        // Auth missing — spin up first-run at the auth step
-        log('WARN', 'Main', 'Setup complete but auth missing — showing auth screen');
-        lateFirstRunManager = new FirstRunManager();
-        lateFirstRunManager.forceStep('AUTHENTICATE');
-
-        // Wire up events (but skip FIRST_RUN_STATE — we're already handling it)
-        lateFirstRunManager.on('state-changed', (state) => {
-          try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(IPC.FIRST_RUN_STATE, state); } catch {}
-        });
-        lateFirstRunManager.on('launch-wizard', () => {
-          log('INFO', 'FirstRun', 'Late first-run complete, transitioning to normal app');
-        });
-
-        // Register the other handlers
-        ipcMain.handle(IPC.FIRST_RUN_RETRY, async () => { try { await lateFirstRunManager!.retry(); } catch {} });
-        ipcMain.handle(IPC.FIRST_RUN_START_AUTH, async (_event, mode: 'oauth' | 'apikey') => {
-          try { if (mode === 'oauth') { await lateFirstRunManager!.handleOAuthLogin(); } } catch {} });
-        ipcMain.handle(IPC.FIRST_RUN_SUBMIT_API_KEY, async (_event, key: string) => { try { await lateFirstRunManager!.handleApiKeySubmit(key); } catch {} });
-        ipcMain.handle(IPC.FIRST_RUN_DEV_MODE_DONE, async () => { try { await lateFirstRunManager!.handleDevModeDone(); } catch {} });
-        ipcMain.handle(IPC.FIRST_RUN_SKIP, async () => {
+      // One-time async auth check — share the promise so concurrent calls
+      // (e.g., React StrictMode double-mount) don't register duplicate handlers
+      if (!lateAuthCheck) {
+        lateAuthCheck = (async () => {
           try {
-            const stateDir = path.join(os.homedir(), '.claude', 'toolkit-state');
-            fs.mkdirSync(stateDir, { recursive: true });
-            const cp = path.join(stateDir, 'config.json');
-            let c: any = {}; try { c = JSON.parse(fs.readFileSync(cp, 'utf8')); } catch {}
-            c.setup_completed = true; fs.writeFileSync(cp, JSON.stringify(c, null, 2));
-          } catch {}
-        });
+            const { detectAuth } = require('./prerequisite-installer');
+            const result = await detectAuth();
+            if (result.installed) return { currentStep: 'COMPLETE' };
 
-        return lateFirstRunManager.getState();
-      } catch {
-        return { currentStep: 'COMPLETE' }; // Can't check — don't block
+            // Auth missing — spin up first-run at the auth step
+            log('WARN', 'Main', 'Setup complete but auth missing — showing auth screen');
+            lateFirstRunManager = new FirstRunManager();
+            lateFirstRunManager.forceStep('AUTHENTICATE');
+
+            // Wire up events (but skip FIRST_RUN_STATE — we're already handling it)
+            lateFirstRunManager.on('state-changed', (state) => {
+              try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(IPC.FIRST_RUN_STATE, state); } catch {}
+            });
+            lateFirstRunManager.on('launch-wizard', () => {
+              log('INFO', 'FirstRun', 'Late first-run complete, transitioning to normal app');
+            });
+
+            // Register the other handlers
+            ipcMain.handle(IPC.FIRST_RUN_RETRY, async () => { try { await lateFirstRunManager!.retry(); } catch {} });
+            ipcMain.handle(IPC.FIRST_RUN_START_AUTH, async (_event, mode: 'oauth' | 'apikey') => {
+              try { if (mode === 'oauth') { await lateFirstRunManager!.handleOAuthLogin(); } } catch {} });
+            ipcMain.handle(IPC.FIRST_RUN_SUBMIT_API_KEY, async (_event, key: string) => { try { await lateFirstRunManager!.handleApiKeySubmit(key); } catch {} });
+            ipcMain.handle(IPC.FIRST_RUN_DEV_MODE_DONE, async () => { try { await lateFirstRunManager!.handleDevModeDone(); } catch {} });
+            ipcMain.handle(IPC.FIRST_RUN_SKIP, async () => {
+              try {
+                const stateDir = path.join(os.homedir(), '.claude', 'toolkit-state');
+                fs.mkdirSync(stateDir, { recursive: true });
+                const cp = path.join(stateDir, 'config.json');
+                let c: any = {}; try { c = JSON.parse(fs.readFileSync(cp, 'utf8')); } catch {}
+                c.setup_completed = true; fs.writeFileSync(cp, JSON.stringify(c, null, 2));
+              } catch {}
+              lateFirstRunManager?.skip();
+            });
+
+            return lateFirstRunManager.getState();
+          } catch {
+            return { currentStep: 'COMPLETE' }; // Can't check — don't block
+          }
+        })();
       }
+      return lateAuthCheck;
     });
   }
 

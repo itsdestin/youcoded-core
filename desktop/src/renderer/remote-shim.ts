@@ -453,6 +453,16 @@ export function installShim(): void {
       setPreference: (model: string) => invoke('model:set-preference', { model }),
       switch: (sessionId: string, model: string) => invoke('model:switch', { sessionId, model }),
     },
+    // First-run is desktop-only — return COMPLETE so the renderer never enters first-run mode
+    firstRun: {
+      getState: () => Promise.resolve({ currentStep: 'COMPLETE' }),
+      retry: () => Promise.resolve(),
+      startAuth: (_mode: string) => Promise.resolve(),
+      submitApiKey: (_key: string) => Promise.resolve(),
+      devModeDone: () => Promise.resolve(),
+      skip: () => Promise.resolve(),
+      onStateChanged: (_cb: Callback) => (() => {}),
+    },
     // Android-only bridge methods — when connected to a remote desktop, these
     // return immediate defaults since the remote server doesn't handle android:* messages
     android: {

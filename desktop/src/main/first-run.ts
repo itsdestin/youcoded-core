@@ -437,6 +437,11 @@ export class FirstRunManager extends EventEmitter {
     this.emitState();
   }
 
+  /** Mark first-run as complete (used by the "skip setup" button). */
+  skip(): void {
+    this.advanceTo('COMPLETE');
+  }
+
   /** Force the state machine to a specific step (e.g., re-trigger auth from normal mode) */
   forceStep(step: FirstRunStep): void {
     this.state = this.defaultState();
