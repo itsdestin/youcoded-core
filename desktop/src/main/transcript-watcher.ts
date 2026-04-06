@@ -11,14 +11,13 @@ import { TranscriptEvent } from '../shared/types';
 /**
  * Converts a filesystem path to Claude Code's project directory slug.
  * e.g. `C:\Users\alice` → `C--Users-alice`
- *      `/home/user/project` → `home-user-project`
+ *      `/home/user/project` → `-home-user-project`
  */
 export function cwdToProjectSlug(cwd: string): string {
   return cwd
     .replace(/\\/g, '/')   // backslash → forward slash
     .replace(/:/g, '-')    // colon → dash
-    .replace(/\//g, '-')   // slash → dash
-    .replace(/^-/, '');     // remove leading dash
+    .replace(/\//g, '-');   // slash → dash
 }
 
 // ---------------------------------------------------------------------------

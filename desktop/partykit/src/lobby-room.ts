@@ -7,7 +7,6 @@ interface UserInfo {
 }
 
 export default class LobbyRoom implements Party.Server {
-  readonly options = { hibernate: true };
   private users = new Map<string, UserInfo>(); // connectionId → user info
 
   constructor(readonly room: Party.Room) {}
@@ -18,6 +17,20 @@ export default class LobbyRoom implements Party.Server {
     if (!username) {
       connection.close(4000, "Missing username");
       return;
+    }
+
+    // Evict stale connections for the same username (reconnect / duplicate tab)
+    for (const [connId, info] of this.users) {
+      if (info.username === username && connId !== connection.id) {
+        this.users.delete(connId);
+        // Close the stale socket so the other end knows
+        for (const conn of this.room.getConnections()) {
+          if (conn.id === connId) {
+            conn.close(4001, "Superseded by new connection");
+            break;
+          }
+        }
+      }
     }
 
     this.users.set(connection.id, { username, status: "idle" });

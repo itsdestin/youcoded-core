@@ -1,4 +1,4 @@
-export type GameScreen = 'setup' | 'lobby' | 'waiting' | 'playing' | 'game-over';
+export type GameScreen = 'setup' | 'lobby' | 'waiting' | 'joining' | 'playing' | 'game-over';
 export type PlayerColor = 'red' | 'yellow';
 
 export interface OnlineUser {
@@ -36,6 +36,8 @@ export interface GameState {
   challengeDeclinedBy: string | null;
   /** Whether this player has requested a rematch */
   rematchRequested: boolean;
+  /** Opponent disconnected during game */
+  opponentDisconnected: boolean;
 }
 
 export type GameAction =
@@ -47,11 +49,14 @@ export type GameAction =
   | { type: 'USER_LEFT'; username: string }
   | { type: 'USER_STATUS'; username: string; status: string }
   | { type: 'ROOM_CREATED'; code: string; color: PlayerColor }
+  | { type: 'JOINING_GAME'; code: string }
   | { type: 'GAME_START'; board: number[][]; you: PlayerColor; opponent: string }
   | { type: 'GAME_STATE'; board: number[][]; turn: PlayerColor; lastMove: { col: number; row: number }; winner?: PlayerColor | 'draw'; winLine?: [number, number][] }
   | { type: 'GAME_OVER'; winner: PlayerColor | 'draw'; line?: [number, number][] }
   | { type: 'CHAT_MESSAGE'; from: string; text: string }
   | { type: 'OPPONENT_DISCONNECTED' }
+  | { type: 'OPPONENT_RECONNECTED'; username: string }
+  | { type: 'ROOM_FULL' }
   | { type: 'TOGGLE_PANEL' }
   | { type: 'RETURN_TO_LOBBY' }
   | { type: 'RESET' }
@@ -92,5 +97,6 @@ export function createInitialGameState(): GameState {
     challengeCode: null,
     challengeDeclinedBy: null,
     rematchRequested: false,
+    opponentDisconnected: false,
   };
 }

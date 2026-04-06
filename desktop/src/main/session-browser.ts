@@ -12,13 +12,14 @@ const SAFE_ID_RE = /^[a-zA-Z0-9_-]+$/;
 /**
  * Converts a project slug back to a display-friendly path.
  * e.g. 'C--Users-desti' → 'C:/Users/desti'
- *      'home-user-project' → '/home/user/project'
+ *      '-home-user-project' → '/home/user/project'
  */
 function slugToDisplayPath(slug: string): string {
   if (/^[A-Z]--/.test(slug)) {
     return slug.replace(/^([A-Z])--/, '$1:/').replace(/-/g, '/');
   }
-  return '/' + slug.replace(/-/g, '/');
+  // Unix slugs start with '-' (from leading /); replace all dashes with /
+  return slug.replace(/-/g, '/');
 }
 
 async function readTopic(sessionId: string): Promise<string> {

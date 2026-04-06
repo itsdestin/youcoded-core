@@ -149,14 +149,20 @@ Check for and install updates to the DestinClaude toolkit.
     ```
     For any `[MISSING]` dependencies: explain which plugin needs it, what symptoms the user will see (e.g., "hook error on every tool call"), show the install command, and offer to install. This is especially important after updates since new plugin versions may introduce new dependencies.
 
-20. **Desktop app update.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, ask if the user wants to update the desktop app. If yes:
-    ```bash
-    bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh"
-    ```
-
 20. **Final confirmation.**
     ```
     Update complete — DestinClaude vX.Y.Z
 
     All N checks passed. Restart Claude Code to pick up the new session-start hook.
     ```
+
+21. **Desktop app update prompt.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
+    ```
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    📱  **DestinCode Desktop App**
+
+    The desktop app ships separately and may also have updates.
+    Run `/appupdate` to download and install the latest version.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ```
+    This block MUST appear after all other output. Use bold and separator lines exactly as shown.

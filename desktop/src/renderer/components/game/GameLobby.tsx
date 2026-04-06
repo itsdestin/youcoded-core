@@ -15,13 +15,25 @@ interface Props {
 
 function ErrorScreen() {
   const state = useGameState();
+  const dispatch = useGameDispatch();
+  const isConnectionError = !state.connected;
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-8">
       <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center">
         <span className="text-2xl">!</span>
       </div>
       <p className="text-sm text-red-400 text-center">{state.partyError}</p>
-      <p className="text-xs text-gray-500 text-center">Make sure GitHub CLI is installed and authenticated: gh auth login</p>
+      {isConnectionError ? (
+        <p className="text-xs text-gray-500 text-center">Make sure GitHub CLI is installed and authenticated: gh auth login</p>
+      ) : (
+        <button
+          onClick={() => dispatch({ type: 'CLEAR_CHALLENGE' })}
+          className="text-xs text-[#66AAFF] hover:text-[#88CCFF] transition-colors"
+        >
+          Dismiss
+        </button>
+      )}
     </div>
   );
 }
@@ -187,6 +199,32 @@ function LobbyScreen({ connection }: Props) {
   );
 }
 
+function JoiningScreen({ connection }: Props) {
+  const state = useGameState();
+  const dispatch = useGameDispatch();
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-8">
+      <div className="flex flex-col items-center gap-3">
+        <p className="text-xs text-gray-500 uppercase tracking-wider">Joining Room</p>
+        <p className="text-lg font-mono font-bold text-gray-200 tracking-widest">{state.roomCode}</p>
+      </div>
+
+      <div className="flex flex-col items-center gap-2">
+        <BrailleSpinner size="lg" />
+        <p className="text-sm text-gray-400">Connecting...</p>
+      </div>
+
+      <button
+        onClick={() => { connection.leaveGame(); dispatch({ type: 'RETURN_TO_LOBBY' }); }}
+        className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 function WaitingScreen({ connection }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
@@ -240,6 +278,7 @@ function WaitingScreen({ connection }: Props) {
 export default function GameLobby({ connection }: Props) {
   const state = useGameState();
   if (state.partyError) return <ErrorScreen />;
+  if (state.screen === 'joining') return <JoiningScreen connection={connection} />;
   if (state.screen === 'waiting') return <WaitingScreen connection={connection} />;
   return <LobbyScreen connection={connection} />;
 }

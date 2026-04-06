@@ -1,7 +1,7 @@
 ---
 name: Transcript Watcher
 description: Real-time JSONL transcript file watcher that provides structured chat state for the desktop app's Chat View
-version: 1.1
+version: 1.2
 created: 2026-03-27
 ---
 
@@ -60,7 +60,7 @@ An `EventEmitter` in the main process that manages watching one transcript file 
 
 - `parseTranscriptLine(line, sessionId)` — Parses a single JSONL line into zero or more `TranscriptEvent` objects. Handles content block types: `text`, `tool_use`, `tool_result`. Skips `thinking`, `image`, and non-message lines (`file-history-snapshot`, `queue-operation`). Only emits `user-message` for lines with a `promptId` (user-typed prompts, not tool-result wrappers).
 
-- `cwdToProjectSlug(cwd)` — Converts a filesystem path to Claude Code's project directory slug (e.g., `C:\Users\alice` → `C--Users-alice`).
+- `cwdToProjectSlug(cwd)` — Converts a filesystem path to Claude Code's project directory slug (e.g., `C:\Users\alice` → `C--Users-alice`, `/home/user/project` → `-home-user-project`). The leading dash from Unix root paths is preserved — it naturally maps back to the leading `/` when converting slugs back to paths.
 
 - `startWatching(desktopSessionId, claudeSessionId, cwd)` — Computes the transcript path, reads existing content (catch-up), then attaches `fs.watch`. Falls back to 1-second polling if the file doesn't exist yet.
 
@@ -165,6 +165,7 @@ The watcher depends on Claude Code's internal JSONL transcript format. Key assum
 
 ## Change Log
 
+- **v1.2** (2026-03-30): Updated `cwdToProjectSlug` description to reflect that leading dashes from Unix root paths are preserved (not stripped). The slug `-home-user-project` correctly maps back to `/home/user/project`.
 - **v1.1** (2026-03-27): Updated dedup description and Design Decision #2 to reflect selective per-event-type filtering (assistant-text only skipped on repeat UUIDs; other event types emitted). Added `stripSystemTags` and safety-net polling as implementation details.
 
 ## Known Issues & Planned Updates
