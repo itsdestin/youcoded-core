@@ -104,7 +104,7 @@ The app uses a semantic CSS token system for theming. All colors are CSS custom 
 
 ## Keyboard Shortcuts
 
-The desktop app uses a layered keyboard system. The text input auto-focuses when any printable character is typed, and auto-unfocuses after 1.5s of idle so global shortcuts become available.
+The desktop app uses a layered keyboard system. The text input auto-focuses when any printable character is typed, and auto-unfocuses after 0.5s of idle so global shortcuts become available.
 
 | Shortcut | Context | Action |
 |----------|---------|--------|

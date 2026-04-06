@@ -74,11 +74,8 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
     return () => window.removeEventListener('keydown', handler);
   }, [disabled]);
 
-  // Unfocus textarea after 1.5s of no typing so global shortcuts (e.g. Shift
-  // to open session switcher) can be detected without conflicting with input.
-  // 1.5s balances responsiveness of global shortcuts against natural typing
-  // pauses — 500ms was too aggressive and caused the textarea to blur during
-  // normal composition, especially after pasting text.
+  // Unfocus textarea after 0.5s of no typing so global shortcuts (e.g. Shift
+  // to open session switcher) can be detected without conflicting with input
   const idleBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const el = inputRef.current;
@@ -87,7 +84,7 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
       if (idleBlurTimer.current) clearTimeout(idleBlurTimer.current);
       idleBlurTimer.current = setTimeout(() => {
         if (document.activeElement === el) el.blur();
-      }, 1500);
+      }, 500);
     };
     el.addEventListener('keydown', resetTimer);
     el.addEventListener('input', resetTimer);
