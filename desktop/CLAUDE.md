@@ -21,7 +21,10 @@ Electron + React app that wraps Claude Code CLI in a GUI.
 - **PermissionMode** (`src/shared/types.ts`) — `'normal' | 'auto-accept' | 'plan' | 'bypass'`. The HeaderBar badge cycles through these on click by sending Shift+Tab (`\x1b[Z`) to the PTY. Bypass mode only appears in sessions created with `skipPermissions: true`
 - **RemoteServer** (`src/main/remote-server.ts`) — HTTP + WebSocket server for remote browser access. Handles auth tokens, PTY buffer replay, hook event relay, transcript event relay, and cross-device session sync
 - **RemoteConfig** (`src/main/remote-config.ts`) — Reads/writes `~/.claude/destincode-remote.json` for port, password hash, and Tailscale trust settings
-- **SkillScanner** (`src/main/skill-scanner.ts`) — Scans installed skills and exposes them to the remote UI's command drawer
+- **SkillScanner** (`src/main/skill-scanner.ts`) — Scans installed skills from `~/.claude/plugins/` (DestinClaude skills, installed_plugins.json cache plugins)
+- **LocalSkillProvider** (`src/main/skill-provider.ts`) — Skill marketplace backend: discovery, search, install, uninstall, overrides, sharing. Implements the `SkillProvider` interface used by both IPC handlers and RemoteServer
+- **PluginInstaller** (`src/main/plugin-installer.ts`) — Installs Claude Code plugins to `~/.claude/plugins/<name>/` via git clone (url), copy from cache (local), or sparse checkout (git-subdir). Includes conflict detection against Claude Code's `installed_plugins.json`
+- **SkillConfigStore** (`src/main/skill-config-store.ts`) — Reads/writes `~/.claude/destincode-skills.json`: favorites, chips, overrides, private prompt skills, and marketplace-installed plugin tracking
 - **SettingsPanel** (`src/renderer/components/SettingsPanel.tsx`) — Settings UI for remote access config, appearance popup (theme + font)
 - **ThemeProvider** (`src/renderer/state/theme-context.tsx`) — Appearance state: active theme, cycle list, font family. Persists to localStorage, applies `data-theme` attribute on `<html>`, swaps highlight.js stylesheet, sets font CSS variables. See `docs/theme-spec.md` for details
 
