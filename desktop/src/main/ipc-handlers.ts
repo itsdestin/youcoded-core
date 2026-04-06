@@ -194,6 +194,34 @@ export function registerIpcHandlers(
     }
   });
 
+  // --- Session defaults persistence ---
+  const DEFAULTS_INITIAL = { skipPermissions: false, model: 'sonnet', projectFolder: '' };
+
+  ipcMain.handle('defaults:get', async () => {
+    try {
+      const raw = fs.readFileSync(defaultsPrefPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULTS_INITIAL, ...parsed };
+    } catch {
+      return { ...DEFAULTS_INITIAL };
+    }
+  });
+
+  ipcMain.handle('defaults:set', async (_event, updates: Record<string, any>) => {
+    try {
+      let current = { ...DEFAULTS_INITIAL };
+      try {
+        current = { ...current, ...JSON.parse(fs.readFileSync(defaultsPrefPath, 'utf-8')) };
+      } catch {}
+      const merged = { ...current, ...updates };
+      fs.mkdirSync(path.dirname(defaultsPrefPath), { recursive: true });
+      fs.writeFileSync(defaultsPrefPath, JSON.stringify(merged, null, 2));
+      return merged;
+    } catch {
+      return null;
+    }
+  });
+
   // --- Skills discovery & marketplace ---
   ipcMain.handle(IPC.SKILLS_LIST, async () => {
     return skillProvider.getInstalled();
@@ -429,6 +457,7 @@ export function registerIpcHandlers(
   const announcementCachePath = path.join(os.homedir(), '.claude', '.announcement-cache.json');
   const updateStatusPath = path.join(os.homedir(), '.claude', 'toolkit-state', 'update-status.json');
   const modelPrefPath = path.join(os.homedir(), '.claude', 'destincode-model.json');
+  const defaultsPrefPath = path.join(os.homedir(), '.claude', 'destincode-defaults.json');
 
   function readJsonFile(filePath: string): any {
     try {

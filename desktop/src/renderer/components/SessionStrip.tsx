@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SessionStatusColor } from './StatusDot';
 import { isAndroid } from '../platform';
+import { MODELS, type ModelAlias } from './StatusBar';
 
 /* ── Narrow viewport hook — mirrors Android's single-session behavior ── */
 const NARROW_BREAKPOINT = 640;
@@ -28,16 +29,25 @@ interface SessionEntry {
   permissionMode: string;
 }
 
+const MODEL_LABELS: Record<string, string> = {
+  sonnet: 'Sonnet',
+  'opus[1m]': 'Opus 1M',
+  haiku: 'Haiku',
+};
+
 interface Props {
   sessions: SessionEntry[];
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
-  onCreateSession: (cwd: string, dangerous: boolean) => void;
+  onCreateSession: (cwd: string, dangerous: boolean, model: string) => void;
   onCloseSession: (id: string) => void;
   sessionStatuses?: Map<string, SessionStatusColor>;
   onResumeSession: (sessionId: string, projectSlug: string) => void;
   onOpenResumeBrowser: () => void;
   onReorderSessions?: (fromIndex: number, toIndex: number) => void;
+  defaultModel?: string;
+  defaultSkipPermissions?: boolean;
+  defaultProjectFolder?: string;
 }
 
 /* ── Status dot color maps ───────────────────────────────── */
@@ -96,14 +106,16 @@ export default function SessionStrip({
   sessions, activeSessionId, onSelectSession,
   onCreateSession, onCloseSession, sessionStatuses, onResumeSession,
   onOpenResumeBrowser, onReorderSessions,
+  defaultModel, defaultSkipPermissions, defaultProjectFolder,
 }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [shiftNavIdx, setShiftNavIdx] = useState<number>(-1);
   const shiftNavActive = useRef(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newCwd, setNewCwd] = useState('');
-  const [dangerous, setDangerous] = useState(false);
+  const [newCwd, setNewCwd] = useState(defaultProjectFolder || '');
+  const [dangerous, setDangerous] = useState(defaultSkipPermissions || false);
+  const [newModel, setNewModel] = useState<string>(defaultModel || 'sonnet');
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -234,11 +246,12 @@ export default function SessionStrip({
   }, []);
 
   const handleCreate = useCallback(() => {
-    onCreateSession(newCwd, dangerous);
+    onCreateSession(newCwd, dangerous, newModel);
     setMenuOpen(false);
     setShowNewForm(false);
-    setDangerous(false);
-  }, [newCwd, dangerous, onCreateSession]);
+    setDangerous(defaultSkipPermissions || false);
+    setNewModel(defaultModel || 'sonnet');
+  }, [newCwd, dangerous, newModel, onCreateSession, defaultSkipPermissions, defaultModel]);
 
   /* ── Pointer-event drag handlers ───────────────────────── */
 
@@ -530,6 +543,24 @@ export default function SessionStrip({
                   {newCwd || 'Select folder...'}
                 </button>
               </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-fg-muted mb-1 block">Model</label>
+                <div className="flex gap-1">
+                  {MODELS.map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setNewModel(m)}
+                      className={`flex-1 px-1 py-1 rounded-sm text-[10px] transition-colors ${
+                        newModel === m
+                          ? 'bg-accent text-on-accent font-medium'
+                          : 'bg-inset text-fg-dim hover:bg-edge'
+                      }`}
+                    >
+                      {MODEL_LABELS[m] || m}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <label className="text-[10px] uppercase tracking-wider text-fg-muted">Skip Permissions</label>
                 <button
@@ -567,7 +598,12 @@ export default function SessionStrip({
               {/* Gradient divider */}
               <div className="w-px my-0.5" style={{ background: 'linear-gradient(to bottom, transparent, var(--fg-faint), transparent)' }} />
               <button
-                onClick={() => setShowNewForm(true)}
+                onClick={() => {
+                  setNewCwd(defaultProjectFolder || '');
+                  setDangerous(defaultSkipPermissions || false);
+                  setNewModel(defaultModel || 'sonnet');
+                  setShowNewForm(true);
+                }}
                 className="flex-1 px-3 py-2 text-sm text-fg-dim hover:bg-inset hover:text-fg transition-colors flex items-center justify-center gap-1.5"
               >
                 <span className="text-base leading-none">+</span>

@@ -67,6 +67,8 @@ const IPC = {
   MODEL_GET_PREFERENCE: 'model:get-preference',
   MODEL_SET_PREFERENCE: 'model:set-preference',
   MODEL_READ_LAST: 'model:read-last',
+  DEFAULTS_GET: 'defaults:get',
+  DEFAULTS_SET: 'defaults:set',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -188,6 +190,12 @@ contextBridge.exposeInMainWorld('claude', {
     getPreference: (): Promise<string> => ipcRenderer.invoke(IPC.MODEL_GET_PREFERENCE),
     setPreference: (model: string): Promise<boolean> => ipcRenderer.invoke(IPC.MODEL_SET_PREFERENCE, model),
     readLastModel: (transcriptPath: string): Promise<string | null> => ipcRenderer.invoke(IPC.MODEL_READ_LAST, transcriptPath),
+  },
+  defaults: {
+    get: (): Promise<{ skipPermissions: boolean; model: string; projectFolder: string }> =>
+      ipcRenderer.invoke(IPC.DEFAULTS_GET),
+    set: (updates: Partial<{ skipPermissions: boolean; model: string; projectFolder: string }>): Promise<any> =>
+      ipcRenderer.invoke(IPC.DEFAULTS_SET, updates),
   },
   off: (channel: string, handler: (...args: any[]) => void) =>
     ipcRenderer.removeListener(channel, handler),

@@ -1,9 +1,11 @@
+declare const __APP_VERSION__: string;
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isAndroid } from '../platform';
 import ThemeScreen from './ThemeScreen';
 import { useTheme } from '../state/theme-context';
+import { MODELS, type ModelAlias } from './StatusBar';
 
 interface RemoteConfig {
   enabled: boolean;
@@ -502,6 +504,149 @@ function RemoteButton({
   );
 }
 
+// ─── Defaults popup button ────────────────────────────────────────────────
+
+const MODEL_LABELS: Record<string, string> = {
+  sonnet: 'Sonnet',
+  'opus[1m]': 'Opus 1M',
+  haiku: 'Haiku',
+};
+
+interface DefaultsButtonProps {
+  defaults: { skipPermissions: boolean; model: string; projectFolder: string };
+  onDefaultsChange: (updates: Partial<{ skipPermissions: boolean; model: string; projectFolder: string }>) => void;
+}
+
+function DefaultsButton({ defaults, onDefaultsChange }: DefaultsButtonProps) {
+  const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleBrowseFolder = useCallback(async () => {
+    try {
+      const folder = await (window as any).claude.dialog.openFolder();
+      if (folder) onDefaultsChange({ projectFolder: folder });
+    } catch {}
+  }, [onDefaultsChange]);
+
+  const summaryParts: string[] = [];
+  summaryParts.push(MODEL_LABELS[defaults.model] || 'Sonnet');
+  if (defaults.skipPermissions) summaryParts.push('Skip Perms');
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+      >
+        <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+          <span className="text-sm">⚙️</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-fg font-medium">Defaults</span>
+          <p className="text-[10px] text-fg-muted">{summaryParts.join(' · ')}</p>
+        </div>
+        <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {open && createPortal(
+        <>
+          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            ref={popupRef}
+            className="fixed z-[61] rounded-xl bg-panel border border-edge shadow-2xl overflow-hidden"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 'min(380px, 88vw)',
+              maxHeight: '80vh',
+            }}
+          >
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge shrink-0">
+                <h2 className="text-sm font-bold text-fg">Session Defaults</h2>
+                <button onClick={() => setOpen(false)} className="text-fg-muted hover:text-fg-2 text-lg leading-none">✕</button>
+              </div>
+
+              <div className="px-4 py-4 space-y-5 overflow-y-auto">
+                {/* Default Model */}
+                <section>
+                  <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Default Model</h3>
+                  <div className="flex gap-1">
+                    {MODELS.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => onDefaultsChange({ model: m })}
+                        className={`flex-1 px-1.5 py-1.5 rounded-sm text-[11px] transition-colors ${
+                          defaults.model === m
+                            ? 'bg-accent text-on-accent font-medium'
+                            : 'bg-inset text-fg-dim hover:bg-edge'
+                        }`}
+                      >
+                        {MODEL_LABELS[m] || m}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Skip Permissions */}
+                <section>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase">Skip Permissions</h3>
+                      <p className="text-[10px] text-fg-faint mt-0.5">New sessions will skip tool approval</p>
+                    </div>
+                    <Toggle
+                      enabled={defaults.skipPermissions}
+                      onToggle={() => onDefaultsChange({ skipPermissions: !defaults.skipPermissions })}
+                      color="red"
+                    />
+                  </div>
+                  {defaults.skipPermissions && (
+                    <p className="text-[10px] text-[#DD4444] mt-1.5">Claude will execute tools without asking for approval.</p>
+                  )}
+                </section>
+
+                {/* Default Project Folder */}
+                <section>
+                  <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-2">Project Folder</h3>
+                  <button
+                    onClick={handleBrowseFolder}
+                    className="w-full text-left px-2.5 py-1.5 bg-inset border border-edge-dim rounded-md text-xs text-fg-2 hover:border-edge transition-colors truncate"
+                  >
+                    {defaults.projectFolder || 'Home directory (default)'}
+                  </button>
+                  {defaults.projectFolder && (
+                    <button
+                      onClick={() => onDefaultsChange({ projectFolder: '' })}
+                      className="text-[10px] text-fg-faint hover:text-fg-muted mt-1"
+                    >
+                      Reset to home directory
+                    </button>
+                  )}
+                </section>
+              </div>
+            </div>
+          </div>
+        </>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 // ─── Tier selector popup ───────────────────────────────────────────────────
 
 const TIER_OPTIONS = [
@@ -613,6 +758,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
   const [tier, setTier] = useState('CORE');
   const [directories, setDirectories] = useState<{ label: string; path: string }[]>([]);
   const [aboutInfo, setAboutInfo] = useState<{ version: string; build: string } | null>(null);
+  const [defaults, setDefaults] = useState({ skipPermissions: false, model: 'sonnet', projectFolder: '' });
   const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
   const [showConnectForm, setShowConnectForm] = useState(false);
   const [formName, setFormName] = useState('Desktop');
@@ -646,11 +792,13 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
       claude.android?.getDirectories?.() ?? [],
       claude.android?.getAbout?.() ?? { version: 'unknown', build: '' },
       claude.android?.getPairedDevices?.() ?? [],
-    ]).then(([t, dirs, about, devices]) => {
+      claude.defaults?.get?.() ?? { skipPermissions: false, model: 'sonnet', projectFolder: '' },
+    ]).then(([t, dirs, about, devices, defs]) => {
       setTier(t?.tier || t || 'CORE');
       setDirectories(dirs?.directories || dirs || []);
       setAboutInfo(about);
       setPairedDevices(devices?.devices || devices || []);
+      setDefaults(defs);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [open]);
@@ -735,6 +883,12 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
       } catch { /* invalid URL */ }
     }
   }, []);
+
+  const handleDefaultsChange = useCallback(async (updates: Partial<typeof defaults>) => {
+    const merged = { ...defaults, ...updates };
+    setDefaults(merged);
+    await claude.defaults?.set?.(updates);
+  }, [defaults]);
 
   if (loading) {
     return (
@@ -920,25 +1074,44 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
             Connect to the DestinCode desktop app on your computer. Set up remote access in the desktop app's settings first.
           </p>
         </section>
-      </div>
 
-      {/* Footer — About + Donate */}
-      <div className="border-t border-edge px-4 py-3 space-y-2">
-        {aboutInfo && (
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-fg-faint">DestinCode {aboutInfo.version}</span>
-            {aboutInfo.build && <span className="text-[10px] text-fg-faint font-mono">{aboutInfo.build}</span>}
+        {/* Other */}
+        <section>
+          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Other</h3>
+          <div className="space-y-2">
+            <DefaultsButton defaults={defaults} onDefaultsChange={handleDefaultsChange} />
+
+            <a
+              href="https://buymeacoffee.com/itsdestin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+            >
+              <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+                <span className="text-sm">☕</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-fg font-medium">Donate</span>
+                <p className="text-[10px] text-fg-muted">Support DestinCode development</p>
+              </div>
+              <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+
+            {aboutInfo && (
+              <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 text-left">
+                <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+                  <span className="text-sm">ℹ️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-fg font-medium">About</span>
+                  <p className="text-[10px] text-fg-muted">DestinCode {aboutInfo.version}{aboutInfo.build ? ` · ${aboutInfo.build}` : ''}</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        <a
-          href="https://buymeacoffee.com/itsdestin"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-sm text-fg-2 hover:text-fg"
-        >
-          <span>☕</span>
-          <span>Donate</span>
-        </a>
+        </section>
       </div>
     </>
   );
@@ -961,6 +1134,7 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
   const [showAddDevice, setShowAddDevice] = useState(false);
   const [showSetupQR, setShowSetupQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [defaults, setDefaults] = useState({ skipPermissions: false, model: 'sonnet', projectFolder: '' });
 
   useEffect(() => {
     if (!open) return;
@@ -973,10 +1147,12 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
       claude.remote.getConfig(),
       claude.remote.detectTailscale(),
       claude.remote.getClientList(),
-    ]).then(([cfg, ts, cls]: [RemoteConfig, TailscaleInfo, ClientInfo[]]) => {
+      claude.defaults?.get?.() ?? { skipPermissions: false, model: 'sonnet', projectFolder: '' },
+    ]).then(([cfg, ts, cls, defs]: [RemoteConfig, TailscaleInfo, ClientInfo[], any]) => {
       setConfig(cfg);
       setTailscale(ts);
       setClients(cls);
+      setDefaults(defs);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [open]);
@@ -1032,6 +1208,12 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
     }
   }, [tailscale]);
 
+  const handleDefaultsChange = useCallback(async (updates: Partial<typeof defaults>) => {
+    const merged = { ...defaults, ...updates };
+    setDefaults(merged);
+    await (window as any).claude.defaults?.set?.(updates);
+  }, [defaults]);
+
   return (
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
@@ -1060,19 +1242,42 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
           onSetShowSetupQR={setShowSetupQR}
           onSetShowAddDevice={setShowAddDevice}
         />
-      </div>
 
-      {/* Support */}
-      <div className="border-t border-edge pt-4 mt-2 flex flex-col gap-2">
-        <a
-          href="https://buymeacoffee.com/itsdestin"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-sm text-fg-2 hover:text-fg"
-        >
-          <span>☕</span>
-          <span>Donate</span>
-        </a>
+        {/* Other */}
+        <section>
+          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Other</h3>
+          <div className="space-y-2">
+            <DefaultsButton defaults={defaults} onDefaultsChange={handleDefaultsChange} />
+
+            <a
+              href="https://buymeacoffee.com/itsdestin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+            >
+              <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+                <span className="text-sm">☕</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-fg font-medium">Donate</span>
+                <p className="text-[10px] text-fg-muted">Support DestinCode development</p>
+              </div>
+              <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+
+            <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 text-left">
+              <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+                <span className="text-sm">ℹ️</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-fg font-medium">About</span>
+                <p className="text-[10px] text-fg-muted">DestinCode {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : ''}</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </>
   );

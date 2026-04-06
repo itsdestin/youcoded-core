@@ -15,6 +15,7 @@ import { usePartyLobby } from './hooks/usePartyLobby';
 import { usePartyGame } from './hooks/usePartyGame';
 import { AppIcon, WelcomeAppIcon, ThemeMascot } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
+import TerminalToolbar from './components/TerminalToolbar';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
@@ -61,6 +62,8 @@ function AppInner() {
   const [drawerSearchMode, setDrawerSearchMode] = useState(false);
   const [drawerFilter, setDrawerFilter] = useState<string | undefined>(undefined);
   const inputBarRef = useRef<InputBarHandle>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bottomBarRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsBadge, setSettingsBadge] = useState(false);
   const [skills, setSkills] = useState<SkillEntry[]>([]);
@@ -80,6 +83,7 @@ function AppInner() {
   const [pendingModel, setPendingModel] = useState<ModelAlias | null>(null);
   const consecutiveFailures = useRef(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [sessionDefaults, setSessionDefaults] = useState({ skipPermissions: false, model: 'sonnet', projectFolder: '' });
 
   // Check first-run state with a 3-second safety timeout — never hang the app
   useEffect(() => {
@@ -105,6 +109,13 @@ function AppInner() {
       if (MODELS.includes(m as any)) {
         setModel(m as ModelAlias);
       }
+    }).catch(() => {});
+  }, []);
+
+  // Load session defaults on mount
+  useEffect(() => {
+    (window as any).claude?.defaults?.get?.().then((defs: any) => {
+      if (defs) setSessionDefaults(defs);
     }).catch(() => {});
   }, []);
 
@@ -625,12 +636,17 @@ function AppInner() {
     [sessionId, dispatch],
   );
 
-  const createSession = useCallback(async (cwd: string, dangerous: boolean) => {
+  const createSession = useCallback(async (cwd: string, dangerous: boolean, sessionModel?: string) => {
+    const m = sessionModel || model;
+    // Update the active model to match what was chosen in the form
+    if (sessionModel && MODELS.includes(sessionModel as any)) {
+      setModel(sessionModel as ModelAlias);
+    }
     await (window.claude.session.create as any)({
       name: 'New Session',
       cwd,
       skipPermissions: dangerous,
-      model,
+      model: m,
     });
   }, [model]);
 
@@ -735,47 +751,80 @@ function AppInner() {
     );
   }
 
+  // Report header/bottom bar heights to native Android side for terminal overlay sizing
+  useEffect(() => {
+    if (getPlatform() !== 'android') return;
+    const header = headerRef.current;
+    const bottom = bottomBarRef.current;
+    if (!header && !bottom) return;
+
+    const report = () => {
+      const headerH = header?.getBoundingClientRect().height || 0;
+      const bottomH = bottom?.getBoundingClientRect().height || 0;
+      (window as any).claude?.remote?.broadcastAction?.({
+        action: 'layout-update',
+        headerHeight: Math.round(headerH),
+        bottomHeight: Math.round(bottomH),
+      });
+    };
+
+    const observer = new ResizeObserver(report);
+    if (header) observer.observe(header);
+    if (bottom) observer.observe(bottom);
+    // Report immediately on mount
+    report();
+    return () => observer.disconnect();
+  }, [sessionId, currentViewMode]);
+
   return (
     <div className="app-shell flex w-screen h-full bg-canvas text-fg">
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {sessions.length > 0 && sessionId && currentSession ? (
           <>
-            <HeaderBar
-              sessions={sessions}
-              activeSessionId={sessionId}
-              onSelectSession={(id: string) => {
-                setSessionId(id);
-                // Notify Android/remote bridge so the native terminal view switches too
-                (window as any).claude?.session?.switch?.(id);
-              }}
-              onCreateSession={createSession}
-              onCloseSession={(id) => window.claude.session.destroy(id)}
-              onReorderSessions={(fromIndex: number, toIndex: number) => {
-                setSessions(prev => {
-                  const next = [...prev];
-                  const [moved] = next.splice(fromIndex, 1);
-                  next.splice(toIndex, 0, moved);
-                  return next;
-                });
-              }}
-              viewMode={currentViewMode}
-              onToggleView={handleToggleView}
-              gamePanelOpen={gameState.panelOpen}
-              onToggleGamePanel={() => gameDispatch({ type: 'TOGGLE_PANEL' })}
-              gameConnected={gameState.connected}
-              challengePending={gameState.challengeFrom !== null}
-              permissionMode={currentPermissionMode}
-              onCyclePermission={cyclePermission}
-              announcement={announcementText}
-              settingsOpen={settingsOpen}
-              onToggleSettings={() => setSettingsOpen(prev => !prev)}
-              settingsBadge={settingsBadge}
-              sessionStatuses={sessionStatuses}
-              onResumeSession={handleResumeSession}
-              onOpenResumeBrowser={() => setResumeRequested(true)}
-            />
-            <div className="flex-1 overflow-hidden relative">
+            <div ref={headerRef}>
+              <HeaderBar
+                sessions={sessions}
+                activeSessionId={sessionId}
+                onSelectSession={(id: string) => {
+                  setSessionId(id);
+                  // Notify Android/remote bridge so the native terminal view switches too
+                  (window as any).claude?.session?.switch?.(id);
+                }}
+                onCreateSession={createSession}
+                onCloseSession={(id) => window.claude.session.destroy(id)}
+                onReorderSessions={(fromIndex: number, toIndex: number) => {
+                  setSessions(prev => {
+                    const next = [...prev];
+                    const [moved] = next.splice(fromIndex, 1);
+                    next.splice(toIndex, 0, moved);
+                    return next;
+                  });
+                }}
+                viewMode={currentViewMode}
+                onToggleView={handleToggleView}
+                gamePanelOpen={gameState.panelOpen}
+                onToggleGamePanel={() => gameDispatch({ type: 'TOGGLE_PANEL' })}
+                gameConnected={gameState.connected}
+                challengePending={gameState.challengeFrom !== null}
+                permissionMode={currentPermissionMode}
+                onCyclePermission={cyclePermission}
+                announcement={announcementText}
+                settingsOpen={settingsOpen}
+                onToggleSettings={() => setSettingsOpen(prev => !prev)}
+                settingsBadge={settingsBadge}
+                sessionStatuses={sessionStatuses}
+                onResumeSession={handleResumeSession}
+                onOpenResumeBrowser={() => setResumeRequested(true)}
+                defaultModel={sessionDefaults.model}
+                defaultSkipPermissions={sessionDefaults.skipPermissions}
+                defaultProjectFolder={sessionDefaults.projectFolder}
+              />
+            </div>
+            <div
+              className="flex-1 overflow-hidden relative"
+              style={getPlatform() === 'android' && currentViewMode === 'terminal' ? { backgroundColor: 'transparent', pointerEvents: 'none' } : undefined}
+            >
               {sessions.map((s) => (
                 <React.Fragment key={s.id}>
                   <ErrorBoundary name="Chat">
@@ -815,8 +864,11 @@ function AppInner() {
                 />
               )}
             </div>
-            {currentViewMode === 'chat' && (
-              <>
+            {(currentViewMode === 'chat' || getPlatform() === 'android') && (
+              <div ref={bottomBarRef}>
+                {getPlatform() === 'android' && currentViewMode === 'terminal' && sessionId && (
+                  <TerminalToolbar sessionId={sessionId} />
+                )}
                 <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
                 <StatusBar
                   statusData={{
@@ -835,7 +887,7 @@ function AppInner() {
                   permissionMode={currentPermissionMode}
                   onCyclePermission={cyclePermission}
                 />
-              </>
+              </div>
             )}
           </>
         ) : (

@@ -17,7 +17,7 @@ interface Props {
   sessions: SessionEntry[];
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
-  onCreateSession: (cwd: string, dangerous: boolean) => void;
+  onCreateSession: (cwd: string, dangerous: boolean, model: string) => void;
   onCloseSession: (id: string) => void;
   viewMode: 'chat' | 'terminal';
   onToggleView: (mode: 'chat' | 'terminal') => void;
@@ -35,6 +35,9 @@ interface Props {
   onResumeSession: (sessionId: string, projectSlug: string) => void;
   onOpenResumeBrowser: () => void;
   onReorderSessions?: (fromIndex: number, toIndex: number) => void;
+  defaultModel?: string;
+  defaultSkipPermissions?: boolean;
+  defaultProjectFolder?: string;
 }
 
 export default function HeaderBar({
@@ -44,6 +47,7 @@ export default function HeaderBar({
   permissionMode, onCyclePermission, announcement,
   settingsOpen, onToggleSettings, settingsBadge, sessionStatuses, onResumeSession,
   onOpenResumeBrowser, onReorderSessions,
+  defaultModel, defaultSkipPermissions, defaultProjectFolder,
 }: Props) {
   return (
     <div className="header-bar flex items-center h-10 px-2 sm:px-3 border-b border-edge shrink-0">
@@ -85,6 +89,9 @@ export default function HeaderBar({
         onResumeSession={onResumeSession}
         onOpenResumeBrowser={onOpenResumeBrowser}
         onReorderSessions={onReorderSessions}
+        defaultModel={defaultModel}
+        defaultSkipPermissions={defaultSkipPermissions}
+        defaultProjectFolder={defaultProjectFolder}
       />
 
       {/* Right — view toggles */}
