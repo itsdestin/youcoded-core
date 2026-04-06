@@ -36,6 +36,7 @@ declare global {
       };
       shell: {
         openChangelog: () => Promise<void>;
+        openExternal: (url: string) => Promise<void>;
       };
       remote: {
         getConfig: () => Promise<any>;

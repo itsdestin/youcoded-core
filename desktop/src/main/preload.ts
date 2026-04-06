@@ -20,6 +20,7 @@ const IPC = {
   READ_TRANSCRIPT_META: 'transcript:read-meta',
   SKILLS_LIST: 'skills:list',
   OPEN_CHANGELOG: 'shell:open-changelog',
+  OPEN_EXTERNAL: 'shell:open-external',
   TERMINAL_READY: 'session:terminal-ready',
   PERMISSION_RESPOND: 'permission:respond',
   REMOTE_GET_CONFIG: 'remote:get-config',
@@ -120,6 +121,8 @@ contextBridge.exposeInMainWorld('claude', {
   shell: {
     openChangelog: (): Promise<void> =>
       ipcRenderer.invoke(IPC.OPEN_CHANGELOG),
+    openExternal: (url: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.OPEN_EXTERNAL, url),
   },
   remote: {
     getConfig: () => ipcRenderer.invoke(IPC.REMOTE_GET_CONFIG),

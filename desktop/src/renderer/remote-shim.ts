@@ -435,6 +435,7 @@ export function installShim(): void {
     },
     shell: {
       openChangelog: async () => {},
+      openExternal: async (url: string) => { window.open(url, '_blank'); },
     },
     remote: {
       getConfig: () => invoke('remote:get-config'),

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme, THEMES, type ThemeName } from '../state/theme-context';
 
 interface StatusData {
@@ -96,35 +96,158 @@ const THEME_LABELS: Record<ThemeName, string> = {
   creme: 'Crème',
 };
 
+// --- Widget visibility customizer ---
+
+type WidgetId = 'usage-5h' | 'usage-7d' | 'context' | 'sync-warnings' | 'theme' | 'version';
+
+const WIDGET_DEFS: { id: WidgetId; label: string }[] = [
+  { id: 'usage-5h', label: '5h Usage' },
+  { id: 'usage-7d', label: '7d Usage' },
+  { id: 'context', label: 'Context %' },
+  { id: 'sync-warnings', label: 'Sync Warnings' },
+  { id: 'theme', label: 'Theme' },
+  { id: 'version', label: 'Version' },
+];
+
+const STORAGE_KEY = 'destincode-statusbar-widgets';
+const ALL_VISIBLE = new Set<WidgetId>(WIDGET_DEFS.map((w) => w.id));
+
+function loadVisibility(): Set<WidgetId> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const arr = JSON.parse(stored) as WidgetId[];
+      return new Set(arr.filter((id) => WIDGET_DEFS.some((w) => w.id === id)));
+    }
+  } catch { /* ignore */ }
+  return new Set(ALL_VISIBLE);
+}
+
+function saveVisibility(visible: Set<WidgetId>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...visible]));
+  } catch { /* ignore */ }
+}
+
+function useWidgetVisibility() {
+  const [visible, setVisible] = useState<Set<WidgetId>>(loadVisibility);
+
+  const toggle = useCallback((id: WidgetId) => {
+    setVisible((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveVisibility(next);
+      return next;
+    });
+  }, []);
+
+  return { visible, toggle };
+}
+
+// Pencil SVG icon (inline to avoid extra dependencies)
+function PencilIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-4 1.5a.5.5 0 0 1-.638-.638l1.5-4a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5z"/>
+    </svg>
+  );
+}
+
 export default function StatusBar({ statusData, onRunSync }: Props) {
   const { usage, updateStatus, contextPercent, syncStatus, syncWarnings } = statusData;
   const warnings = parseSyncWarnings(syncWarnings);
   const { theme, cycleTheme } = useTheme();
+  const { visible, toggle } = useWidgetVisibility();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const show = (id: WidgetId) => visible.has(id);
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 sm:px-3 py-1 text-[10px] text-fg-muted border-t border-edge-dim">
+      {/* Customize widget — pencil icon */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="flex items-center justify-center w-5 h-5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
+          title="Customize Status Bar"
+        >
+          <PencilIcon />
+        </button>
+        {menuOpen && (
+          <div className="absolute bottom-full left-0 mb-1 w-44 rounded border border-edge-dim bg-panel shadow-lg z-50 py-1 text-[11px]">
+            <div className="px-2 py-1 text-fg-faint font-semibold border-b border-edge-dim text-[10px] uppercase tracking-wide">
+              Status Bar Widgets
+            </div>
+            {WIDGET_DEFS.map((w) => (
+              <button
+                key={w.id}
+                onClick={() => toggle(w.id)}
+                className="flex items-center gap-2 w-full px-2 py-1 hover:bg-inset transition-colors text-left"
+              >
+                <span
+                  className={`w-3 h-3 rounded-sm border flex-shrink-0 flex items-center justify-center ${
+                    visible.has(w.id)
+                      ? 'bg-accent border-accent text-on-accent'
+                      : 'border-edge-dim'
+                  }`}
+                >
+                  {visible.has(w.id) && (
+                    <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                    </svg>
+                  )}
+                </span>
+                <span className="text-fg">{w.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Rate limits */}
-      {usage?.five_hour != null && (
-        <span className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded bg-panel border border-edge-dim">
+      {show('usage-5h') && usage?.five_hour != null && (
+        <button
+          onClick={() => window.claude.shell.openExternal('https://claude.ai/settings/usage')}
+          className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
+          title="View usage on claude.ai"
+        >
           <span>5h:</span>
           <span className={utilizationColor(usage.five_hour.utilization)}>
             {usage.five_hour.utilization}%
           </span>
           <span className="text-fg-faint hidden sm:inline">{format5hReset(usage.five_hour.resets_at)}</span>
-        </span>
+        </button>
       )}
-      {usage?.seven_day != null && (
-        <span className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded bg-panel border border-edge-dim">
+      {show('usage-7d') && usage?.seven_day != null && (
+        <button
+          onClick={() => window.claude.shell.openExternal('https://claude.ai/settings/usage')}
+          className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
+          title="View usage on claude.ai"
+        >
           <span>7d:</span>
           <span className={utilizationColor(usage.seven_day.utilization)}>
             {usage.seven_day.utilization}%
           </span>
           <span className="text-fg-faint hidden sm:inline">{format7dReset(usage.seven_day.resets_at)}</span>
-        </span>
+        </button>
       )}
 
       {/* Context */}
-      {contextPercent != null && (
+      {show('context') && contextPercent != null && (
         <span>
           Ctx:{' '}
           <span className={contextColor(contextPercent)}>
@@ -134,7 +257,7 @@ export default function StatusBar({ statusData, onRunSync }: Props) {
       )}
 
       {/* Sync warnings */}
-      {warnings.map((w, i) => (
+      {show('sync-warnings') && warnings.map((w, i) => (
         <button
           key={i}
           onClick={onRunSync}
@@ -145,16 +268,18 @@ export default function StatusBar({ statusData, onRunSync }: Props) {
       ))}
 
       {/* Theme pill */}
-      <button
-        onClick={cycleTheme}
-        className="px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
-        title="Click to cycle theme"
-      >
-        {THEME_LABELS[theme]}
-      </button>
+      {show('theme') && (
+        <button
+          onClick={cycleTheme}
+          className="px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
+          title="Click to cycle theme"
+        >
+          {THEME_LABELS[theme]}
+        </button>
+      )}
 
       {/* Version — pushed to end, hidden on very narrow screens */}
-      {updateStatus && (
+      {show('version') && updateStatus && (
         <button
           onClick={() => window.claude.shell.openChangelog()}
           className="px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors ml-auto hidden sm:inline-flex"

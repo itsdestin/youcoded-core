@@ -113,6 +113,13 @@ export function registerIpcHandlers(
     await shell.openExternal('https://github.com/itsdestin/destinclaude/blob/master/CHANGELOG.md');
   });
 
+  // Open any URL in the default browser (allowlisted to https only)
+  ipcMain.handle(IPC.OPEN_EXTERNAL, async (_event, url: string) => {
+    if (typeof url === 'string' && url.startsWith('https://')) {
+      await shell.openExternal(url);
+    }
+  });
+
   // Read model + context from a transcript JSONL file (async, first/last byte-range reads)
   ipcMain.handle(IPC.READ_TRANSCRIPT_META, async (_event, transcriptPath: string) => {
     try {
