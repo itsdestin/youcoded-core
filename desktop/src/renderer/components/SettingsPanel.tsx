@@ -261,7 +261,7 @@ function RemoteButton({
         </svg>
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
           <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
           <div
@@ -495,7 +495,8 @@ function RemoteButton({
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </section>
   );
