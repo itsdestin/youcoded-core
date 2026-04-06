@@ -14,6 +14,7 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Memory System | system | core/specs/memory-system-spec.md | 1.2 |
 | Personal Data Sync | system | core/specs/personal-sync-spec.md | 2.3 (retired) |
 | Conversation Index | system | core/specs/conversation-index-spec.md | 1.0 |
+| Journal Vault | system | core/specs/journal-vault-spec.md | 1.0 |
 | Statusline | system | core/specs/statusline-spec.md | 1.10 |
 | DestinTip | system | core/specs/destintip-spec.md | 1.2 |
 | Landing Page | system | core/specs/landing-page-spec.md | 1.4 |
