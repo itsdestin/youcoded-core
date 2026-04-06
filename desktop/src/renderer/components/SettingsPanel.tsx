@@ -183,6 +183,324 @@ function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) 
   );
 }
 
+// ─── Remote settings popup button ─────────────────────────────────────────
+
+interface RemoteButtonProps {
+  config: RemoteConfig | null;
+  tailscale: TailscaleInfo | null;
+  clients: ClientInfo[];
+  loading: boolean;
+  hasActiveSession: boolean;
+  newPassword: string;
+  passwordStatus: 'idle' | 'saving' | 'saved';
+  copied: boolean;
+  showSetupQR: boolean;
+  showAddDevice: boolean;
+  onSetNewPassword: (v: string) => void;
+  onSetPassword: () => void;
+  onToggleEnabled: () => void;
+  onToggleTailscaleTrust: () => void;
+  onSetKeepAwake: (hours: number) => void;
+  onRunSetup: () => void;
+  onDisconnectClient: (id: string) => void;
+  onCopyLink: () => void;
+  onSetShowSetupQR: (v: boolean) => void;
+  onSetShowAddDevice: (v: boolean) => void;
+}
+
+function RemoteButton({
+  config, tailscale, clients, loading, hasActiveSession,
+  newPassword, passwordStatus, copied, showSetupQR, showAddDevice,
+  onSetNewPassword, onSetPassword, onToggleEnabled, onToggleTailscaleTrust,
+  onSetKeepAwake, onRunSetup, onDisconnectClient, onCopyLink,
+  onSetShowSetupQR, onSetShowAddDevice,
+}: RemoteButtonProps) {
+  const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const hasClients = clients.length > 0;
+  const statusText = loading
+    ? 'Loading...'
+    : !config?.enabled
+      ? 'Disabled'
+      : hasClients
+        ? `${clients.length} client${clients.length > 1 ? 's' : ''} connected`
+        : 'Enabled · No clients';
+
+  return (
+    <section>
+      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Remote Access</h3>
+
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+      >
+        {/* Status indicator dot */}
+        <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
+          <div className={`w-2.5 h-2.5 rounded-full ${
+            !config?.enabled ? 'bg-fg-muted/40' : hasClients ? 'bg-green-500' : 'bg-amber-500'
+          }`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-fg font-medium">{statusText}</span>
+          {tailscale?.installed && (
+            <span className="text-[10px] text-fg-muted ml-2">Tailscale</span>
+          )}
+        </div>
+        <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            ref={popupRef}
+            className="fixed z-[61] rounded-xl bg-panel border border-edge shadow-2xl overflow-hidden"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 'min(480px, 88vw)',
+              height: 'min(600px, 80vh)',
+            }}
+          >
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-edge shrink-0">
+                <h2 className="text-sm font-bold text-fg">Remote Access</h2>
+                <button onClick={() => setOpen(false)} className="text-fg-muted hover:text-fg-2 text-lg leading-none">✕</button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8 text-fg-muted text-sm">Loading...</div>
+                ) : (
+                  <>
+                    {/* Setup banner — shown when no clients connected */}
+                    {!hasClients && (
+                      <div className="bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
+                        <p className="text-xs text-blue-400 mb-2">
+                          Remote access lets you use DestinCode from any device — phone, tablet, or another computer.
+                        </p>
+
+                        {tailscale?.installed && tailscale.url && config?.hasPassword ? (
+                          showSetupQR ? (
+                            <div className="mt-2">
+                              <p className="text-[10px] text-fg-muted mb-2">Scan to connect a device:</p>
+                              <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
+                                <QRCodeSVG value={tailscale.url} size={140} />
+                              </div>
+                              <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
+                              <button
+                                onClick={onCopyLink}
+                                className="w-full mt-2 px-3 py-1 rounded bg-inset hover:bg-edge text-[10px] text-fg-dim"
+                              >
+                                {copied ? 'Copied!' : 'Copy link'}
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => onSetShowSetupQR(true)}
+                              className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium"
+                            >
+                              Set Up Remote Access
+                            </button>
+                          )
+                        ) : (
+                          <>
+                            <button
+                              onClick={onRunSetup}
+                              disabled={!hasActiveSession}
+                              className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={!hasActiveSession ? 'Create a session first' : ''}
+                            >
+                              Set Up Remote Access
+                            </button>
+                            {!hasActiveSession && (
+                              <p className="text-[10px] text-fg-muted mt-1 text-center">Create a session first to run setup</p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Server settings */}
+                    <section>
+                      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Server</h3>
+
+                      <label className="flex items-center justify-between py-2 cursor-pointer">
+                        <span className="text-xs text-fg-2">Enabled</span>
+                        <Toggle enabled={!!config?.enabled} onToggle={onToggleEnabled} />
+                      </label>
+
+                      <div className="py-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-fg-2">Password</span>
+                          {config?.hasPassword && (
+                            <span className="text-[10px] text-green-400">Set</span>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <input
+                            type="password"
+                            placeholder={config?.hasPassword ? 'Change password...' : 'Set password...'}
+                            value={newPassword}
+                            onChange={(e) => onSetNewPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && onSetPassword()}
+                            className="flex-1 px-2 py-1 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                          />
+                          <button
+                            onClick={onSetPassword}
+                            disabled={!newPassword.trim() || passwordStatus === 'saving'}
+                            className="px-2 py-1 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
+                          >
+                            {passwordStatus === 'saved' ? '✓' : passwordStatus === 'saving' ? '...' : 'Set'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="py-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-fg-2">Keep awake</span>
+                        </div>
+                        <div className="flex gap-1">
+                          {KEEP_AWAKE_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => onSetKeepAwake(opt.value)}
+                              className={`flex-1 px-1.5 py-1 rounded text-[10px] transition-colors ${
+                                config?.keepAwakeHours === opt.value
+                                  ? 'bg-accent text-on-accent font-medium'
+                                  : 'bg-inset text-fg-dim hover:bg-edge'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Remote Clients section */}
+                    {hasClients && (
+                      <section>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase">Clients</h3>
+                          <button
+                            onClick={() => onSetShowAddDevice(true)}
+                            className="text-[10px] text-blue-400 hover:text-blue-300"
+                          >
+                            + Add Device
+                          </button>
+                        </div>
+
+                        <div className="space-y-1">
+                          {clients.map(client => (
+                            <div key={client.id} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
+                              <div>
+                                <span className="text-xs text-fg-2 font-mono">{client.ip}</span>
+                                <span className="text-[10px] text-fg-faint ml-2">{timeAgo(client.connectedAt)}</span>
+                              </div>
+                              <button
+                                onClick={() => onDisconnectClient(client.id)}
+                                className="text-fg-faint hover:text-red-400 text-sm leading-none px-1"
+                                title="Disconnect"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Add Device overlay */}
+                    {showAddDevice && tailscale?.url && (
+                      <section className="bg-inset/50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-xs font-medium text-fg-2">Add Device</h3>
+                          <button
+                            onClick={() => onSetShowAddDevice(false)}
+                            className="text-fg-muted hover:text-fg-2 text-sm leading-none"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-fg-muted mb-2">Scan QR or copy link to connect a new device:</p>
+                        <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
+                          <QRCodeSVG value={tailscale.url} size={140} />
+                        </div>
+                        <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
+                        <button
+                          onClick={onCopyLink}
+                          className="w-full mt-2 px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs"
+                        >
+                          {copied ? 'Copied!' : 'Copy Link'}
+                        </button>
+                      </section>
+                    )}
+
+                    {/* Tailscale section */}
+                    <section>
+                      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Tailscale</h3>
+
+                      {tailscale?.installed ? (
+                        <>
+                          <div className="py-2 flex items-center justify-between">
+                            <span className="text-xs text-fg-2">Status</span>
+                            <span className="text-[10px] text-green-400">
+                              Connected{tailscale.hostname ? ` · ${tailscale.hostname}` : ''}
+                            </span>
+                          </div>
+
+                          <div className="py-2 flex items-center justify-between">
+                            <span className="text-xs text-fg-2">IP</span>
+                            <span className="text-xs text-fg-dim font-mono">{tailscale.ip}</span>
+                          </div>
+
+                          <label className="flex items-center justify-between py-2 cursor-pointer">
+                            <span className="text-xs text-fg-2">Skip password on Tailscale</span>
+                            <Toggle enabled={!!config?.trustTailscale} onToggle={onToggleTailscaleTrust} />
+                          </label>
+                        </>
+                      ) : (
+                        <div className="py-2">
+                          <p className="text-xs text-fg-muted mb-2">
+                            Tailscale is not installed. It creates a secure private network so you can access DestinCode from anywhere.
+                          </p>
+                          <button
+                            onClick={onRunSetup}
+                            disabled={!hasActiveSession}
+                            className="px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
+                          >
+                            Install with Setup Skill
+                          </button>
+                        </div>
+                      )}
+                    </section>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 // ─── Tier selector popup ───────────────────────────────────────────────────
 
 const TIER_OPTIONS = [
@@ -713,224 +1031,34 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
     }
   }, [tailscale]);
 
-  const hasClients = clients.length > 0;
-
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-fg-muted text-sm">
-        Loading...
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
 
         <ThemeButton onSendInput={onSendInput} />
 
-        {/* Setup banner — shown when no clients connected */}
-        {!hasClients && (
-          <div className="bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
-            <p className="text-xs text-blue-400 mb-2">
-              Remote access lets you use DestinCode from any device — phone, tablet, or another computer.
-            </p>
-
-            {tailscale?.installed && tailscale.url && config?.hasPassword ? (
-              showSetupQR ? (
-                <div className="mt-2">
-                  <p className="text-[10px] text-fg-muted mb-2">Scan to connect a device:</p>
-                  <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
-                    <QRCodeSVG value={tailscale.url} size={140} />
-                  </div>
-                  <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
-                  <button
-                    onClick={handleCopyLink}
-                    className="w-full mt-2 px-3 py-1 rounded bg-inset hover:bg-edge text-[10px] text-fg-dim"
-                  >
-                    {copied ? 'Copied!' : 'Copy link'}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowSetupQR(true)}
-                  className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium"
-                >
-                  Set Up Remote Access
-                </button>
-              )
-            ) : (
-              <>
-                <button
-                  onClick={handleRunSetup}
-                  disabled={!hasActiveSession}
-                  className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={!hasActiveSession ? 'Create a session first' : ''}
-                >
-                  Set Up Remote Access
-                </button>
-                {!hasActiveSession && (
-                  <p className="text-[10px] text-fg-muted mt-1 text-center">Create a session first to run setup</p>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Remote Access section */}
-        <section>
-          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Remote Access</h3>
-
-          <label className="flex items-center justify-between py-2 cursor-pointer">
-            <span className="text-xs text-fg-2">Enabled</span>
-            <Toggle enabled={!!config?.enabled} onToggle={handleToggleEnabled} />
-          </label>
-
-          <div className="py-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-fg-2">Password</span>
-              {config?.hasPassword && (
-                <span className="text-[10px] text-green-400">Set</span>
-              )}
-            </div>
-            <div className="flex gap-1">
-              <input
-                type="password"
-                placeholder={config?.hasPassword ? 'Change password...' : 'Set password...'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
-                className="flex-1 px-2 py-1 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
-              />
-              <button
-                onClick={handleSetPassword}
-                disabled={!newPassword.trim() || passwordStatus === 'saving'}
-                className="px-2 py-1 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
-              >
-                {passwordStatus === 'saved' ? '✓' : passwordStatus === 'saving' ? '...' : 'Set'}
-              </button>
-            </div>
-          </div>
-
-          <div className="py-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-fg-2">Keep awake</span>
-            </div>
-            <div className="flex gap-1">
-              {KEEP_AWAKE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleSetKeepAwake(opt.value)}
-                  className={`flex-1 px-1.5 py-1 rounded text-[10px] transition-colors ${
-                    config?.keepAwakeHours === opt.value
-                      ? 'bg-accent text-on-accent font-medium'
-                      : 'bg-inset text-fg-dim hover:bg-edge'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Remote Clients section */}
-        {hasClients && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase">Remote Clients</h3>
-              <button
-                onClick={() => setShowAddDevice(true)}
-                className="text-[10px] text-blue-400 hover:text-blue-300"
-              >
-                + Add Device
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {clients.map(client => (
-                <div key={client.id} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
-                  <div>
-                    <span className="text-xs text-fg-2 font-mono">{client.ip}</span>
-                    <span className="text-[10px] text-fg-faint ml-2">{timeAgo(client.connectedAt)}</span>
-                  </div>
-                  <button
-                    onClick={() => handleDisconnectClient(client.id)}
-                    className="text-fg-faint hover:text-red-400 text-sm leading-none px-1"
-                    title="Disconnect"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Add Device overlay */}
-        {showAddDevice && tailscale?.url && (
-          <section className="bg-inset/50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-medium text-fg-2">Add Device</h3>
-              <button
-                onClick={() => setShowAddDevice(false)}
-                className="text-fg-muted hover:text-fg-2 text-sm leading-none"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-[10px] text-fg-muted mb-2">Scan QR or copy link to connect a new device:</p>
-            <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
-              <QRCodeSVG value={tailscale.url} size={140} />
-            </div>
-            <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
-            <button
-              onClick={handleCopyLink}
-              className="w-full mt-2 px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs"
-            >
-              {copied ? 'Copied!' : 'Copy Link'}
-            </button>
-          </section>
-        )}
-
-        {/* Tailscale section */}
-        <section>
-          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Tailscale</h3>
-
-          {tailscale?.installed ? (
-            <>
-              <div className="py-2 flex items-center justify-between">
-                <span className="text-xs text-fg-2">Status</span>
-                <span className="text-[10px] text-green-400">
-                  Connected{tailscale.hostname ? ` · ${tailscale.hostname}` : ''}
-                </span>
-              </div>
-
-              <div className="py-2 flex items-center justify-between">
-                <span className="text-xs text-fg-2">IP</span>
-                <span className="text-xs text-fg-dim font-mono">{tailscale.ip}</span>
-              </div>
-
-              <label className="flex items-center justify-between py-2 cursor-pointer">
-                <span className="text-xs text-fg-2">Skip password on Tailscale</span>
-                <Toggle enabled={!!config?.trustTailscale} onToggle={handleToggleTailscaleTrust} />
-              </label>
-            </>
-          ) : (
-            <div className="py-2">
-              <p className="text-xs text-fg-muted mb-2">
-                Tailscale is not installed. It creates a secure private network so you can access DestinCode from anywhere.
-              </p>
-              <button
-                onClick={handleRunSetup}
-                disabled={!hasActiveSession}
-                className="px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
-              >
-                Install with Setup Skill
-              </button>
-            </div>
-          )}
-        </section>
+        <RemoteButton
+          config={config}
+          tailscale={tailscale}
+          clients={clients}
+          loading={loading}
+          hasActiveSession={hasActiveSession}
+          newPassword={newPassword}
+          passwordStatus={passwordStatus}
+          copied={copied}
+          showSetupQR={showSetupQR}
+          showAddDevice={showAddDevice}
+          onSetNewPassword={setNewPassword}
+          onSetPassword={handleSetPassword}
+          onToggleEnabled={handleToggleEnabled}
+          onToggleTailscaleTrust={handleToggleTailscaleTrust}
+          onSetKeepAwake={handleSetKeepAwake}
+          onRunSetup={handleRunSetup}
+          onDisconnectClient={handleDisconnectClient}
+          onCopyLink={handleCopyLink}
+          onSetShowSetupQR={setShowSetupQR}
+          onSetShowAddDevice={setShowAddDevice}
+        />
       </div>
 
       {/* Support */}
