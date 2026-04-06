@@ -170,12 +170,12 @@ body {
   font-size: 9px;
 }
 [data-statusbar-style="floating"] .status-bar {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+  align-self: center;
+  width: fit-content;
+  max-width: 95%;
   border-radius: var(--radius-full, 9999px);
   padding: 2px 12px;
+  margin: 4px auto;
   border: 1px solid var(--edge-dim);
   background: var(--panel);
 }

@@ -251,6 +251,7 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
     - Scan-lines: `<div class="effect-scanlines" style="--scanline-opacity: 0.08;"></div>`
     These are cosmetic overlays — only include them when the theme concept uses these effects.
 14. **Layout presets work in the app.** `data-input-style`, `data-bubble-style`, `data-header-style`, and `data-statusbar-style` are wired to the real app's DOM via the theme engine. Bubble, header, and status bar presets apply at runtime. Input style presets require the `input-bar-container` class on the input wrapper — ensure the manifest includes the intended `input-style` value.
+15. **No absolute positioning on layout-flow elements**: Never use `position: absolute` on `.status-bar`, `.input-bar-container`, or other elements that participate in the app's flex column layout. Absolute positioning removes them from document flow and causes overlaps with adjacent elements. The app's built-in layout styles handle floating/pill appearances using `align-self`, `width: fit-content`, and `margin: auto` instead.
 
 ---
 
@@ -578,6 +579,7 @@ Write `<slug>/manifest.json` matching this schema exactly:
 - `font.family` is applied to `--font-sans` and `--font-mono` CSS variables. Always include `'Cascadia Mono', monospace` as fallbacks
 - `font.google-font-url` is a Google Fonts `@import` URL. The app injects this into the `<head>` at theme load time. Omit if using a system font
 - `shape.radius` controls bare `rounded` elements (status bar pills, quick chips, permission buttons). Defaults to `radius-sm` if omitted
+- **Layout overlap prevention**: The `statusbar-style: "floating"` option renders the status bar as a centered pill using `align-self: center; width: fit-content; margin: auto;` — it stays in normal document flow and does NOT use `position: absolute`. Never add `position: absolute` to the status bar, input bar, or other layout-flow elements in `custom_css`, as this removes them from the flex layout and causes overlaps with adjacent elements (e.g., the status bar overlapping the input area). If a theme needs an element to appear "floating", use `align-self: center`, `width: fit-content`, `border-radius`, and `margin` instead of absolute positioning.
 
 ### Step 6: Write Custom CSS Aggressively
 
