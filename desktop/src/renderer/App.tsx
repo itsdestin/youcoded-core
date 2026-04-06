@@ -18,6 +18,11 @@ import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
+import Marketplace from './components/Marketplace';
+import SkillManager from './components/SkillManager';
+import SkillEditor from './components/SkillEditor';
+import ShareSheet from './components/ShareSheet';
+import CreatePromptSheet from './components/CreatePromptSheet';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 import FirstRunView from './components/FirstRunView';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
@@ -63,6 +68,11 @@ function AppInner() {
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
   const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
   const [resumeRequested, setResumeRequested] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [editorSkillId, setEditorSkillId] = useState<string | null>(null);
+  const [shareSkillId, setShareSkillId] = useState<string | null>(null);
+  const [createPromptOpen, setCreatePromptOpen] = useState(false);
   const [isFirstRun, setIsFirstRun] = useState<boolean | null>(null); // null = loading
   const handleFirstRunComplete = useCallback(() => setIsFirstRun(false), []);
 
@@ -799,8 +809,8 @@ function AppInner() {
                   searchMode={drawerSearchMode}
                   onSelect={handleSelectSkill}
                   onClose={handleCloseDrawer}
-                  onOpenManager={() => {}}
-                  onOpenMarketplace={() => {}}
+                  onOpenManager={() => setManagerOpen(true)}
+                  onOpenMarketplace={() => setMarketplaceOpen(true)}
                 />
               )}
             </div>
@@ -872,6 +882,27 @@ function AppInner() {
         onClose={() => setResumeRequested(false)}
         onResume={handleResumeSession}
       />
+      {marketplaceOpen && (
+        <Marketplace onClose={() => setMarketplaceOpen(false)} />
+      )}
+      {managerOpen && (
+        <SkillManager
+          onClose={() => setManagerOpen(false)}
+          onOpenMarketplace={() => { setManagerOpen(false); setMarketplaceOpen(true); }}
+          onOpenShareSheet={(id) => setShareSkillId(id)}
+          onOpenEditor={(id) => setEditorSkillId(id)}
+          onOpenCreatePrompt={() => setCreatePromptOpen(true)}
+        />
+      )}
+      {editorSkillId && (
+        <SkillEditor skillId={editorSkillId} onClose={() => setEditorSkillId(null)} />
+      )}
+      {shareSkillId && (
+        <ShareSheet skillId={shareSkillId} onClose={() => setShareSkillId(null)} />
+      )}
+      {createPromptOpen && (
+        <CreatePromptSheet onClose={() => setCreatePromptOpen(false)} />
+      )}
       {toast && (
         <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-panel border border-edge text-sm text-fg shadow-lg">
           {toast}
