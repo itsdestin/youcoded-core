@@ -137,7 +137,25 @@ export function applyThemeToDom(theme: ThemeDefinition): void {
     root.style.removeProperty('--panel-glass');
   }
 
-  // 5. Layout data attributes on body — clear previous first
+  // 5. Background wallpaper — set directly on <body> (bypasses z-index stacking issues)
+  const bg = theme.background;
+  if (bg?.type === 'image' && bg.value) {
+    body.style.backgroundImage = `url("${bg.value}")`;
+    body.style.backgroundSize = 'cover';
+    body.style.backgroundPosition = 'center';
+    body.style.backgroundRepeat = 'no-repeat';
+    if (bg.opacity !== undefined && bg.opacity < 1) {
+      // Can't set opacity on body without affecting children, so leave at 1
+      // The slight dimming is handled by the vignette/overlay in custom_css if needed
+    }
+  } else {
+    body.style.backgroundImage = '';
+    body.style.backgroundSize = '';
+    body.style.backgroundPosition = '';
+    body.style.backgroundRepeat = '';
+  }
+
+  // 6. Layout data attributes on body — clear previous first
   for (const attr of LAYOUT_ATTRS) {
     body.removeAttribute(attr);
   }
@@ -145,7 +163,7 @@ export function applyThemeToDom(theme: ThemeDefinition): void {
     body.setAttribute(attr, value);
   }
 
-  // 6. custom_css — inject/replace in <style id="theme-custom">
+  // 7. custom_css — inject/replace in <style id="theme-custom">
   const customCSSId = 'theme-custom';
   let customEl = document.getElementById(customCSSId) as HTMLStyleElement | null;
   if (theme.custom_css) {
@@ -159,7 +177,7 @@ export function applyThemeToDom(theme: ThemeDefinition): void {
     customEl.textContent = '';
   }
 
-  // 7. Theme font — inject Google Font <link> and set --font-sans/--font-mono
+  // 8. Theme font — inject Google Font <link> and set --font-sans/--font-mono
   applyThemeFont(theme.font);
 }
 
@@ -174,6 +192,10 @@ export function clearThemeFromDom(): void {
   const root = document.documentElement;
   const body = document.body;
   root.removeAttribute('data-panels-blur');
+  body.style.backgroundImage = '';
+  body.style.backgroundSize = '';
+  body.style.backgroundPosition = '';
+  body.style.backgroundRepeat = '';
   const propsToRemove = [
     ...TOKEN_CSS_PROPS,
     '--panels-blur', '--panel-glass',
