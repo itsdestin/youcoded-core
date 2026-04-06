@@ -128,6 +128,32 @@ export class SkillConfigStore {
     this.save();
   }
 
+  // --- Installed Plugins (marketplace) ---
+
+  getInstalledPlugins(): Record<string, any> {
+    const config = this.load() as any;
+    return config.installed_plugins || {};
+  }
+
+  recordPluginInstall(id: string, meta: Record<string, any>): void {
+    const config = this.load() as any;
+    if (!config.installed_plugins) config.installed_plugins = {};
+    config.installed_plugins[id] = meta;
+    this.save();
+  }
+
+  removePluginInstall(id: string): void {
+    const config = this.load() as any;
+    if (config.installed_plugins) {
+      delete config.installed_plugins[id];
+    }
+    // Cascade cleanup
+    config.favorites = config.favorites.filter((f: string) => f !== id);
+    config.chips = config.chips.filter((c: any) => c.skillId !== id);
+    delete config.overrides[id];
+    this.save();
+  }
+
   /** Force reload from disk (useful after external changes) */
   reload(): UserSkillConfig {
     this.config = null;

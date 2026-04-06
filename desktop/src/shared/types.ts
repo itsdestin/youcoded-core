@@ -139,7 +139,7 @@ export interface SkillProvider {
   getFavorites(): Promise<string[]>;
   getChips(): Promise<ChipConfig[]>;
   getOverrides(): Promise<Record<string, MetadataOverride>>;
-  install(id: string): Promise<void>;
+  install(id: string): Promise<any>;
   uninstall(id: string): Promise<void>;
   setFavorite(id: string, favorited: boolean): Promise<void>;
   setChips(chips: ChipConfig[]): Promise<void>;

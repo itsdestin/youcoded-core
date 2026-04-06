@@ -4,6 +4,7 @@ import os from 'os';
 import { scanSkills } from './skill-scanner';
 import { SkillConfigStore } from './skill-config-store';
 import { encodeSkillLink, decodeSkillLink } from './skill-share';
+import { installPlugin, uninstallPlugin, isPluginInstalled, type InstallResult } from './plugin-installer';
 import type {
   SkillEntry, SkillDetailView, SkillFilters, ChipConfig,
   MetadataOverride, SkillProvider,
@@ -147,10 +148,10 @@ export class LocalSkillProvider implements SkillProvider {
 
   // --- Mutations ---
 
-  async install(id: string): Promise<void> {
+  async install(id: string): Promise<InstallResult> {
     const index = await this.fetchIndex();
     const entry = index.find(e => e.id === id);
-    if (!entry) throw new Error(`Skill not found in marketplace: ${id}`);
+    if (!entry) return { status: 'failed', error: `Skill not found in marketplace: ${id}` };
 
     if (entry.type === 'prompt') {
       this.configStore.createPromptSkill({
@@ -159,15 +160,46 @@ export class LocalSkillProvider implements SkillProvider {
         visibility: 'published',
         installedAt: new Date().toISOString(),
       });
-    } else {
-      throw new Error('Plugin installation from marketplace not yet implemented');
+      this.installedCache = null;
+      return { status: 'installed' };
     }
 
-    this.installedCache = null;
+    // Plugin install — delegate to PluginInstaller
+    const marketplaceEntry = entry as any;
+    const result = await installPlugin({
+      id: marketplaceEntry.id,
+      sourceType: marketplaceEntry.sourceType || 'unknown',
+      sourceRef: marketplaceEntry.sourceRef || '',
+      sourceSubdir: marketplaceEntry.sourceSubdir,
+      sourceMarketplace: marketplaceEntry.sourceMarketplace,
+      description: marketplaceEntry.description,
+      author: marketplaceEntry.author,
+    });
+
+    if (result.status === 'installed') {
+      // Record in config store
+      this.configStore.recordPluginInstall(id, {
+        installedAt: new Date().toISOString(),
+        installedFrom: marketplaceEntry.sourceMarketplace || 'unknown',
+        installPath: path.join(os.homedir(), '.claude', 'plugins', id),
+        sourceType: marketplaceEntry.sourceType,
+        sourceRef: marketplaceEntry.sourceRef,
+      });
+      this.installedCache = null;
+    }
+
+    return result;
   }
 
   async uninstall(id: string): Promise<void> {
-    this.configStore.deletePromptSkill(id);
+    // Check if this is a marketplace-installed plugin
+    const installed = this.configStore.getInstalledPlugins();
+    if (installed[id]) {
+      await uninstallPlugin(id);
+      this.configStore.removePluginInstall(id);
+    } else {
+      this.configStore.deletePromptSkill(id);
+    }
     this.installedCache = null;
   }
 

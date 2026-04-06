@@ -561,8 +561,10 @@ export class RemoteServer {
         break;
       }
       case 'skills:install': {
-        if (this.skillProvider) await this.skillProvider.install(payload.id);
-        this.respond(client.ws, type, id, { ok: true });
+        const installResult = this.skillProvider
+          ? await this.skillProvider.install(payload.id)
+          : { status: 'failed', error: 'Skill provider not initialized' };
+        this.respond(client.ws, type, id, installResult);
         break;
       }
       case 'skills:uninstall': {
