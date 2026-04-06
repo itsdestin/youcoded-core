@@ -191,7 +191,7 @@ export default function StatusBar({ statusData, onRunSync, model, onCycleModel, 
   const show = (id: WidgetId) => visible.has(id);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 sm:px-3 py-1 text-[10px] text-fg-muted border-t border-edge-dim">
+    <div className="status-bar flex flex-wrap items-center gap-x-2 gap-y-1 px-2 sm:px-3 py-1 text-[10px] text-fg-muted border-t border-edge-dim">
       {/* Customize widget — pencil icon */}
       <div className="relative" ref={menuRef}>
         <button

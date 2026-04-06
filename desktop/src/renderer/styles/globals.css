@@ -292,9 +292,44 @@ html, body, #root {
 }
 
 /* When glassmorphism is active, make the main canvas transparent
-   so the #theme-bg wallpaper shows through behind blurred panels */
+   so the body wallpaper shows through */
 [data-panels-blur] .bg-canvas {
   background-color: transparent !important;
+}
+
+/* Header bar — frosted glass with blur */
+[data-panels-blur] .header-bar {
+  backdrop-filter: blur(var(--panels-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
+  background-color: var(--panel-glass, var(--panel));
+}
+
+/* Status bar — frosted glass with blur */
+[data-panels-blur] .status-bar {
+  backdrop-filter: blur(var(--panels-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
+  background-color: var(--panel-glass, var(--panel));
+}
+
+/* Input bar wrapper — frosted glass */
+[data-panels-blur] .border-t.shrink-0:has(form) {
+  backdrop-filter: blur(var(--panels-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
+  background-color: var(--panel-glass, var(--panel));
+}
+
+/* Chat bubbles (assistant) — semi-transparent inset with subtle blur */
+[data-panels-blur] .bg-inset {
+  backdrop-filter: blur(calc(var(--panels-blur, 0px) * 0.5));
+  -webkit-backdrop-filter: blur(calc(var(--panels-blur, 0px) * 0.5));
+  background-color: color-mix(in srgb, var(--inset) 75%, transparent);
+}
+
+/* User message bubble — semi-transparent accent with subtle blur */
+[data-panels-blur] .bg-accent {
+  backdrop-filter: blur(calc(var(--panels-blur, 0px) * 0.5));
+  -webkit-backdrop-filter: blur(calc(var(--panels-blur, 0px) * 0.5));
+  background-color: color-mix(in srgb, var(--accent) 85%, transparent);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
