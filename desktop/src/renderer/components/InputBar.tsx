@@ -62,8 +62,8 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      // Skip non-printable keys
-      if (e.key.length !== 1) return;
+      // Allow Backspace and Enter to focus + act, skip other non-printable keys
+      if (e.key !== 'Backspace' && e.key !== 'Enter' && e.key.length !== 1) return;
       inputRef.current?.focus();
     };
     window.addEventListener('keydown', handler);
