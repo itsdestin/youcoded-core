@@ -153,7 +153,7 @@ export default function TerminalView({ sessionId, visible }: Props) {
         right: 0,
         bottom: 0,
         background: 'var(--canvas)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
         // Use visibility:hidden instead of display:none so xterm.js can
         // measure fonts and maintain its screen buffer while the terminal

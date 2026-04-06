@@ -93,7 +93,7 @@ const mdComponents = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="text-sm text-[#ccbb88]" {...props}>
+        <code className="text-sm text-code" {...props}>
           {children}
         </code>
       );

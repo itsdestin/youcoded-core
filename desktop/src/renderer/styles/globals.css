@@ -25,6 +25,7 @@
   --edge-dim: #DCDCDC80;
   --scrollbar-thumb: #C0C0C0;
   --scrollbar-hover: #999999;
+  --code: #8B6914;
   --hl-theme: light;
   color-scheme: light;
   --radius-sm: 4px;
@@ -52,6 +53,7 @@
   --edge-dim: #37373780;
   --scrollbar-thumb: #333333;
   --scrollbar-hover: #555555;
+  --code: #D4A843;
   --hl-theme: dark;
   color-scheme: dark;
   --radius-sm: 4px;
@@ -79,6 +81,7 @@
   --edge-dim: #30363D80;
   --scrollbar-thumb: #30363D;
   --scrollbar-hover: #484F58;
+  --code: #C9A84C;
   --hl-theme: dark;
   color-scheme: dark;
   --radius-sm: 4px;
@@ -106,6 +109,7 @@
   --edge-dim: #D4C8B580;
   --scrollbar-thumb: #CBBFB0;
   --scrollbar-hover: #A89A8A;
+  --code: #7A5D2E;
   --hl-theme: light;
   color-scheme: light;
   --radius-sm: 4px;
@@ -141,7 +145,16 @@
   --color-edge: var(--edge);
   --color-edge-dim: var(--edge-dim);
 
-  /* Border radius scale — driven by theme variables (use --radius-* vars directly in components) */
+  /* Border radius scale — maps Tailwind rounded-* utilities to theme variables */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-full: var(--radius-full);
+
+  /* Inline code text color */
+  --color-code: var(--code);
 
   /* Status colors — constant across all themes */
   --color-green-400: #4CAF50;
