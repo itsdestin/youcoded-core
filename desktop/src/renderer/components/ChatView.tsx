@@ -125,6 +125,11 @@ export default function ChatView({ sessionId, visible, resumeInfo }: Props) {
     });
   }, [sessionId, dispatch]);
 
+  // Scroll to bottom when switching sessions
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [sessionId]);
+
   // Track whether user is scrolled to bottom
   useEffect(() => {
     const sentinel = bottomRef.current;
@@ -149,6 +154,40 @@ export default function ChatView({ sessionId, visible, resumeInfo }: Props) {
 
   const jumpToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Arrow key scrolling with acceleration when not typing
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollSpeed = useRef(0);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+      e.preventDefault();
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      // Accelerate: start at 40px, increase by 20px per repeat, cap at 300px
+      scrollSpeed.current = Math.min(scrollSpeed.current + 20, 300);
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      container.scrollBy({ top: direction * scrollSpeed.current, behavior: 'auto' });
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        scrollSpeed.current = 0;
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('keyup', onKeyUp, true);
+    };
   }, []);
 
   const handlePromptSelect = useCallback(
@@ -178,7 +217,7 @@ export default function ChatView({ sessionId, visible, resumeInfo }: Props) {
         flexDirection: 'column',
       }}
     >
-      <div className="flex-1 overflow-y-auto pt-4 pb-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pt-4 pb-1">
         {state.timeline.length === 0 && !state.isThinking ? (
           <div className="flex items-center justify-center h-full text-fg-muted text-sm">
             Start a conversation with Claude
