@@ -16,7 +16,7 @@ function getXtermTheme(): { background: string; foreground: string; cursor: stri
   // When glassmorphism is active, make xterm background transparent so the
   // wallpaper shows through the frosted container behind it
   const hasBlur = document.documentElement.hasAttribute('data-panels-blur');
-  const bg = hasBlur ? 'rgba(0, 0, 0, 0)' : (s.getPropertyValue('--canvas').trim() || '#0A0A0A');
+  const bg = hasBlur ? 'transparent' : (s.getPropertyValue('--canvas').trim() || '#0A0A0A');
   // Selection: accent at 30% opacity
   return { background: bg, foreground: fg, cursor: fg, selectionBackground: accent + '4D' };
 }
@@ -35,7 +35,6 @@ export default function TerminalView({ sessionId, visible }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const webglRef = useRef<WebglAddon | null>(null);
   const { theme, font, activeTheme } = useTheme();
 
   // Sync xterm theme when app theme changes (activeTheme changes on hot-reload too,
@@ -44,26 +43,8 @@ export default function TerminalView({ sessionId, visible }: Props) {
     if (!terminalRef.current) return;
     // Microtask delay: CSS variables may not be painted yet when this effect fires
     requestAnimationFrame(() => {
-      if (!terminalRef.current) return;
-      terminalRef.current.options.theme = getXtermTheme();
-
-      // WebGL addon renders on an opaque canvas that can't show transparency.
-      // Dispose it when glassmorphism is active so the DOM renderer is used
-      // (which handles transparent backgrounds natively via CSS).
-      // Re-attach it when glassmorphism is off for better rendering perf.
-      const glass = hasGlassmorphism();
-      if (glass && webglRef.current) {
-        webglRef.current.dispose();
-        webglRef.current = null;
-      } else if (!glass && !webglRef.current) {
-        try {
-          const webgl = new WebglAddon();
-          webgl.onContextLoss(() => webgl.dispose());
-          terminalRef.current.loadAddon(webgl);
-          webglRef.current = webgl;
-        } catch {
-          // Falls back to DOM renderer if WebGL unavailable
-        }
+      if (terminalRef.current) {
+        terminalRef.current.options.theme = getXtermTheme();
       }
     });
   }, [activeTheme]);
@@ -96,18 +77,13 @@ export default function TerminalView({ sessionId, visible }: Props) {
     terminal.open(containerRef.current);
 
     // WebGL renderer must be loaded after open() — eliminates grid-line
-    // artifacts from the DOM renderer's sub-pixel rounding issues.
-    // Skip when glassmorphism is active — the WebGL canvas is opaque
-    // and blocks the wallpaper from showing through.
-    if (!hasGlassmorphism()) {
-      try {
-        const webgl = new WebglAddon();
-        webgl.onContextLoss(() => webgl.dispose());
-        terminal.loadAddon(webgl);
-        webglRef.current = webgl;
-      } catch {
-        // Falls back to DOM renderer if WebGL unavailable
-      }
+    // artifacts from the DOM renderer's sub-pixel rounding issues
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      terminal.loadAddon(webgl);
+    } catch {
+      // Falls back to DOM renderer if WebGL unavailable
     }
 
     terminalRef.current = terminal;
