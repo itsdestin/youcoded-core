@@ -374,6 +374,64 @@ export async function disconnectFromHost(): Promise<void> {
   setConnectionMode('local');
 }
 
+/**
+ * Opens a browser file picker, reads selected files as base64,
+ * uploads each to the remote desktop via WebSocket, and returns
+ * the desktop-side file paths.
+ */
+async function pickAndUploadFiles(): Promise<string[]> {
+  // Create a hidden file input and trigger the native picker
+  const paths: string[] = [];
+  const files = await new Promise<FileList | null>((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*,text/*,.pdf,.json,.csv,.md,.ts,.tsx,.js,.jsx,.py,.rs,.go,.java,.c,.cpp,.h';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      resolve(input.files);
+      document.body.removeChild(input);
+    });
+    // Handle cancel — the input won't fire 'change', so listen for focus return
+    const onFocus = () => {
+      setTimeout(() => {
+        if (!input.files?.length) {
+          resolve(null);
+          if (input.parentNode) document.body.removeChild(input);
+        }
+        window.removeEventListener('focus', onFocus);
+      }, 300);
+    };
+    window.addEventListener('focus', onFocus);
+    input.click();
+  });
+
+  if (!files || files.length === 0) return [];
+
+  // Read each file as base64 and upload to the desktop
+  for (const file of Array.from(files)) {
+    try {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      const result = await invoke('file:upload', {
+        name: file.name,
+        data: base64,
+        size: file.size,
+      });
+      if (result?.path) paths.push(result.path);
+    } catch (err) {
+      console.error('Failed to upload file:', file.name, err);
+    }
+  }
+  return paths;
+}
+
 /** Install the window.claude shim. Call once on app startup in browser mode. */
 export function installShim(): void {
   // Android WebView (file://) always starts in local mode — clear any stale remote target
@@ -445,8 +503,14 @@ export function installShim(): void {
       getCuratedDefaults: () => invoke('skills:get-curated-defaults'),
     },
     dialog: {
-      openFile: async () => [],
-      openFolder: async () => null,
+      openFile: () => targetUrl
+        ? pickAndUploadFiles()                   // Remote — pick on device, upload to desktop
+        : invoke('android:pick-file')            // Local Android — native file picker
+            .catch(() => [] as string[]),
+      openFolder: () => targetUrl
+        ? invoke('dialog:open-folder')
+        : invoke('android:pick-folder')
+            .catch(() => null),
       readTranscriptMeta: (p: string) => invoke('transcript:read-meta', { path: p }),
       saveClipboardImage: async () => null,
     },

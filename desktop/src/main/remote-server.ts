@@ -147,6 +147,23 @@ export class RemoteServer {
       this.broadcast({ type: 'status:data', payload: data });
     }, 10_000);
 
+    // Cleanup uploaded files older than 1 hour
+    const uploadDir = path.join(os.tmpdir(), 'claude-desktop-uploads');
+    setInterval(async () => {
+      try {
+        const files = await fs.promises.readdir(uploadDir);
+        const now = Date.now();
+        for (const file of files) {
+          try {
+            const stat = await fs.promises.stat(path.join(uploadDir, file));
+            if (now - stat.mtimeMs > 3600_000) {
+              await fs.promises.unlink(path.join(uploadDir, file));
+            }
+          } catch {}
+        }
+      } catch {}
+    }, 3600_000);
+
     // Topic names are tracked by ipc-handlers.ts and forwarded via setLastTopic() + broadcast()
 
     return new Promise<void>((resolve) => {
@@ -638,6 +655,21 @@ export class RemoteServer {
       case 'skills:get-curated-defaults': {
         const result = this.skillProvider ? await this.skillProvider.getCuratedDefaults() : [];
         this.respond(client.ws, type, id, result);
+        break;
+      }
+      case 'file:upload': {
+        const uploadDir = path.join(os.tmpdir(), 'claude-desktop-uploads');
+        try {
+          await fs.promises.mkdir(uploadDir, { recursive: true });
+          // Sanitize filename — strip path separators and limit length
+          const rawName = String(payload.name || 'upload').replace(/[/\\:*?"<>|]/g, '_').slice(0, 200);
+          const filePath = path.join(uploadDir, `${Date.now()}-${rawName}`);
+          const buffer = Buffer.from(payload.data, 'base64');
+          await fs.promises.writeFile(filePath, buffer);
+          this.respond(client.ws, type, id, { path: filePath });
+        } catch (err) {
+          this.respond(client.ws, type, id, { error: 'Upload failed' });
+        }
         break;
       }
       case 'model:get-preference': {
