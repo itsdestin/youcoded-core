@@ -89,7 +89,7 @@ Hook trigger-point registration is written to `~/.claude/settings.json` under th
 | Layer | Skills | Commands | Hooks | MCP Servers |
 |-------|--------|----------|-------|-------------|
 | Core | setup-wizard, remote-setup | setup-wizard, toolkit, contribute, toolkit-uninstall, update, health, restore | checklist-reminder, contribution-detector, sync, session-start, title-update, todo-capture, tool-router, write-guard + lib/backup-common.sh, lib/migrate.sh, migrations/ + statusline (separate config) | — |
-| Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, fork-file, google-drive, journaling-assistant | — | sync-encyclopedia | — |
+| Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, fork-file, google-drive, journaling-assistant | — | — | — |
 | Productivity | claudes-inbox, skill-creator | — | — | todoist, gmessages, windows-control (Windows) |
 | Modules | (optional domain-specific add-ons) | — | — | — |
 

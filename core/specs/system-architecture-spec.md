@@ -88,7 +88,7 @@ Local (~/.claude/)
 | `checklist-reminder.sh` | Stop | `.*` | Remind Claude to verify system change checklist if system files were modified | Reads `.write-registry.json` |
 | `done-sound.sh` | Stop | `.*` | Play a chime sound when Claude finishes | None |
 | `check-inbox.sh` | (utility) | — | Check inbox providers for items, called by session-start.sh | None |
-| `sync-encyclopedia.sh` | PostToolUse | `Write\|Edit` | Sync encyclopedia cache to Drive after edits (life layer) | None |
+| ~~`sync-encyclopedia.sh`~~ | — | — | Removed — encyclopedia sync consolidated into `sync.sh` | — |
 | `announcement-fetch.js` | (utility) | — | Fetch broadcast announcements from GitHub repo | Writes `.announcement-cache.json` |
 | `usage-fetch.js` | (utility) | — | Retrieve and cache API usage/rate-limit data | Writes `.usage-cache.json` |
 | `statusline.sh` | (statusLine) | — | Render multi-line status bar for Claude Code | Reads topics, sync-status, caches |

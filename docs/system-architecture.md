@@ -50,8 +50,6 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 
 **Hook composition:** If a user already has hooks at the same trigger points, the setup wizard offers to merge logic (preserving both) or let the user choose which to keep. The backup system ensures nothing is lost.
 
-The life layer adds `sync-encyclopedia.sh` (rclone-based Google Drive sync for encyclopedia files).
-
 **Hook settings manifest:** `core/hooks/hooks-manifest.json` declares the desired state for all hook registrations in `settings.json`. The `/update` command's `settings-migrate` phase reconciles the user's settings against this manifest — adding new hooks, updating properties, and enforcing minimum timeouts (MAX of user value and manifest value).
 
 **Shared libraries:** `core/hooks/lib/` contains sourced utilities (`hook-preamble.sh`, `backup-common.sh`, `migrate.sh`) that are not hooks themselves but are loaded by hooks at runtime. `core/hooks/migrations/` contains schema migration scripts and the v1 baseline definition.
@@ -90,7 +88,7 @@ The life layer's encyclopedia system maintains a living biography through 8 modu
 
 **Compilation:** The `encyclopedia-compile` skill merges all 8 files into a single narrative document. It supports four detail levels (Full, Personal, Professional, Public) that control how much intimate detail appears.
 
-**Sync architecture:** Files are stored in Google Drive (`gdrive:Claude/The Journal/System/`) and cached locally at `~/.claude/encyclopedia/`. The `sync-encyclopedia.sh` hook syncs on session start. The encyclopedia-update skill writes changes back to Drive after user approval.
+**Sync architecture:** Files are stored in Google Drive (`gdrive:Claude/The Journal/System/`) and cached locally at `~/.claude/encyclopedia/`. The unified `sync.sh` hook handles encyclopedia sync alongside other backends. The encyclopedia-update skill writes changes back to Drive after user approval.
 
 ## Fork File
 
