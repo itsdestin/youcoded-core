@@ -253,6 +253,7 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
     These are cosmetic overlays — only include them when the theme concept uses these effects.
 14. **Layout presets work in the app.** `data-chrome-style`, `data-input-style`, `data-bubble-style`, `data-header-style`, and `data-statusbar-style` are wired to the real app's DOM via the theme engine. `chrome-style: "floating"` elevates all chrome bars (header, input, status) into detached rounded cards; individual `*-style` keys override per element. Input style presets require the `input-bar-container` class on the input wrapper.
 15. **No absolute positioning on layout-flow elements**: Never use `position: absolute` on `.status-bar`, `.input-bar-container`, or other elements that participate in the app's flex column layout. Absolute positioning removes them from document flow and causes overlaps with adjacent elements. The floating chrome aesthetic uses `align-self`, `width: fit-content`, `margin`, `border-radius`, and `box-shadow` instead.
+16. **Static asset serving**: The visual companion server only serves non-HTML files under the `/files/` URL prefix (e.g. `GET /files/wallpaper.jpg`). A bare reference like `src="wallpaper.jpg"` resolves to `GET /wallpaper.jpg`, which returns 404. All `<img>`, `background-image: url(...)`, and other asset references in preview HTML **MUST** use the `/files/` prefix (e.g. `src="/files/wallpaper.jpg"`, `url('/files/wallpaper.jpg')`). Additionally, the asset file must exist inside the server's `screen_dir` (the `content/` directory) — files in the theme pack folder (`<slug>/assets/`) are in a different directory tree and are not accessible to the server. Always copy downloaded wallpapers and any other binary assets into `screen_dir` immediately after downloading them, then reference them as `/files/<filename>` in all HTML.
 
 ---
 
@@ -264,12 +265,15 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
 
 After the user approves a concept direction, Claude generates and shows each visual element one at a time in the concept browser for tweaking. Each screen is a separate HTML file pushed to the visual companion's `screen_dir`. Claude iterates on each screen until the user approves or says "skip" / "looks good" / "next", then moves to the next screen. After all screens are approved, proceed to the full theme pack generation in Step 1 below.
 
+**IMPORTANT — Wallpaper in previews**: If the theme uses a wallpaper image (not just a CSS gradient), download it **before** rendering Screen 1. Save it to both `<slug>/assets/wallpaper.<ext>` AND copy it into `screen_dir` so the preview server can serve it. Reference it in HTML as `/files/wallpaper.<ext>` (see Critical Rendering Rule 16). Concept card mockups in Phase 1 should also use the real wallpaper in `#theme-bg` instead of a CSS gradient stand-in — otherwise the user evaluates glassmorphism themes without seeing how the wallpaper actually looks through frosted panels, which defeats the purpose.
+
 **Screen 1: Background & Atmosphere**
 - Show the wallpaper or gradient Claude plans to use as a full-width preview (filling most of the viewport)
 - Show the pattern overlay if applicable, rendered as a tiled preview panel beside or below the wallpaper
 - Show glassmorphism settings: a panel sample with the planned blur level and panel opacity, overlaid on the wallpaper so the user sees the actual frosted-glass effect
 - Show the particle effect choice as a label badge (particles are static in preview)
 - Use concept card CSS classes for panels/surfaces; use custom layout for the large wallpaper preview area
+- All wallpaper references must use `/files/wallpaper.<ext>` (not bare filenames or relative paths — see Critical Rendering Rule 16)
 - User can say "try a different wallpaper", "less blur", "no pattern", "more opacity", etc.
 
 **Screen 2: Mascot Crossovers**
@@ -317,6 +321,7 @@ mkdir -p ~/.claude/destinclaude-themes/<slug>/assets
 - Use WebSearch to find high-quality official or fan art wallpapers
 - Use WebFetch to download the image
 - Save to `<slug>/assets/wallpaper.png` (or appropriate extension)
+- **Also copy to `screen_dir`** so the preview server can serve it (see Critical Rendering Rule 16)
 - Prefer 1920x1080 or higher resolution
 - Prioritize images that work well as a subtle background (not too busy, good as a blurred backdrop)
 
@@ -325,6 +330,7 @@ mkdir -p ~/.claude/destinclaude-themes/<slug>/assets
 - Use WebFetch to download the image
 - Alternatively, use a CSS gradient in `background.value` if no wallpaper is needed
 - Save to `<slug>/assets/wallpaper.png`
+- **Also copy to `screen_dir`** if a wallpaper image was downloaded (see Critical Rendering Rule 16)
 
 ### Step 3: Generate SVG Assets
 
