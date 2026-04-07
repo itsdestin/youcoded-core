@@ -548,7 +548,10 @@ function DefaultsButton({ defaults, onDefaultsChange }: DefaultsButtonProps) {
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
       >
         <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
-          <span className="text-sm">⚙️</span>
+          <svg className="w-4 h-4 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="7" x2="20" y2="7" /><circle cx="8" cy="7" r="2.2" fill="var(--panel)" />
+                    <line x1="4" y1="17" x2="20" y2="17" /><circle cx="16" cy="17" r="2.2" fill="var(--panel)" />
+                  </svg>
         </div>
         <div className="flex-1 min-w-0">
           <span className="text-xs text-fg font-medium">Defaults</span>
@@ -1088,7 +1091,9 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
             >
               <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
-                <span className="text-sm">☕</span>
+                <svg className="w-4 h-4 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                  </svg>
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs text-fg font-medium">Donate</span>
@@ -1102,7 +1107,11 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
             {aboutInfo && (
               <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 text-left">
                 <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
-                  <span className="text-sm">ℹ️</span>
+                  <svg className="w-4 h-4 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-fg font-medium">About</span>
@@ -1256,7 +1265,9 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
             >
               <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
-                <span className="text-sm">☕</span>
+                <svg className="w-4 h-4 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                  </svg>
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs text-fg font-medium">Donate</span>
@@ -1269,7 +1280,11 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
 
             <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 text-left">
               <div className="flex items-center justify-center shrink-0" style={{ width: 32, height: 20 }}>
-                <span className="text-sm">ℹ️</span>
+                <svg className="w-4 h-4 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs text-fg font-medium">About</span>

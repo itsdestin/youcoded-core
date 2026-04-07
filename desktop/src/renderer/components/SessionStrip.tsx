@@ -113,9 +113,9 @@ export default function SessionStrip({
   const [shiftNavIdx, setShiftNavIdx] = useState<number>(-1);
   const shiftNavActive = useRef(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newCwd, setNewCwd] = useState(defaultProjectFolder || '');
-  const [dangerous, setDangerous] = useState(defaultSkipPermissions || false);
-  const [newModel, setNewModel] = useState<string>(defaultModel || 'sonnet');
+  const [newCwd, setNewCwd] = useState('');
+  const [dangerous, setDangerous] = useState(false);
+  const [newModel, setNewModel] = useState<string>('sonnet');
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -379,7 +379,7 @@ export default function SessionStrip({
 
   return (
     <>
-      <div ref={pillBarRef} className="flex items-center gap-0.5 bg-inset rounded-full px-1.5 py-0.5 overflow-hidden min-w-0 shrink">
+      <div ref={pillBarRef} className="session-strip flex items-center gap-0.5 bg-inset rounded-full px-1.5 py-0.5 overflow-hidden min-w-0 shrink">
         {/* ── Session pills ──────────────────────────────── */}
         {visibleSessions.map((s, idx) => {
           const color = sessionStatuses?.get(s.id) || 'gray';
