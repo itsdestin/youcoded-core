@@ -598,20 +598,14 @@ Use the `custom_css` field for visual effects the schema cannot express. Include
 ::selection { background: rgba(ACCENT_R, ACCENT_G, ACCENT_B, 0.3); color: ACCENT_ON; }
 ```
 
-**REQUIRED when the theme has a wallpaper image (`background.type: "image"`):**
+**REQUIRED when the theme has a pattern overlay:**
 
-The wallpaper and pattern MUST be added as `body::before` and `body::after` fixed overlays in `custom_css`. This is the **only** way for backgrounds to be visible in terminal view — the terminal uses a WebGL canvas that is opaque, so `body` background-image (which sits behind everything) cannot show through it. Fixed pseudo-element overlays render ON TOP of the WebGL canvas with `pointer-events: none`, making them visible in both chat and terminal views.
+The pattern MUST be added as a `body::after` fixed overlay in `custom_css`. This renders ON TOP of the terminal's WebGL canvas (which is opaque), making the pattern visible in both chat and terminal views. Do NOT use `body::before` for this — `::before` renders behind body's children and will be hidden by the WebGL canvas.
+
+The wallpaper image itself does NOT need an overlay — the app disables the WebGL renderer when glassmorphism is active, so `body` background-image (set by the theme engine) shows through the terminal via the DOM renderer's CSS transparency.
 
 ```css
-/* Wallpaper overlay — visible in both chat and terminal views */
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background: url('theme-asset://SLUG/assets/wallpaper.EXT') center/cover no-repeat;
-  opacity: 0.6; /* adjust to taste — lower = subtler */
-  pointer-events: none; z-index: 0;
-}
-
-/* Pattern overlay — repeating SVG on top of wallpaper */
+/* Pattern overlay — visible in both chat and terminal views */
 body::after {
   content: ''; position: fixed; inset: 0;
   background-image: url('theme-asset://SLUG/assets/pattern.svg');
@@ -621,7 +615,7 @@ body::after {
 }
 ```
 
-Omit `body::after` if the theme has no pattern. Omit `body::before` if the theme uses a gradient or solid background (no wallpaper image). Use `theme-asset://SLUG/...` URLs to reference local theme assets.
+Omit `body::after` if the theme has no pattern. Use `theme-asset://SLUG/...` URLs to reference local theme assets.
 
 **ALSO REQUIRED when `panels-blur > 0` (glassmorphism themes):**
 
@@ -680,7 +674,7 @@ Key notes for glassmorphism:
 - `color-mix(in srgb, var(--token) N%, transparent)` creates semi-transparent versions of theme tokens without needing to know their RGB values
 - `saturate(1.2)` boosts the blurred wallpaper color through the frost — makes it feel warm/alive rather than washed out
 - The header becomes `position: absolute` so chat content scrolls underneath the frosted bar
-- The terminal view uses a WebGL canvas that is always opaque — backgrounds are visible in terminal view ONLY via the `body::before`/`body::after` fixed overlays (see above), NOT via body background-image transparency
+- The terminal view disables WebGL when glassmorphism is active, so `body` background-image (wallpaper) shows through via the DOM renderer. Patterns use `body::after` overlays which render on top of the canvas regardless of renderer
 
 **Consider including (when they fit the theme):**
 ```css
