@@ -780,13 +780,15 @@ phase_verify() {
         // Legacy fallback — keep the existing hardcoded list
         expected = [
           ['SessionStart',      'startup',    'session-start.sh'],
+          ['SessionStart',      'startup',    'contribution-detector.sh'],
           ['PreToolUse',        'Write|Edit', 'write-guard.sh'],
           ['PreToolUse',        'Bash|Agent', 'worktree-guard.sh'],
           ['PostToolUse',       'Write|Edit', 'sync.sh'],
           ['PostToolUse',       '.*',         'title-update.sh'],
           ['UserPromptSubmit',  '.*',         'todo-capture.sh'],
           ['Stop',              '.*',         'checklist-reminder.sh'],
-          ['Stop',              '.*',         'done-sound.sh']
+          ['Stop',              '.*',         'done-sound.sh'],
+          ['SessionEnd',        '.*',         'session-end-sync.sh']
         ];
       }
 
