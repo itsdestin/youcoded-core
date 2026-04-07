@@ -10,6 +10,7 @@ import type {
   ThemeRegistryEntryWithStatus,
 } from '../shared/theme-marketplace-types';
 import { THEMES_DIR } from './theme-watcher';
+import { generateThemePreview } from './theme-preview-generator';
 
 const execFileAsync = promisify(execFile);
 
@@ -278,7 +279,14 @@ export class ThemeMarketplaceProvider {
       }
     }
 
-    // 4. Collect all theme files (manifest + assets)
+    // 4. Generate preview image
+    try {
+      await generateThemePreview(themeDir, manifest);
+    } catch (err: any) {
+      console.warn('[ThemeMarketplace] Preview generation failed (continuing without):', err.message);
+    }
+
+    // 5. Collect all theme files (manifest + assets + preview)
     const filesToUpload: { repoPath: string; localPath: string; binary: boolean }[] = [];
 
     // Add manifest.json (strip source field for the PR — reviewer decides)
@@ -305,7 +313,17 @@ export class ThemeMarketplaceProvider {
       }
     }
 
-    // 5. Upload files via GitHub Contents API
+    // Add preview.png if it was generated
+    const previewPath = path.join(themeDir, 'preview.png');
+    if (fs.existsSync(previewPath)) {
+      filesToUpload.push({
+        repoPath: `themes/${slug}/preview.png`,
+        localPath: previewPath,
+        binary: true,
+      });
+    }
+
+    // 6. Upload files via GitHub Contents API
     for (const file of filesToUpload) {
       let content: string;
       if (file.repoPath.endsWith('manifest.json') && file.localPath === manifestPath) {

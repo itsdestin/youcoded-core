@@ -14,6 +14,7 @@ import { listPastSessions, loadHistory } from './session-browser';
 import { readTranscriptMeta } from './transcript-utils';
 import { startThemeWatcher, listUserThemes, userThemeDir, userThemeManifest, THEMES_DIR } from './theme-watcher';
 import { ThemeMarketplaceProvider } from './theme-marketplace-provider';
+import { generateThemePreview } from './theme-preview-generator';
 
 // Max age for clipboard paste images (1 hour)
 const CLIPBOARD_MAX_AGE_MS = 60 * 60 * 1000;
@@ -87,6 +88,19 @@ export function registerIpcHandlers(
 
   ipcMain.handle(IPC.THEME_MARKETPLACE_PUBLISH, async (_event, slug: string) => {
     return themeMarketplace.publishTheme(slug);
+  });
+
+  ipcMain.handle(IPC.THEME_MARKETPLACE_GENERATE_PREVIEW, async (_event, slug: string) => {
+    try {
+      const manifestPath = path.resolve(userThemeManifest(slug));
+      if (!manifestPath.startsWith(THEMES_DIR + path.sep)) throw new Error('Invalid theme slug');
+      const manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf-8'));
+      const previewPath = await generateThemePreview(userThemeDir(slug), manifest);
+      return previewPath;
+    } catch (err: any) {
+      console.warn('[IPC] Failed to generate theme preview:', err.message);
+      return null;
+    }
   });
 
   // Broadcast session-created events from SessionManager (covers both IPC and remote-created sessions)

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../state/theme-context';
-import type { LoadedTheme } from '../themes/theme-types';
 
 interface ThemeShareSheetProps {
   themeSlug: string;
@@ -11,9 +10,26 @@ export default function ThemeShareSheet({ themeSlug, onClose }: ThemeShareSheetP
   const { allThemes } = useTheme();
   const theme = allThemes.find(t => t.slug === themeSlug);
 
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+
+  // Generate preview on mount
+  useEffect(() => {
+    const claude = (window as any).claude;
+    if (!claude?.theme?.marketplace?.generatePreview) {
+      setPreviewLoading(false);
+      return;
+    }
+    claude.theme.marketplace.generatePreview(themeSlug)
+      .then((path: string | null) => {
+        setPreviewPath(path);
+        setPreviewLoading(false);
+      })
+      .catch(() => setPreviewLoading(false));
+  }, [themeSlug]);
 
   // Close on Escape
   useEffect(() => {
@@ -44,7 +60,7 @@ export default function ThemeShareSheet({ themeSlug, onClose }: ThemeShareSheetP
     <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative bg-panel border border-edge-dim rounded-xl p-5 max-w-sm w-full mx-4 shadow-xl"
+        className="relative bg-panel border border-edge-dim rounded-xl p-5 max-w-md w-full mx-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -56,17 +72,32 @@ export default function ThemeShareSheet({ themeSlug, onClose }: ThemeShareSheetP
           </button>
         </div>
 
-        {/* Theme preview card */}
+        {/* Preview image */}
         <div className="rounded-lg overflow-hidden border border-edge-dim mb-4">
-          <div style={{ height: 6, background: `linear-gradient(90deg, ${theme.tokens.canvas}, ${theme.tokens.accent})` }} />
-          <div className="px-3 py-2.5" style={{ background: theme.tokens.canvas }}>
-            <p className="text-xs font-medium" style={{ color: theme.tokens.fg }}>{theme.name}</p>
-            <p className="text-[10px] mt-0.5" style={{ color: theme.tokens['fg-muted'] }}>
-              {theme.dark ? 'Dark' : 'Light'} theme
-              {theme.effects?.particles && theme.effects.particles !== 'none' ? ` \u00b7 ${theme.effects.particles} particles` : ''}
-              {theme.font?.family ? ` \u00b7 ${theme.font.family.split(',')[0].replace(/'/g, '')}` : ''}
-            </p>
-          </div>
+          {previewLoading ? (
+            <div className="w-full h-40 bg-well flex items-center justify-center">
+              <span className="text-xs text-fg-muted animate-pulse">Generating preview...</span>
+            </div>
+          ) : previewPath ? (
+            <img
+              src={`file://${previewPath.replace(/\\/g, '/')}`}
+              alt={`${theme.name} preview`}
+              className="w-full h-auto"
+            />
+          ) : (
+            /* Fallback: color swatch card */
+            <div>
+              <div style={{ height: 6, background: `linear-gradient(90deg, ${theme.tokens.canvas}, ${theme.tokens.accent})` }} />
+              <div className="px-3 py-2.5" style={{ background: theme.tokens.canvas }}>
+                <p className="text-xs font-medium" style={{ color: theme.tokens.fg }}>{theme.name}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: theme.tokens['fg-muted'] }}>
+                  {theme.dark ? 'Dark' : 'Light'} theme
+                  {theme.effects?.particles && theme.effects.particles !== 'none' ? ` \u00b7 ${theme.effects.particles} particles` : ''}
+                  {theme.font?.family ? ` \u00b7 ${theme.font.family.split(',')[0].replace(/'/g, '')}` : ''}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -74,6 +105,7 @@ export default function ThemeShareSheet({ themeSlug, onClose }: ThemeShareSheetP
           This will create a pull request to the{' '}
           <span className="text-fg-2 font-medium">destinclaude-themes</span>{' '}
           repository on GitHub. Your theme will be reviewed and, if approved, added to the marketplace for all users.
+          {previewPath && ' A preview image will be included in the submission.'}
         </p>
 
         <p className="text-[10px] text-fg-faint mb-4">
@@ -102,10 +134,10 @@ export default function ThemeShareSheet({ themeSlug, onClose }: ThemeShareSheetP
             <>
               <button
                 onClick={handlePublish}
-                disabled={publishing}
+                disabled={publishing || previewLoading}
                 className="w-full text-xs font-medium py-2.5 rounded-lg bg-accent text-on-accent hover:brightness-110 transition-colors disabled:opacity-50"
               >
-                {publishing ? 'Publishing...' : 'Publish to Marketplace'}
+                {publishing ? 'Publishing...' : previewLoading ? 'Generating preview...' : 'Publish to Marketplace'}
               </button>
               {publishError && (
                 <p className="text-xs text-red-400 text-center mt-2">{publishError}</p>

@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { ThemeRegistryEntryWithStatus } from '../../shared/theme-marketplace-types';
 import { useTheme } from '../state/theme-context';
+import { applyThemeToDom } from '../themes/theme-engine';
+import type { ThemeDefinition } from '../themes/theme-types';
 
 interface ThemeDetailProps {
   entry: ThemeRegistryEntryWithStatus;
@@ -9,12 +11,67 @@ interface ThemeDetailProps {
 }
 
 export default function ThemeDetail({ entry, onBack, onInstallComplete }: ThemeDetailProps) {
-  const { setTheme, allThemes } = useTheme();
+  const { setTheme, allThemes, activeTheme } = useTheme();
   const [installing, setInstalling] = useState(false);
   const [uninstalling, setUninstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trying, setTrying] = useState(false);
+  const [manifest, setManifest] = useState<ThemeDefinition | null>(null);
+  const [fetchingManifest, setFetchingManifest] = useState(false);
+
+  // Store the theme to revert to when leaving the try preview
+  const revertThemeRef = useRef<ThemeDefinition | null>(null);
 
   const isInstalled = allThemes.some(t => t.slug === entry.slug) || entry.installed;
+
+  // Fetch full manifest for try-before-install
+  useEffect(() => {
+    if (!entry.manifestUrl) return;
+    setFetchingManifest(true);
+    fetch(entry.manifestUrl)
+      .then(res => res.ok ? res.json() : null)
+      .then((data: ThemeDefinition | null) => {
+        setManifest(data);
+        setFetchingManifest(false);
+      })
+      .catch(() => setFetchingManifest(false));
+  }, [entry.manifestUrl]);
+
+  // Auto-revert on unmount if currently trying
+  useEffect(() => {
+    return () => {
+      if (revertThemeRef.current) {
+        applyThemeToDom(revertThemeRef.current);
+        revertThemeRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleTry = useCallback(() => {
+    if (!manifest) return;
+    if (trying) {
+      // Revert
+      if (revertThemeRef.current) {
+        applyThemeToDom(revertThemeRef.current);
+        revertThemeRef.current = null;
+      }
+      setTrying(false);
+    } else {
+      // Apply preview (tokens + shapes only — no assets since not downloaded)
+      revertThemeRef.current = activeTheme;
+      applyThemeToDom(manifest);
+      setTrying(true);
+    }
+  }, [manifest, trying, activeTheme]);
+
+  const handleBack = useCallback(() => {
+    // Revert if trying
+    if (revertThemeRef.current) {
+      applyThemeToDom(revertThemeRef.current);
+      revertThemeRef.current = null;
+    }
+    onBack();
+  }, [onBack]);
 
   const handleInstall = useCallback(async () => {
     setInstalling(true);
@@ -25,6 +82,12 @@ export default function ThemeDetail({ entry, onBack, onInstallComplete }: ThemeD
       if (result.status === 'failed') {
         setError(result.error || 'Installation failed');
       } else {
+        // Revert try-preview before completing
+        if (revertThemeRef.current) {
+          applyThemeToDom(revertThemeRef.current);
+          revertThemeRef.current = null;
+          setTrying(false);
+        }
         onInstallComplete();
       }
     } catch (err: any) {
@@ -53,6 +116,11 @@ export default function ThemeDetail({ entry, onBack, onInstallComplete }: ThemeD
   }, [entry.slug, onInstallComplete]);
 
   const handleApply = useCallback(() => {
+    // Revert try-preview, then set as active
+    if (revertThemeRef.current) {
+      revertThemeRef.current = null;
+      setTrying(false);
+    }
     setTheme(entry.slug);
   }, [entry.slug, setTheme]);
 
@@ -60,8 +128,13 @@ export default function ThemeDetail({ entry, onBack, onInstallComplete }: ThemeD
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center px-4 py-3 border-b border-edge shrink-0">
-        <button onClick={onBack} className="text-fg-muted hover:text-fg mr-3 text-lg">&larr;</button>
+        <button onClick={handleBack} className="text-fg-muted hover:text-fg mr-3 text-lg">&larr;</button>
         <h2 className="text-sm font-bold text-fg truncate">{entry.name}</h2>
+        {trying && (
+          <span className="ml-2 text-[9px] font-medium px-2 py-0.5 rounded-full bg-accent/15 text-accent">
+            Previewing
+          </span>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -169,13 +242,26 @@ export default function ThemeDetail({ entry, onBack, onInstallComplete }: ThemeD
             </button>
           </>
         ) : (
-          <button
-            onClick={handleInstall}
-            disabled={installing}
-            className="flex-1 py-2 text-xs font-medium rounded-lg bg-accent text-on-accent hover:brightness-110 transition-colors disabled:opacity-50"
-          >
-            {installing ? 'Installing...' : 'Install Theme'}
-          </button>
+          <>
+            <button
+              onClick={handleTry}
+              disabled={!manifest && !fetchingManifest}
+              className={`py-2 px-4 text-xs font-medium rounded-lg border transition-colors ${
+                trying
+                  ? 'border-accent text-accent bg-accent/10 hover:bg-accent/20'
+                  : 'border-edge-dim text-fg-muted hover:text-fg hover:border-edge'
+              } disabled:opacity-50`}
+            >
+              {fetchingManifest ? 'Loading...' : trying ? 'Revert' : 'Try Theme'}
+            </button>
+            <button
+              onClick={handleInstall}
+              disabled={installing}
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-accent text-on-accent hover:brightness-110 transition-colors disabled:opacity-50"
+            >
+              {installing ? 'Installing...' : 'Install Theme'}
+            </button>
+          </>
         )}
       </div>
     </div>
