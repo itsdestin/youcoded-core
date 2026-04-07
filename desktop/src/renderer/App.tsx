@@ -34,6 +34,47 @@ import ThemeEffects from './components/ThemeEffects';
 
 type ViewMode = 'chat' | 'terminal';
 
+// --- Completion sound (Web Audio API) ---
+const SOUND_STORAGE_KEY = 'destincode-sound-muted';
+const SOUND_VOLUME_KEY = 'destincode-sound-volume';
+
+function isSoundMuted(): boolean {
+  try { return localStorage.getItem(SOUND_STORAGE_KEY) === '1'; } catch { return false; }
+}
+
+function getSoundVolume(): number {
+  try {
+    const v = parseFloat(localStorage.getItem(SOUND_VOLUME_KEY) || '0.3');
+    return isNaN(v) ? 0.3 : Math.max(0, Math.min(1, v));
+  } catch { return 0.3; }
+}
+
+function playCompletionSound() {
+  if (isSoundMuted()) return;
+  try {
+    const ctx = new AudioContext();
+    const vol = getSoundVolume();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+    // Two-tone chime: C5 then E5
+    const freqs = [523.25, 659.25];
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+    });
+
+    // Clean up after playback
+    setTimeout(() => ctx.close(), 1000);
+  } catch { /* audio not available */ }
+}
+
 interface StatusDataState {
   usage: any;
   announcement: any;
@@ -228,6 +269,10 @@ function AppInner() {
       const action = hookEventToAction(event);
       if (action) {
         dispatch(action);
+      }
+      // Play completion sound on Stop events
+      if (event.type === 'Stop') {
+        playCompletionSound();
       }
       // First hook event for a session = Claude is initialized
       if (event.sessionId) {

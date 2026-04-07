@@ -117,6 +117,95 @@ function Toggle({ enabled, onToggle, color = 'green' }: { enabled: boolean; onTo
 }
 
 
+// ─── Sound settings ───────────────────────────────────────────────────────
+
+const SOUND_MUTED_KEY = 'destincode-sound-muted';
+const SOUND_VOLUME_KEY = 'destincode-sound-volume';
+
+function SoundSettings() {
+  const [muted, setMuted] = useState(() => {
+    try { return localStorage.getItem(SOUND_MUTED_KEY) === '1'; } catch { return false; }
+  });
+  const [volume, setVolume] = useState(() => {
+    try {
+      const v = parseFloat(localStorage.getItem(SOUND_VOLUME_KEY) || '0.3');
+      return isNaN(v) ? 0.3 : Math.max(0, Math.min(1, v));
+    } catch { return 0.3; }
+  });
+
+  const handleToggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(SOUND_MUTED_KEY, next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }, []);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value);
+    setVolume(v);
+    try { localStorage.setItem(SOUND_VOLUME_KEY, String(v)); } catch {}
+  }, []);
+
+  const handleTestSound = useCallback(() => {
+    try {
+      const ctx = new AudioContext();
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      [523.25, 659.25].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        osc.start(ctx.currentTime + i * 0.12);
+        osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+      });
+      setTimeout(() => ctx.close(), 1000);
+    } catch {}
+  }, [volume]);
+
+  return (
+    <section>
+      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Sound</h3>
+      <div className="space-y-3 px-3 py-3 rounded-lg bg-inset/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs text-fg font-medium">Completion Sound</span>
+            <p className="text-[10px] text-fg-muted">Play a chime when Claude finishes</p>
+          </div>
+          <Toggle enabled={!muted} onToggle={handleToggleMute} />
+        </div>
+
+        {!muted && (
+          <>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-fg-muted w-10 shrink-0">Volume</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="flex-1 h-1 accent-accent"
+              />
+              <span className="text-[10px] text-fg-muted w-8 text-right">{Math.round(volume * 100)}%</span>
+            </div>
+            <button
+              onClick={handleTestSound}
+              className="text-[10px] text-accent hover:underline"
+            >
+              Test Sound
+            </button>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ─── Tier selector popup (Android) ────────────────────────────────────────
 
 // ─── Theme popup button ────────────────────────────────────────────────────
@@ -1228,6 +1317,8 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
       <div className="flex-1 px-4 py-4 space-y-6">
 
         <ThemeButton onSendInput={onSendInput} />
+
+        <SoundSettings />
 
         <RemoteButton
           config={config}

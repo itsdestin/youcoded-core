@@ -461,6 +461,20 @@ export function registerIpcHandlers(
     readySessions.delete(sessionId);
   });
 
+  // --- Prune stale context files on startup ---
+  // Context files are written per-session by statusline.sh and cleaned up on
+  // session exit, but a crash can leave orphans. Delete any .context-* files
+  // that aren't associated with a running session.
+  try {
+    const claudeDir = path.join(os.homedir(), '.claude');
+    const entries = fs.readdirSync(claudeDir);
+    for (const entry of entries) {
+      if (entry.startsWith('.context-')) {
+        fs.unlink(path.join(claudeDir, entry), () => {});
+      }
+    }
+  } catch { /* directory doesn't exist or unreadable — fine */ }
+
   // --- Status data poller ---
   // Reads DestinClaude cache files and pushes status updates to the renderer
   const usageCachePath = path.join(os.homedir(), '.claude', '.usage-cache.json');
@@ -546,6 +560,22 @@ export function registerIpcHandlers(
 
   refreshUsageCache();
   const usageRefreshInterval = setInterval(refreshUsageCache, 5 * 60 * 1000);
+
+  // --- Announcement cache refresher ---
+  // Runs announcement-fetch.js on startup and every 6 hours to keep
+  // .announcement-cache.json fresh without relying on the toolkit's session-start.sh.
+  const rawAnnounceFetchPath = path.resolve(__dirname, '../../hook-scripts/announcement-fetch.js');
+  const unpackedAnnounceFetchPath = rawAnnounceFetchPath.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+  const announceFetchScript = fs.existsSync(unpackedAnnounceFetchPath) ? unpackedAnnounceFetchPath : rawAnnounceFetchPath;
+
+  function refreshAnnouncementCache() {
+    try {
+      execFile('node', [announceFetchScript], { timeout: 15000 }, () => {});
+    } catch { /* node not found or script error — announcement just stays stale */ }
+  }
+
+  refreshAnnouncementCache();
+  const announceRefreshInterval = setInterval(refreshAnnouncementCache, 6 * 60 * 60 * 1000);
 
   // --- Topic file watcher (auto-title) ---
   // The auto-title hook writes topics to ~/.claude/topics/topic-{CLAUDE_CODE_SESSION_ID}.
@@ -689,6 +719,7 @@ export function registerIpcHandlers(
     stopThemeWatcher();
     clearInterval(statusInterval);
     clearInterval(usageRefreshInterval);
+    clearInterval(announceRefreshInterval);
     transcriptWatcher.stopAll();
     for (const [id, watcher] of topicWatchers) {
       if (typeof (watcher as fs.FSWatcher).close === 'function') {

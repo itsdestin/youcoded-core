@@ -97,14 +97,10 @@ function installHooks() {
   }
 
   // --- Auto-titling hook ---
-  // Always register the best available title-update script:
-  // prefer the DestinClaude toolkit version, fall back to the desktop-bundled one.
-  const toolkitTitlePath = path.join(require('os').homedir(), '.claude', 'plugins', 'destinclaude', 'core', 'hooks', 'title-update.sh');
+  // Always use the app-bundled title-update script (app owns session naming).
   const rawTitlePath = path.resolve(__dirname, '..', 'hook-scripts', 'title-update.sh');
   const unpackedTitlePath = rawTitlePath.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
-  const TITLE_UPDATE_PATH = fs.existsSync(unpackedTitlePath) ? unpackedTitlePath : rawTitlePath;
-
-  const activeTitlePath = fs.existsSync(toolkitTitlePath) ? toolkitTitlePath : TITLE_UPDATE_PATH;
+  const activeTitlePath = fs.existsSync(unpackedTitlePath) ? unpackedTitlePath : rawTitlePath;
 
   if (!settings.hooks['PostToolUse']) {
     settings.hooks['PostToolUse'] = [];
@@ -148,9 +144,40 @@ When you see an \`[Auto-Title]\` reminder, **immediately** use Bash to write a 3
     console.warn('Failed to deploy Auto-Title instruction:', e.message);
   }
 
+  // --- Remove done-sound.sh (app handles completion sounds natively) ---
+  if (settings.hooks['Stop']) {
+    settings.hooks['Stop'] = settings.hooks['Stop'].filter((matcher) =>
+      !matcher.hooks?.some((h) => h.command?.includes('done-sound'))
+    );
+  }
+
+  // --- Statusline ---
+  // Register the statusline script so Claude Code pipes session JSON to it.
+  // Prefer the toolkit version (has sync/announcement lines); fall back to bundled.
+  // Only set if unset or pointing to a known destinclaude/app path — don't overwrite
+  // custom user scripts.
+  const toolkitStatuslinePath = path.join(require('os').homedir(), '.claude', 'plugins', 'destinclaude', 'core', 'hooks', 'statusline.sh');
+  const rawStatuslinePath = path.resolve(__dirname, '..', 'hook-scripts', 'statusline.sh');
+  const unpackedStatuslinePath = rawStatuslinePath.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+  const STATUSLINE_PATH = fs.existsSync(unpackedStatuslinePath) ? unpackedStatuslinePath : rawStatuslinePath;
+
+  const activeStatuslinePath = fs.existsSync(toolkitStatuslinePath) ? toolkitStatuslinePath : STATUSLINE_PATH;
+  const currentStatuslineCmd = settings.statusLine?.command || '';
+  const isOurStatusline = !currentStatuslineCmd
+    || currentStatuslineCmd.includes('statusline.sh')
+    || currentStatuslineCmd.includes('destinclaude')
+    || currentStatuslineCmd.includes('destincode');
+
+  if (isOurStatusline) {
+    settings.statusLine = {
+      type: 'command',
+      command: `bash ${JSON.stringify(activeStatuslinePath)}`,
+    };
+  }
+
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
-  const titleSource = fs.existsSync(toolkitTitlePath) ? 'toolkit' : 'bundled';
-  console.log('Hooks installed for ' + FIRE_AND_FORGET_EVENTS.length + ' fire-and-forget events + PermissionRequest (blocking) + auto-title (' + titleSource + ')');
+  const statuslineSource = fs.existsSync(toolkitStatuslinePath) ? 'toolkit' : 'bundled';
+  console.log('Hooks installed for ' + FIRE_AND_FORGET_EVENTS.length + ' fire-and-forget events + PermissionRequest (blocking) + auto-title + statusline (' + statuslineSource + ')');
 }
 
 installHooks();
