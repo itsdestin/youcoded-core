@@ -21,6 +21,7 @@ import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
 import Marketplace from './components/Marketplace';
 import ThemeMarketplace from './components/ThemeMarketplace';
+import ThemeShareSheet from './components/ThemeShareSheet';
 import SkillManager from './components/SkillManager';
 import SkillEditor from './components/SkillEditor';
 import ShareSheet from './components/ShareSheet';
@@ -116,6 +117,7 @@ function AppInner() {
   const [managerOpen, setManagerOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [themeMarketplaceOpen, setThemeMarketplaceOpen] = useState(false);
+  const [publishThemeSlug, setPublishThemeSlug] = useState<string | null>(null);
   const [editorSkillId, setEditorSkillId] = useState<string | null>(null);
   const [shareSkillId, setShareSkillId] = useState<string | null>(null);
   const [createPromptOpen, setCreatePromptOpen] = useState(false);
@@ -988,6 +990,7 @@ function AppInner() {
         }}
         hasActiveSession={!!sessionId}
         onOpenThemeMarketplace={() => { setSettingsOpen(false); setThemeMarketplaceOpen(true); }}
+        onPublishTheme={(slug) => { setSettingsOpen(false); setPublishThemeSlug(slug); }}
       />
       <ResumeBrowser
         open={resumeRequested}
@@ -1001,6 +1004,9 @@ function AppInner() {
       )}
       {themeMarketplaceOpen && (
         <ThemeMarketplace onClose={() => setThemeMarketplaceOpen(false)} />
+      )}
+      {publishThemeSlug && (
+        <ThemeShareSheet themeSlug={publishThemeSlug} onClose={() => setPublishThemeSlug(null)} />
       )}
       {managerOpen && (
         <SkillManager

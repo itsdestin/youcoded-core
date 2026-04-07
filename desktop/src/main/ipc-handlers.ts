@@ -85,6 +85,10 @@ export function registerIpcHandlers(
     return themeMarketplace.uninstallTheme(slug);
   });
 
+  ipcMain.handle(IPC.THEME_MARKETPLACE_PUBLISH, async (_event, slug: string) => {
+    return themeMarketplace.publishTheme(slug);
+  });
+
   // Broadcast session-created events from SessionManager (covers both IPC and remote-created sessions)
   sessionManager.on('session-created', (info) => {
     send(IPC.SESSION_CREATED, info);

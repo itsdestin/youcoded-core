@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import type {
   ThemeRegistryIndex,
   ThemeRegistryEntry,
@@ -8,6 +10,12 @@ import type {
   ThemeRegistryEntryWithStatus,
 } from '../shared/theme-marketplace-types';
 import { THEMES_DIR } from './theme-watcher';
+
+const execFileAsync = promisify(execFile);
+
+// Resolve gh CLI path at module load
+let ghPath = 'gh';
+try { const w = require('which'); ghPath = w.sync('gh'); } catch { /* use bare 'gh' */ }
 
 // Registry is fetched from this URL (GitHub Pages or raw GitHub)
 const REGISTRY_URL =
@@ -187,6 +195,210 @@ export class ThemeMarketplaceProvider {
     } catch (err: any) {
       return { status: 'failed', error: err?.message ?? 'Unknown error' };
     }
+  }
+
+  /**
+   * Publish a user theme to the destinclaude-themes repo via GitHub PR.
+   * Requires `gh` CLI to be authenticated.
+   *
+   * Flow:
+   * 1. Verify gh auth
+   * 2. Fork itsdestin/destinclaude-themes (idempotent — gh handles existing forks)
+   * 3. Create a branch, commit theme files, push, and open a PR
+   */
+  async publishTheme(slug: string): Promise<{ prUrl: string }> {
+    if (!SAFE_SLUG_RE.test(slug)) {
+      throw new Error('Invalid theme slug');
+    }
+
+    const themeDir = path.join(THEMES_DIR, slug);
+    const manifestPath = path.join(themeDir, 'manifest.json');
+
+    if (!fs.existsSync(manifestPath)) {
+      throw new Error('Theme not found on disk');
+    }
+
+    // Verify the theme is a user theme (not community-installed)
+    const manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf-8'));
+    if (manifest.source === 'community') {
+      throw new Error('Cannot publish a theme installed from the marketplace');
+    }
+
+    // 1. Verify gh CLI auth
+    let username: string;
+    try {
+      const { stdout } = await execFileAsync(ghPath, ['api', 'user', '--jq', '.login']);
+      username = stdout.trim();
+      if (!username) throw new Error('Empty username');
+    } catch {
+      throw new Error('GitHub CLI not authenticated. Run `gh auth login` first.');
+    }
+
+    const UPSTREAM_REPO = 'itsdestin/destinclaude-themes';
+    const branchName = `theme/${slug}`;
+
+    // 2. Fork the themes repo (idempotent — gh returns existing fork)
+    try {
+      await execFileAsync(ghPath, ['repo', 'fork', UPSTREAM_REPO, '--clone=false'], { timeout: 30000 });
+    } catch (err: any) {
+      // gh repo fork returns exit code 0 even if fork exists; only throw on real errors
+      if (err.code === 'ENOENT') throw new Error('gh CLI not found');
+    }
+
+    const FORK_REPO = `${username}/destinclaude-themes`;
+
+    // 3. Use the GitHub API to create/update files on a branch
+    // First, get the default branch SHA
+    let baseSha: string;
+    try {
+      const { stdout } = await execFileAsync(ghPath, [
+        'api', `repos/${UPSTREAM_REPO}/git/ref/heads/main`, '--jq', '.object.sha',
+      ]);
+      baseSha = stdout.trim();
+    } catch {
+      throw new Error('Failed to read upstream repo. Does itsdestin/destinclaude-themes exist?');
+    }
+
+    // Create the branch on the fork
+    try {
+      await execFileAsync(ghPath, [
+        'api', `repos/${FORK_REPO}/git/refs`, '-X', 'POST',
+        '-f', `ref=refs/heads/${branchName}`,
+        '-f', `sha=${baseSha}`,
+      ]);
+    } catch {
+      // Branch may already exist — try to update it
+      try {
+        await execFileAsync(ghPath, [
+          'api', `repos/${FORK_REPO}/git/refs/heads/${branchName}`, '-X', 'PATCH',
+          '-f', `sha=${baseSha}`, '-f', 'force=true',
+        ]);
+      } catch (err: any) {
+        throw new Error(`Failed to create branch: ${err.message}`);
+      }
+    }
+
+    // 4. Collect all theme files (manifest + assets)
+    const filesToUpload: { repoPath: string; localPath: string; binary: boolean }[] = [];
+
+    // Add manifest.json (strip source field for the PR — reviewer decides)
+    const cleanManifest = { ...manifest };
+    delete cleanManifest.source;
+    delete cleanManifest.basePath;
+    filesToUpload.push({
+      repoPath: `themes/${slug}/manifest.json`,
+      localPath: manifestPath,
+      binary: false,
+    });
+
+    // Add all assets
+    const assetsDir = path.join(themeDir, 'assets');
+    if (fs.existsSync(assetsDir)) {
+      const assetFiles = await this.walkDirectory(assetsDir);
+      for (const absPath of assetFiles) {
+        const relativePath = path.relative(themeDir, absPath).replace(/\\/g, '/');
+        filesToUpload.push({
+          repoPath: `themes/${slug}/${relativePath}`,
+          localPath: absPath,
+          binary: !absPath.endsWith('.json') && !absPath.endsWith('.svg') && !absPath.endsWith('.css'),
+        });
+      }
+    }
+
+    // 5. Upload files via GitHub Contents API
+    for (const file of filesToUpload) {
+      let content: string;
+      if (file.repoPath.endsWith('manifest.json') && file.localPath === manifestPath) {
+        // Use the cleaned manifest
+        content = Buffer.from(JSON.stringify(cleanManifest, null, 2)).toString('base64');
+      } else {
+        const raw = await fs.promises.readFile(file.localPath);
+        content = raw.toString('base64');
+      }
+
+      try {
+        await execFileAsync(ghPath, [
+          'api', `repos/${FORK_REPO}/contents/${file.repoPath}`, '-X', 'PUT',
+          '-f', `message=Add ${file.repoPath}`,
+          '-f', `content=${content}`,
+          '-f', `branch=${branchName}`,
+        ], { timeout: 30000 });
+      } catch (err: any) {
+        // File may already exist — update it (need the sha)
+        try {
+          const { stdout: existingFile } = await execFileAsync(ghPath, [
+            'api', `repos/${FORK_REPO}/contents/${file.repoPath}`,
+            '-q', '.sha', '-H', 'Accept: application/vnd.github.v3+json',
+            '--method', 'GET', '-f', `ref=${branchName}`,
+          ]);
+          await execFileAsync(ghPath, [
+            'api', `repos/${FORK_REPO}/contents/${file.repoPath}`, '-X', 'PUT',
+            '-f', `message=Update ${file.repoPath}`,
+            '-f', `content=${content}`,
+            '-f', `sha=${existingFile.trim()}`,
+            '-f', `branch=${branchName}`,
+          ], { timeout: 30000 });
+        } catch {
+          throw new Error(`Failed to upload ${file.repoPath}`);
+        }
+      }
+    }
+
+    // 6. Create the PR
+    const prTitle = `[Theme] ${manifest.name || slug}`;
+    const prBody = [
+      `## New Theme: ${manifest.name || slug}`,
+      '',
+      manifest.description ? `> ${manifest.description}` : '',
+      '',
+      `- **Author:** ${manifest.author || username}`,
+      `- **Mode:** ${manifest.dark ? 'Dark' : 'Light'}`,
+      `- **Slug:** \`${slug}\``,
+      '',
+      '_Submitted via DestinCode Theme Marketplace_',
+    ].join('\n');
+
+    try {
+      const { stdout: prUrlRaw } = await execFileAsync(ghPath, [
+        'pr', 'create',
+        '--repo', UPSTREAM_REPO,
+        '--head', `${username}:${branchName}`,
+        '--title', prTitle,
+        '--body', prBody,
+      ], { timeout: 30000 });
+      return { prUrl: prUrlRaw.trim() };
+    } catch (err: any) {
+      // If PR already exists, try to get its URL
+      if (err.stderr?.includes('already exists')) {
+        try {
+          const { stdout: existingPr } = await execFileAsync(ghPath, [
+            'pr', 'list',
+            '--repo', UPSTREAM_REPO,
+            '--head', `${username}:${branchName}`,
+            '--json', 'url', '--jq', '.[0].url',
+          ]);
+          if (existingPr.trim()) {
+            return { prUrl: existingPr.trim() };
+          }
+        } catch { /* fall through */ }
+      }
+      throw new Error(`Failed to create PR: ${err.stderr || err.message}`);
+    }
+  }
+
+  /** Recursively walk a directory and return all file paths. */
+  private async walkDirectory(dir: string): Promise<string[]> {
+    const results: string[] = [];
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...await this.walkDirectory(fullPath));
+      } else {
+        results.push(fullPath);
+      }
+    }
+    return results;
   }
 
   /** Check if a community theme is installed locally. */
