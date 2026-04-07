@@ -110,6 +110,23 @@ function buildPreviewHTML(manifest: Record<string, any>, themeDir: string): stri
     ? `backdrop-filter: blur(${panelsBlur}px) saturate(1.2); -webkit-backdrop-filter: blur(${panelsBlur}px) saturate(1.2);`
     : '';
 
+  // Pattern overlay: embed SVG as base64 data URI if available
+  let patternDataUri = '';
+  const patternPath = bg.pattern;
+  if (patternPath) {
+    let patternRelPath = patternPath;
+    if (patternRelPath.startsWith('theme-asset://')) {
+      const url = new URL(patternRelPath);
+      patternRelPath = decodeURIComponent(url.pathname.replace(/^\//, ''));
+    }
+    const patternFullPath = path.join(themeDir, patternRelPath);
+    if (fs.existsSync(patternFullPath)) {
+      const svgB64 = fs.readFileSync(patternFullPath).toString('base64');
+      patternDataUri = `data:image/svg+xml;base64,${svgB64}`;
+    }
+  }
+  const patternOpacity = bg['pattern-opacity'] ?? 0.06;
+
   // Body background: wallpaper image, gradient, or solid canvas
   let bodyBg = 'var(--canvas)';
   if (hasWallpaper) {
@@ -117,6 +134,9 @@ function buildPreviewHTML(manifest: Record<string, any>, themeDir: string): stri
   } else if (hasGradient) {
     bodyBg = bg.value;
   }
+
+  // Inject custom_css for body::after overlays (patterns, etc.)
+  const customCss = manifest.custom_css || '';
 
   return `<!DOCTYPE html>
 <html>
@@ -136,7 +156,18 @@ function buildPreviewHTML(manifest: Record<string, any>, themeDir: string): stri
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
+    ${patternDataUri ? `
+    /* Pattern overlay — rendered even if custom_css doesn't include body::after */
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("${patternDataUri}");
+      background-size: 30px 30px; background-repeat: repeat;
+      opacity: ${patternOpacity};
+      pointer-events: none; z-index: 0;
+    }` : ''}
+    ${customCss ? `/* Theme custom CSS */ ${customCss}` : ''}
 
     /* Header */
     .header {
