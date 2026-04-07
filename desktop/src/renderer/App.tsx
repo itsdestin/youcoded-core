@@ -15,7 +15,7 @@ import { usePartyLobby } from './hooks/usePartyLobby';
 import { usePartyGame } from './hooks/usePartyGame';
 import { AppIcon, WelcomeAppIcon, ThemeMascot } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
-import TerminalToolbar from './components/TerminalToolbar';
+import TerminalToolbar, { TerminalScrollButtons } from './components/TerminalToolbar';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
@@ -112,12 +112,12 @@ function AppInner() {
     }).catch(() => {});
   }, []);
 
-  // Load session defaults on mount
+  // Load session defaults on mount and whenever settings panel closes
   useEffect(() => {
     (window as any).claude?.defaults?.get?.().then((defs: any) => {
       if (defs) setSessionDefaults(defs);
     }).catch(() => {});
-  }, []);
+  }, [settingsOpen]);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -782,12 +782,12 @@ function AppInner() {
   }
 
   return (
-    <div className="app-shell flex w-screen h-full bg-canvas text-fg">
+    <div className={`app-shell flex w-screen h-full text-fg ${getPlatform() === 'android' && currentViewMode === 'terminal' ? '' : 'bg-canvas'}`}>
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {sessions.length > 0 && sessionId && currentSession ? (
           <>
-            <div ref={headerRef}>
+            <div ref={headerRef} className="bg-canvas">
               <HeaderBar
                 sessions={sessions}
                 activeSessionId={sessionId}
@@ -868,13 +868,16 @@ function AppInner() {
                   onOpenMarketplace={() => setMarketplaceOpen(true)}
                 />
               )}
+              {getPlatform() === 'android' && currentViewMode === 'terminal' && sessionId && (
+                <TerminalScrollButtons sessionId={sessionId} />
+              )}
             </div>
             {(currentViewMode === 'chat' || getPlatform() === 'android') && (
-              <div ref={bottomBarRef}>
+              <div ref={bottomBarRef} className="bg-canvas">
                 {getPlatform() === 'android' && currentViewMode === 'terminal' && sessionId && (
                   <TerminalToolbar sessionId={sessionId} />
                 )}
-                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
+                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} minimal={getPlatform() === 'android' && currentViewMode === 'terminal'} onResumeCommand={() => setResumeRequested(true)} />
                 <StatusBar
                   statusData={{
                     usage: statusData.usage,
@@ -972,9 +975,9 @@ function AppInner() {
   );
 }
 
-const ChatInputBar = React.forwardRef<InputBarHandle, { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; onCloseDrawer?: () => void; onDrawerSearch?: (query: string) => void; disabled?: boolean; onResumeCommand?: () => void }>(
-  function ChatInputBar({ sessionId, onOpenDrawer, onCloseDrawer, onDrawerSearch, disabled, onResumeCommand }, ref) {
-    return <InputBar ref={ref} sessionId={sessionId} onOpenDrawer={onOpenDrawer} onCloseDrawer={onCloseDrawer} onDrawerSearch={onDrawerSearch} disabled={disabled} onResumeCommand={onResumeCommand} />;
+const ChatInputBar = React.forwardRef<InputBarHandle, { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; onCloseDrawer?: () => void; onDrawerSearch?: (query: string) => void; disabled?: boolean; minimal?: boolean; onResumeCommand?: () => void }>(
+  function ChatInputBar({ sessionId, onOpenDrawer, onCloseDrawer, onDrawerSearch, disabled, minimal, onResumeCommand }, ref) {
+    return <InputBar ref={ref} sessionId={sessionId} onOpenDrawer={onOpenDrawer} onCloseDrawer={onCloseDrawer} onDrawerSearch={onDrawerSearch} disabled={disabled} minimal={minimal} onResumeCommand={onResumeCommand} />;
   },
 );
 
