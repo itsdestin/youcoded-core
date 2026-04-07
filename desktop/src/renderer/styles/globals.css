@@ -366,10 +366,14 @@ html, body, #root {
 }
 
 /* macOS traffic lights need space — add left padding when title bar is hidden */
-@supports (-webkit-app-region: drag) {
-  .mac-titlebar-inset .header-bar {
-    padding-left: 78px;
-  }
+.mac-titlebar-inset .header-bar {
+  padding-left: 78px;
+}
+
+/* Windows caption buttons (min/max/close) overlay top-right — add right padding
+   so header content doesn't sit behind them. 138px ≈ 46px × 3 buttons. */
+.win-titlebar-overlay .header-bar {
+  padding-right: 140px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
