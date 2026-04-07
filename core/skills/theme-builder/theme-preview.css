@@ -120,6 +120,8 @@ body {
   margin: 8px 12px;
   border-radius: var(--radius-2xl, 24px);
   box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+  overflow: hidden;
+  padding: 4px 8px;
 }
 [data-input-style="minimal"] .input-bar-container {
   border-top: none;
