@@ -648,8 +648,8 @@ Adjust the opacity percentages to taste (lower = more transparent/wallpaper visi
   background-color: color-mix(in srgb, var(--panel) 82%, transparent);
 }
 
-/* Input bar — frosted glass */
-[data-panels-blur] .border-t.shrink-0:has(form) {
+/* Input bar — frosted glass (skipped for minimal input-style, which stays fully transparent) */
+[data-panels-blur]:not([data-input-style="minimal"]) .border-t.shrink-0:has(form) {
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   background-color: color-mix(in srgb, var(--panel) 82%, transparent);
