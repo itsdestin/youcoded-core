@@ -1417,11 +1417,11 @@ If yes:
 
 1. Run the install script:
 ```bash
-bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh"
+bash "$TOOLKIT_ROOT/scripts/install-app.sh"
 ```
 
 2. If the script fails (e.g., no release found for this version), inform the user:
-   - "The desktop app isn't available for this version yet. You can install it later by running: `bash ~/.claude/plugins/destinclaude/desktop/scripts/install-app.sh`"
+   - "The desktop app isn't available for this version yet. You can install it later by running: `bash ~/.claude/plugins/destinclaude/scripts/install-app.sh`"
 
 3. If successful, the script prints launch instructions for their platform.
 

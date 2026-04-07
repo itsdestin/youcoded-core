@@ -29,13 +29,13 @@ Always downloads and installs the latest DestinCode desktop app from GitHub Rele
 
 4. **Verify install script exists.**
    ```bash
-   [[ -f "$TOOLKIT_ROOT/desktop/scripts/install-app.sh" ]] && echo "OK" || echo "MISSING"
+   [[ -f "$TOOLKIT_ROOT/scripts/install-app.sh" ]] && echo "OK" || echo "MISSING"
    ```
    If missing: "Install script not found. Your toolkit may not include the desktop component."
 
 5. **Run the installer.** No confirmation needed — just install:
    ```bash
-   TOOLKIT_ROOT="$TOOLKIT_ROOT" bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh" --version "$LATEST_VERSION"
+   TOOLKIT_ROOT="$TOOLKIT_ROOT" bash "$TOOLKIT_ROOT/scripts/install-app.sh" --version "$LATEST_VERSION"
    ```
    Present the installer output to the user.
 

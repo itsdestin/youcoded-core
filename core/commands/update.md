@@ -168,7 +168,7 @@ Check for and install updates to the DestinClaude toolkit.
     All N checks passed. Restart Claude Code to pick up the new session-start hook.
     ```
 
-22. **Desktop app update prompt.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
+22. **Desktop app update prompt.** If `$TOOLKIT_ROOT/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
     ```
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     📱  **DestinCode Desktop App**
