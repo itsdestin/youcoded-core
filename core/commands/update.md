@@ -6,9 +6,15 @@ Check for and install updates to the DestinClaude toolkit.
 
 ## Steps
 
-1. **Read current version.** Read the VERSION file in the toolkit root directory. Store this as `CURRENT_VERSION`. You will need it later as the pre-merge version.
+0. **Resolve TOOLKIT_ROOT.** Read `~/.claude/toolkit-state/config.local.json` and extract the `toolkit_root` value. This is the authoritative path to the active plugin installation — rebuilt every session start by `session-start.sh`. Store as `TOOLKIT_ROOT` and use it as the working directory for ALL subsequent git and file operations.
+   ```bash
+   node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).toolkit_root)" "$HOME/.claude/toolkit-state/config.local.json"
+   ```
+   If the file doesn't exist or `toolkit_root` is null, fall back to `~/.claude/toolkit-state/config.json`. If neither has it: "Can't determine toolkit location — run `/health` to diagnose."
 
-2. **Fetch latest release info.** Run in the toolkit root:
+1. **Read current version.** Read `$TOOLKIT_ROOT/VERSION`. Store this as `CURRENT_VERSION`. You will need it later as the pre-merge version.
+
+2. **Fetch latest release info.** Run in `$TOOLKIT_ROOT`:
    ```bash
    git fetch --tags origin 2>/dev/null
    ```
@@ -137,26 +143,32 @@ Check for and install updates to the DestinClaude toolkit.
     ```
     If `[NEW]` plugins found: add them to `settings.json`'s `enabledPlugins` (zero-config, no approval needed). Tell the user which ones were added.
 
-18. **Verify everything.**
+18. **Update marketplace plugins.**
+    ```bash
+    bash "$TOOLKIT_ROOT/scripts/post-update.sh" marketplace-plugins
+    ```
+    For each `[UPDATED]` line: tell the user which plugin was updated. For `[WARN]`: show the error but continue. For `[SKIP]`: note why (e.g., git-subdir plugins need manual re-install). If no marketplace plugins are installed, this step reports `[INFO]` and moves on.
+
+19. **Verify everything.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" verify
     ```
     Present results as a verification table. For any `[FAIL]`: explain the problem, offer to fix it. After fix, re-run just that verification. For `[FAIL]` items suggesting missing dependencies, suggest `/setup-wizard` or `/health`.
 
-19. **Check plugin dependencies.**
+20. **Check plugin dependencies.**
     ```bash
     bash "$TOOLKIT_ROOT/scripts/post-update.sh" deps
     ```
     For any `[MISSING]` dependencies: explain which plugin needs it, what symptoms the user will see (e.g., "hook error on every tool call"), show the install command, and offer to install. This is especially important after updates since new plugin versions may introduce new dependencies.
 
-20. **Final confirmation.**
+21. **Final confirmation.**
     ```
     Update complete — DestinClaude vX.Y.Z
 
     All N checks passed. Restart Claude Code to pick up the new session-start hook.
     ```
 
-21. **Desktop app update prompt.** If `$TOOLKIT_ROOT/desktop/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
+22. **Desktop app update prompt.** If `$TOOLKIT_ROOT/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
     ```
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     📱  **DestinCode Desktop App**

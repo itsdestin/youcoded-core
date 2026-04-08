@@ -780,14 +780,15 @@ phase_verify() {
         // Legacy fallback — keep the existing hardcoded list
         expected = [
           ['SessionStart',      'startup',    'session-start.sh'],
+          ['SessionStart',      'startup',    'contribution-detector.sh'],
           ['PreToolUse',        'Write|Edit', 'write-guard.sh'],
           ['PreToolUse',        'Bash|Agent', 'worktree-guard.sh'],
-          ['PostToolUse',       'Write|Edit', 'git-sync.sh'],
-          ['PostToolUse',       'Write|Edit', 'personal-sync.sh'],
+          ['PostToolUse',       'Write|Edit', 'sync.sh'],
           ['PostToolUse',       '.*',         'title-update.sh'],
           ['UserPromptSubmit',  '.*',         'todo-capture.sh'],
           ['Stop',              '.*',         'checklist-reminder.sh'],
-          ['Stop',              '.*',         'done-sound.sh']
+          ['Stop',              '.*',         'done-sound.sh'],
+          ['SessionEnd',        '.*',         'session-end-sync.sh']
         ];
       }
 
@@ -881,16 +882,11 @@ EOF
   fi
 
   # 2. Sync Status
-  if [ -f "$CLAUDE_HOME/hooks/git-sync.sh" ] || [ -L "$CLAUDE_HOME/hooks/git-sync.sh" ]; then
-    if [ -f "$CLAUDE_HOME/.sync-status" ]; then
-      emit "OK" "Sync Status" "git-sync.sh installed, .sync-status exists"
-      ok_count=$((ok_count + 1))
-    else
-      emit "OK" "Sync Status" "git-sync.sh installed, .sync-status created on first write"
-      ok_count=$((ok_count + 1))
-    fi
+  if [ -f "$CLAUDE_HOME/hooks/sync.sh" ] || [ -L "$CLAUDE_HOME/hooks/sync.sh" ]; then
+    emit "OK" "Sync Status" "sync.sh installed"
+    ok_count=$((ok_count + 1))
   else
-    emit "FAIL" "Sync Status" "git-sync.sh missing from hooks"
+    emit "FAIL" "Sync Status" "sync.sh missing from hooks"
     fail_count=$((fail_count + 1))
   fi
 
@@ -1090,6 +1086,114 @@ phase_plugins() {
       process.stdout.write('[INFO] ' + unregistered + ' unregistered plugin(s) found\n');
     }
   "
+}
+
+# =============================================================================
+# Phase: marketplace-plugins — update marketplace-installed plugins
+# =============================================================================
+
+phase_marketplace_plugins() {
+  emit_section "Marketplace Plugin Updates"
+
+  local skills_config="$CLAUDE_HOME/destincode-skills.json"
+  local plugins_dir="$CLAUDE_HOME/plugins"
+  local cache_dir="$CLAUDE_HOME/destincode-marketplace-cache"
+
+  if [ ! -f "$skills_config" ]; then
+    emit "SKIP" "marketplace" "no destincode-skills.json found"
+    return 0
+  fi
+
+  local node_config
+  node_config="$(to_node_path "$skills_config")"
+
+  # Read installed_plugins from config
+  local installed
+  installed="$(node -e "
+    var d = JSON.parse(require('fs').readFileSync('${node_config}','utf8'));
+    var p = d.installed_plugins || {};
+    Object.keys(p).forEach(function(k) {
+      var meta = p[k];
+      console.log(k + '\t' + (meta.sourceType||'') + '\t' + (meta.sourceRef||''));
+    });
+  " 2>/dev/null)" || true
+
+  if [ -z "$installed" ]; then
+    emit "INFO" "marketplace" "no marketplace plugins installed"
+    return 0
+  fi
+
+  local updated_count=0
+  local failed_count=0
+  local skipped_count=0
+
+  # Update marketplace repo cache first (used by "local" source plugins)
+  if [ -d "$cache_dir/claude-plugins-official" ]; then
+    if git -C "$cache_dir/claude-plugins-official" pull --ff-only &>/dev/null; then
+      emit "OK" "cache" "marketplace repo updated"
+    else
+      emit "WARN" "cache" "marketplace repo pull failed — local plugins may be stale"
+    fi
+  fi
+
+  while IFS=$'\t' read -r plugin_id source_type source_ref; do
+    [ -z "$plugin_id" ] && continue
+    local plugin_dir="$plugins_dir/$plugin_id"
+
+    if [ ! -d "$plugin_dir" ]; then
+      emit "WARN" "$plugin_id" "directory missing — skipping"
+      skipped_count=$((skipped_count + 1))
+      continue
+    fi
+
+    case "$source_type" in
+      local)
+        # Re-copy from updated marketplace cache
+        if [ -n "$source_ref" ] && [ -d "$cache_dir/claude-plugins-official/$source_ref" ]; then
+          rm -rf "$plugin_dir"
+          cp -r "$cache_dir/claude-plugins-official/$source_ref" "$plugin_dir"
+          emit "UPDATED" "$plugin_id" "refreshed from marketplace cache"
+          updated_count=$((updated_count + 1))
+        else
+          emit "WARN" "$plugin_id" "source path not found in cache: $source_ref"
+          failed_count=$((failed_count + 1))
+        fi
+        ;;
+      url)
+        if [ -d "$plugin_dir/.git" ]; then
+          if git -C "$plugin_dir" pull --ff-only &>/dev/null; then
+            emit "UPDATED" "$plugin_id" "pulled latest"
+            updated_count=$((updated_count + 1))
+          else
+            emit "WARN" "$plugin_id" "git pull failed — may need re-install"
+            failed_count=$((failed_count + 1))
+          fi
+        else
+          emit "SKIP" "$plugin_id" "not a git repo — cannot update"
+          skipped_count=$((skipped_count + 1))
+        fi
+        ;;
+      git-subdir)
+        emit "SKIP" "$plugin_id" "git-subdir plugins need re-install to update"
+        skipped_count=$((skipped_count + 1))
+        ;;
+      *)
+        emit "SKIP" "$plugin_id" "unknown source type: $source_type"
+        skipped_count=$((skipped_count + 1))
+        ;;
+    esac
+  done <<< "$installed"
+
+  echo ""
+  if [ $updated_count -gt 0 ]; then
+    emit "INFO" "marketplace" "$updated_count plugin(s) updated"
+  fi
+  if [ $failed_count -gt 0 ]; then
+    emit "WARN" "marketplace" "$failed_count plugin(s) failed to update"
+  fi
+  if [ $skipped_count -gt 0 ] && [ $updated_count -eq 0 ] && [ $failed_count -eq 0 ]; then
+    emit "INFO" "marketplace" "$skipped_count plugin(s) skipped"
+  fi
 }
 
 # =============================================================================
@@ -1525,6 +1629,9 @@ phase_post_update() {
   phase_plugins || overall_exit=1
   echo ""
 
+  phase_marketplace_plugins || overall_exit=1
+  echo ""
+
   phase_deps || overall_exit=1
 
   return $overall_exit
@@ -1569,6 +1676,9 @@ main() {
     plugins)
       phase_plugins
       ;;
+    marketplace-plugins)
+      phase_marketplace_plugins
+      ;;
     deps)
       phase_deps
       ;;
@@ -1579,7 +1689,7 @@ main() {
       phase_post_update "${2:-}" "${3:-}"
       ;;
     *)
-      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|settings-migrate|orphans|remove-orphan|verify|mcps|plugins|deps|migrations|post-update"
+      emit "FAIL" "unknown phase: ${1:-}" "use: self-check|refresh|settings-migrate|orphans|remove-orphan|verify|mcps|plugins|marketplace-plugins|deps|migrations|post-update"
       exit 2
       ;;
   esac

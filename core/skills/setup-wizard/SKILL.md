@@ -351,7 +351,7 @@ If the user chose option 3, run an express setup that skips most interactive pha
 2. **Phase 2 (Conflicts):** Skip if none. Resolve any found conflicts tersely.
 3. **Phase 3 (Layers):** Auto-select all layers (Core + Life + Productivity). No question asked.
 4. **Phase 4 (Dependencies):** Install all dependencies silently. For each tool that needs a browser sign-in (GitHub, Google Drive, gcloud), open the browser without preamble — just say "Sign in to [service] in the browser that just opened." Show a single summary table at the end.
-5. **Phase 5 (Personalization):** Only ask for `USER_NAME`. Use defaults for all other template variables (`DRIVE_ROOT`: "Claude", `TODOIST_PROJECT`: "Claude's Inbox", `JOURNAL_DIR`: "journal", `ENCYCLOPEDIA_DIR`: "encyclopedia"). For `GIT_REMOTE` and `PERSONAL_SYNC_BACKEND`, skip with defaults ("none") — the user can configure these later. Run all symlink, hook, MCP, and plugin registration steps silently.
+5. **Phase 5 (Personalization):** Only ask for `USER_NAME`. Use defaults for all other template variables (`DRIVE_ROOT`: "Claude", `TODOIST_PROJECT`: "Claude's Inbox", `JOURNAL_DIR`: "journal", `ENCYCLOPEDIA_DIR`: "encyclopedia"). For `PERSONAL_SYNC_BACKEND`, skip with default ("none") — the user can configure this later. Run all symlink, hook, MCP, and plugin registration steps silently.
 6. **Phase 5b (Desktop App):** Install without asking if the install script exists.
 7. **Phase 6 (Verification):** Show compact pass/fail table only.
 
@@ -623,7 +623,22 @@ Install external tools required by the selected layers. For each dependency, fol
 
 Use the platform detected in Phase 1 to choose install commands.
 
-**Note:** On macOS, the bootstrap installer already installs Homebrew before launching the setup wizard. All `brew install` commands below can be run directly without checking for Homebrew first.
+**Note:** Homebrew may or may not be installed at this point. Before running any `brew install` command on macOS, first check if Homebrew is available. If missing, install it:
+
+1. Tell the user: "Several tools we need are installed through Homebrew — a package manager for Mac. I'll install it now. Your computer will ask for your password — nothing will appear as you type, which is normal. Just type it and press Enter."
+2. Run: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+3. After install, ensure Homebrew is on PATH:
+   ```bash
+   if [[ -f /opt/homebrew/bin/brew ]]; then
+       eval "$(/opt/homebrew/bin/brew shellenv)"
+   elif [[ -f /usr/local/bin/brew ]]; then
+       eval "$(/usr/local/bin/brew shellenv)"
+   fi
+   ```
+4. Verify: `brew --version`
+5. If it fails, tell the user: "Homebrew installation needs a terminal restart. Close and reopen this session, then run `/setup-wizard` again."
+
+Only run this check once — after Homebrew is confirmed, all subsequent `brew install` commands can proceed directly.
 
 ### Core Dependencies
 
@@ -949,7 +964,7 @@ Summarize: "All the tools you need are installed. Now let's personalize everythi
 Fill in template variables, install selected layers, and configure CLAUDE.md.
 
 > **Comfort-level adaptation:**
-> - **Beginner:** Keep all explanatory framing for template variable questions (the "by 'root' I just mean..." style). When asking about `GIT_REMOTE` and `PERSONAL_SYNC_BACKEND`, keep the full tutorial offers and plain-language explanations.
+> - **Beginner:** Keep all explanatory framing for template variable questions (the "by 'root' I just mean..." style). When asking about `PERSONAL_SYNC_BACKEND`, keep the full tutorial offers and plain-language explanations.
 > - **Intermediate:** No change (this is the current behavior).
 > - **Power user:** Strip all explanatory framing from template variable questions — ask them rapid-fire with just the variable name and default. Skip the GitHub/sync tutorial offers (just ask the raw question). Example: "Google Drive root folder? (default: Claude)" instead of the multi-line explanation.
 
@@ -991,7 +1006,7 @@ Store the selected backends as comma-separated `PERSONAL_SYNC_BACKEND` in config
 # Trigger personal-sync manually to test
 source ~/.claude/hooks/lib/backup-common.sh
 # Touch the debounce marker in the past to force sync
-touch -t 202001010000 ~/.claude/toolkit-state/.personal-sync-marker 2>/dev/null
+touch -t 202001010000 ~/.claude/toolkit-state/.sync-marker 2>/dev/null
 ```
 
 Tell the user the result: "Backup configured! Your personal data will sync to [backends] automatically."
@@ -1018,8 +1033,6 @@ What Todoist project should Claude use as your inbox? (default: Claude's Inbox) 
 ```
 
 Only ask about variables relevant to the selected layers. Skip `TODOIST_PROJECT` if Productivity isn't selected, skip `DRIVE_ROOT`/`JOURNAL_DIR`/`ENCYCLOPEDIA_DIR` if Life isn't selected.
-
-When asking about `GIT_REMOTE`, if the user seems unsure or says they don't know what GitHub is, offer to explain it and help them set up a free account and repository. Frame it as: "GitHub is a free service that stores a backup of your settings online — like a safety net. Want me to walk you through setting one up? It takes about 2 minutes." If they decline, skip it gracefully.
 
 When asking about `PERSONAL_SYNC_BACKEND`, frame the distinction clearly: "Your toolkit improvements — skills, hooks, and commands — sync to the public DestinClaude repo. That's all system-level code, nothing personal. But your memory (things Claude learns about you), your preferences, and your personal config need a private home so they're backed up and available if you switch devices."
 
@@ -1086,6 +1099,8 @@ mkdir -p ~/.claude/skills
 # Core skills (always)
 ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
 ln -sf "$TOOLKIT_ROOT/core/skills/remote-setup" ~/.claude/skills/remote-setup
+ln -sf "$TOOLKIT_ROOT/core/skills/sync" ~/.claude/skills/sync
+ln -sf "$TOOLKIT_ROOT/core/skills/theme-builder" ~/.claude/skills/theme-builder
 
 # Life skills (if Life layer selected)
 for skill in encyclopedia-compile encyclopedia-interviewer encyclopedia-librarian encyclopedia-update fork-file google-drive journaling-assistant; do
@@ -1106,7 +1121,7 @@ Only run the blocks for layers the user selected in Phase 3.
 mkdir -p ~/.claude/commands
 
 # Core commands (always)
-for cmd in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md restore.md; do
+for cmd in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md restore.md appupdate.md diagnose.md; do
   ln -sf "$TOOLKIT_ROOT/core/commands/$cmd" ~/.claude/commands/$cmd
 done
 ```
@@ -1118,7 +1133,7 @@ mkdir -p ~/.claude/hooks
 
 # Core hooks (always — skip any the user chose to "keep yours" in Phase 2)
 # NOTE: statusline.sh is NOT a hook — it's configured separately via settings.json "statusLine"
-for hook in check-inbox.sh checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh worktree-guard.sh write-guard.sh; do
+for hook in check-inbox.sh checklist-reminder.sh contribution-detector.sh done-sound.sh sync.sh session-end-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh worktree-guard.sh write-guard.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
 done
 
@@ -1129,7 +1144,7 @@ done
 
 # Shared libraries used by hooks
 mkdir -p ~/.claude/hooks/lib
-for lib in backup-common.sh migrate.sh; do
+for lib in hook-preamble.sh backup-common.sh migrate.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/lib/$lib" ~/.claude/hooks/lib/$lib
 done
 
@@ -1145,7 +1160,7 @@ fi
 ln -sf "$TOOLKIT_ROOT/core/hooks/statusline.sh" ~/.claude/statusline.sh
 
 # Life hooks (if Life layer selected)
-ln -sf "$TOOLKIT_ROOT/life/hooks/sync-encyclopedia.sh" ~/.claude/hooks/sync-encyclopedia.sh
+# sync-encyclopedia.sh removed — encyclopedia sync is now handled by the unified sync.sh
 ```
 
 #### 5d: Register hooks in settings.json
@@ -1186,14 +1201,17 @@ Hooks must also be registered in `~/.claude/settings.json` under the `hooks` key
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/git-sync.sh" }]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/personal-sync.sh" }]
+        "timeout": 120,
+        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/sync.sh" }]
       },
       {
         "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/title-update.sh" }]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "timeout": 120,
+        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/session-end-sync.sh" }]
       }
     ],
     "Stop": [
@@ -1399,11 +1417,11 @@ If yes:
 
 1. Run the install script:
 ```bash
-bash "$TOOLKIT_ROOT/desktop/scripts/install-app.sh"
+bash "$TOOLKIT_ROOT/scripts/install-app.sh"
 ```
 
 2. If the script fails (e.g., no release found for this version), inform the user:
-   - "The desktop app isn't available for this version yet. You can install it later by running: `bash ~/.claude/plugins/destinclaude/desktop/scripts/install-app.sh`"
+   - "The desktop app isn't available for this version yet. You can install it later by running: `bash ~/.claude/plugins/destinclaude/scripts/install-app.sh`"
 
 3. If successful, the script prints launch instructions for their platform.
 

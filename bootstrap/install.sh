@@ -242,7 +242,7 @@ echo ""
 # --- Install DestinCode desktop app ---
 echo "  Installing DestinCode desktop app..."
 DESKTOP_INSTALLED=false
-INSTALL_SCRIPT="$TOOLKIT_DIR/desktop/scripts/install-app.sh"
+INSTALL_SCRIPT="$TOOLKIT_DIR/scripts/install-app.sh"
 if [ -f "$INSTALL_SCRIPT" ]; then
     if bash "$INSTALL_SCRIPT"; then
         echo "  DestinCode desktop app installed"

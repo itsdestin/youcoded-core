@@ -1,0 +1,511 @@
+/*
+ * DestinCode Theme Preview CSS
+ * Self-contained CSS that replicates the app's theme rendering.
+ * Used by /theme-builder concept cards so HTML preview matches the app.
+ *
+ * CONTRACT: Class names and CSS properties MUST match
+ * desktop/src/renderer/styles/globals.css + Tailwind @theme block.
+ *
+ * SYNC CHECK: Run `node core/skills/theme-builder/scripts/sync-check.cjs`
+ * to verify this file stays in sync with globals.css.
+ * Last synced: 2026-04-06
+ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans, 'Cascadia Mono', 'Fira Code', monospace);
+  color: var(--fg);
+  background: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Surfaces */
+.bg-canvas  { background-color: var(--canvas); }
+.bg-panel   { background-color: var(--panel); }
+.bg-inset   { background-color: var(--inset); }
+.bg-well    { background-color: var(--well); }
+.bg-accent  { background-color: var(--accent); }
+
+/* Text */
+.text-fg       { color: var(--fg); }
+.text-fg-2     { color: var(--fg-2); }
+.text-fg-dim   { color: var(--fg-dim); }
+.text-fg-muted { color: var(--fg-muted); }
+.text-fg-faint { color: var(--fg-faint); }
+.text-on-accent { color: var(--on-accent); }
+
+/* Borders */
+.border-edge     { border-color: var(--edge); }
+.border-edge-dim { border-color: var(--edge-dim); }
+
+/* Radius */
+.rounded      { border-radius: var(--radius, 4px); }
+.rounded-sm   { border-radius: var(--radius-sm, 4px); }
+.rounded-md   { border-radius: var(--radius-md, 8px); }
+.rounded-lg   { border-radius: var(--radius-lg, 12px); }
+.rounded-xl   { border-radius: var(--radius-xl, 16px); }
+.rounded-2xl  { border-radius: var(--radius-2xl, 24px); }
+.rounded-full { border-radius: var(--radius-full, 9999px); }
+
+/* Background layer */
+#theme-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--canvas);
+  opacity: 1;
+}
+
+/* Glassmorphism — base rule for all panel surfaces */
+[data-panels-blur] .bg-panel {
+  backdrop-filter: blur(var(--panels-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
+  background-color: var(--panel-glass, var(--panel));
+}
+
+/* Header bar — heavy frosted glass, floats over chat so content scrolls behind */
+[data-panels-blur] .header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Status bar — heavy frosted glass */
+[data-panels-blur] .status-bar {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Input bar — heavy frosted glass */
+[data-panels-blur] .input-bar-container {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Assistant bubbles — lighter frosted glass */
+[data-panels-blur] .chat-bubble.assistant,
+[data-panels-blur] .assistant-bubble,
+[data-panels-blur] .bg-inset {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--inset) 90%, transparent);
+}
+
+/* User bubbles — frosted accent */
+[data-panels-blur] .chat-bubble.user,
+[data-panels-blur] .user-bubble,
+[data-panels-blur] .bg-accent {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--accent) 90%, transparent);
+}
+
+/* Chat area needs top padding when glassmorphism is active
+   so content scrolls behind the header */
+[data-panels-blur] .chat-area {
+  padding-top: 3rem;
+}
+
+/* Layout presets — input */
+[data-input-style="floating"] .input-bar-container {
+  margin: 8px 12px;
+  border-radius: var(--radius-2xl, 24px);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+  overflow: hidden;
+  padding: 4px 8px;
+}
+[data-input-style="minimal"] .input-bar-container {
+  border-top: none;
+  background: transparent;
+}
+[data-input-style="terminal"] .input-bar-container {
+  border-radius: 0;
+  font-family: var(--font-mono, monospace);
+  border-top: 1px solid var(--edge);
+}
+
+/* Layout presets — bubbles */
+[data-bubble-style="pill"] .chat-bubble,
+[data-bubble-style="pill"] .assistant-bubble,
+[data-bubble-style="pill"] .user-bubble {
+  border-radius: var(--radius-2xl, 24px);
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+[data-bubble-style="flat"] .chat-bubble,
+[data-bubble-style="flat"] .assistant-bubble,
+[data-bubble-style="flat"] .user-bubble {
+  border-radius: 0;
+  border-left: 2px solid var(--edge);
+}
+[data-bubble-style="bordered"] .chat-bubble,
+[data-bubble-style="bordered"] .assistant-bubble,
+[data-bubble-style="bordered"] .user-bubble {
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-md, 8px);
+}
+
+/* Layout presets — header */
+[data-header-style="minimal"] .header-bar {
+  background: transparent;
+  border-bottom: none;
+}
+[data-header-style="hidden"] .header-bar {
+  display: none;
+}
+
+/* Layout presets — statusbar */
+[data-statusbar-style="minimal"] .status-bar {
+  background: transparent;
+  border-top: none;
+  font-size: 9px;
+}
+/* Floating chrome — elevate all bars into detached rounded cards.
+   Activated by layout.chrome-style: "floating" in a theme manifest. */
+[data-chrome-style="floating"] .chrome-wrapper {
+  background-color: transparent !important;
+}
+[data-chrome-style="floating"] .header-bar {
+  margin: 6px 8px 0;
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--edge-dim);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+[data-chrome-style="floating"] .input-bar-container {
+  margin: 0 8px;
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--edge-dim);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
+}
+[data-chrome-style="floating"] .status-bar {
+  align-self: center;
+  width: fit-content;
+  max-width: 95%;
+  border-radius: var(--radius-full, 9999px);
+  padding: 2px 12px;
+  margin: 4px auto;
+  border: 1px solid var(--edge-dim);
+  background: var(--panel);
+}
+
+/* Scrollbar — matches app responsive sizing */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+@media (min-width: 640px) {
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Particle badge (static — animation is app-only) */
+.particle-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--accent);
+  color: var(--on-accent);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* App mockup structure */
+.app-mockup {
+  width: 100%;
+  max-width: 420px;
+  height: 520px;
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--edge-dim);
+  position: relative;
+}
+.header-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--edge);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  gap: 8px;
+  flex-shrink: 0;
+}
+.chat-area {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--canvas);
+}
+.chat-bubble {
+  padding: 8px 12px;
+  border-radius: var(--radius-2xl, 24px);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 85%;
+}
+.chat-bubble.assistant,
+.assistant-bubble {
+  background: var(--inset);
+  color: var(--fg);
+  align-self: flex-start;
+  border-bottom-left-radius: var(--radius-sm, 4px);
+}
+.chat-bubble.user,
+.user-bubble {
+  background: var(--accent);
+  color: var(--on-accent);
+  align-self: flex-end;
+  border-bottom-right-radius: var(--radius-sm, 4px);
+}
+/* Alias classes matching app layout preset selectors */
+.assistant-bubble {
+  padding: 8px 12px;
+  border-radius: var(--radius-2xl, 24px);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 85%;
+  background: var(--inset);
+  color: var(--fg);
+  align-self: flex-start;
+  border-bottom-left-radius: var(--radius-sm, 4px);
+}
+.user-bubble {
+  padding: 8px 12px;
+  border-radius: var(--radius-2xl, 24px);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 85%;
+  background: var(--accent);
+  color: var(--on-accent);
+  align-self: flex-end;
+  border-bottom-right-radius: var(--radius-sm, 4px);
+}
+.chat-bubble .tool-card {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--inset);
+  font-size: 10px;
+  color: var(--fg-dim);
+  border: 1px solid var(--edge-dim);
+}
+.input-bar-container {
+  padding: 4px 8px 6px;
+  background: var(--panel);
+  border-top: 1px solid var(--edge-dim);
+  flex-shrink: 0;
+}
+.input-bar-container .input-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--inset);
+  border-radius: var(--radius-xl, 16px);
+  padding: 6px 10px;
+}
+.input-bar-container .attach-btn {
+  width: 20px;
+  height: 20px;
+  color: var(--fg-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.input-bar-container .input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-family: inherit;
+}
+.input-bar-container .send-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: var(--panel);
+  border-top: 1px solid var(--edge-dim);
+  font-size: 10px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Pattern overlay — repeating SVG pattern between wallpaper and panels.
+   Opacity is set dynamically via inline style from theme's pattern-opacity value.
+   Default 0.06 matches theme-engine.ts buildPatternStyle() fallback. */
+.pattern-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-size: 40px 40px;
+  opacity: var(--pattern-opacity, 0.06);
+}
+
+/* App-level #theme-pattern div (matches globals.css) */
+#theme-pattern {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Visual effects — vignette, noise, scan-lines
+   Applied via overlay divs in the mockup. Theme manifest fields:
+   effects.vignette (0-1), effects.noise (0-1), effects.scan-lines (bool)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.effect-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0, var(--vignette-opacity, 0)) 100%);
+}
+
+.effect-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--noise-opacity, 0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+.effect-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--scanline-opacity, 0.08);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.15) 1px,
+    rgba(0, 0, 0, 0.15) 2px
+  );
+}
+
+/* Ensure panels render above pattern overlay */
+.app-mockup .header-bar,
+.app-mockup .chat-area,
+.app-mockup .input-bar-container,
+.app-mockup .status-bar {
+  position: relative;
+  z-index: 1;
+}
+
+/* Concept card layout */
+.concept-card {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.concept-card .swatch-row {
+  display: flex;
+  gap: 6px;
+}
+.concept-card .swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--edge-dim);
+}
+
+/* Asset preview row — thumbnails of planned assets */
+.concept-card .asset-preview-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+.concept-card .asset-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.concept-card .asset-preview-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--edge-dim);
+  background-color: var(--inset);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+.concept-card .asset-preview-thumb.asset-preview-pattern {
+  background-size: 20px 20px;
+  background-repeat: repeat;
+  background-position: center;
+}
+.concept-card .asset-preview-label {
+  font-size: 9px;
+  color: var(--fg-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Vibe tags */
+.concept-card .concept-label {
+  font-size: 10px;
+  color: var(--fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.concept-card .concept-label span {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--inset);
+  border: 1px solid var(--edge-dim);
+}

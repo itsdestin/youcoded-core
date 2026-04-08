@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Last updated:** 2026-03-26
-**Feature location:** `desktop/src/main/remote-server.ts`, `desktop/src/main/remote-config.ts`, `core/skills/remote-setup/SKILL.md`
+**Feature location:** `destincode/desktop/src/main/remote-server.ts`, `destincode/desktop/src/main/remote-config.ts`, `core/skills/remote-setup/SKILL.md`
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Remote access allows users to control DestinCode from any device on their networ
 
 | Decision | Rationale | Alternatives considered |
 |----------|-----------|----------------------|
-| WebSocket bridge in Electron main process | Reuses existing SessionManager and HookRelay instances — avoids duplicating session management. IPC surface is small (~15 methods). See `desktop/docs/superpowers/specs/2026-03-24-remote-web-access-design.md`. | Separate server process (rejected: shared state coordination overhead with no benefit) |
+| WebSocket bridge in Electron main process | Reuses existing SessionManager and HookRelay instances — avoids duplicating session management. IPC surface is small (~15 methods). See `destincode/desktop/docs/superpowers/specs/2026-03-24-remote-web-access-design.md`. | Separate server process (rejected: shared state coordination overhead with no benefit) |
 | Shared view model (all clients see same sessions) | Single-user app — independent views would require session ownership tracking with no practical benefit. | Per-client sessions (rejected: unnecessary complexity) |
 | Password + optional Tailscale trust | Bcrypt hash stored at rest. Session tokens avoid re-entry. `trustTailscale` flag skips auth for Tailscale IPs (`100.64.0.0/10`). | OAuth (rejected: over-engineered for personal use), no auth (rejected: unsafe on shared networks) |
 | Guided setup skill (`/remote-setup`) | Non-technical users need step-by-step guidance for Tailscale install, auth, and phone setup. Conversational skill format matches the toolkit's approach. | Documentation-only (rejected: users don't read docs), auto-configure (rejected: Tailscale requires interactive auth) |
@@ -29,9 +29,9 @@ Remote access allows users to control DestinCode from any device on their networ
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Remote server | `desktop/src/main/remote-server.ts` | HTTP + WebSocket server, auth, event broadcasting |
-| Remote config | `desktop/src/main/remote-config.ts` | Reads/writes `~/.claude/destincode-remote.json` |
-| Remote shim | `desktop/src/renderer/remote-shim.ts` | Replaces Electron IPC with WebSocket transport for browser clients |
+| Remote server | `destincode/desktop/src/main/remote-server.ts` | HTTP + WebSocket server, auth, event broadcasting |
+| Remote config | `destincode/desktop/src/main/remote-config.ts` | Reads/writes `~/.claude/destincode-remote.json` |
+| Remote shim | `destincode/desktop/src/renderer/remote-shim.ts` | Replaces Electron IPC with WebSocket transport for browser clients |
 | Remote setup skill | `core/skills/remote-setup/SKILL.md` | Guided Tailscale + password configuration |
 | Config file | `~/.claude/destincode-remote.json` | Password hash, port, enabled flag, Tailscale trust |
 

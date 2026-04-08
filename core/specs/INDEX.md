@@ -4,15 +4,16 @@ All feature specifications. Skill specs live in their skill folder; system specs
 
 | Feature | Type | Spec Location | Version |
 |---------|------|--------------|---------|
-| Specs System | system | core/specs/specs-system-spec.md | 3.1 |
-| DestinClaude Toolkit | system | core/specs/destinclaude-spec.md | 2.7 |
-| System Architecture | system | core/specs/system-architecture-spec.md | 1.5 |
-| Backup & Sync | system | core/specs/backup-system-spec.md | 4.4 |
+| Specs System | system | core/specs/specs-system-spec.md | 3.2 |
+| DestinClaude Toolkit | system | core/specs/destinclaude-spec.md | 2.8 |
+| System Architecture | system | core/specs/system-architecture-spec.md | 1.6 |
+| Backup & Sync | system | core/specs/backup-system-spec.md | 5.0 |
 | Remote Access | system | core/specs/remote-access-spec.md | 1.0 |
-| Write Guard | system | core/specs/write-guard-spec.md | 1.2 |
+| Write Guard | system | core/specs/write-guard-spec.md | 1.3 |
 | Worktree Guard | system | core/specs/worktree-guard-spec.md | 1.0 |
-| Memory System | system | core/specs/memory-system-spec.md | 1.1 |
-| Personal Data Sync | system | core/specs/personal-sync-spec.md | 2.0 |
+| Memory System | system | core/specs/memory-system-spec.md | 1.2 |
+| Personal Data Sync | system | core/specs/personal-sync-spec.md | 2.3 (retired) |
+| Conversation Index | system | core/specs/conversation-index-spec.md | 1.0 |
 | Statusline | system | core/specs/statusline-spec.md | 1.10 |
 | DestinTip | system | core/specs/destintip-spec.md | 1.2 |
 | Landing Page | system | core/specs/landing-page-spec.md | 1.4 |
@@ -27,8 +28,10 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Claude's Inbox | skill | productivity/skills/claudes-inbox/specs/claudes-inbox-spec.md | 3.0 |
 | Fork File | skill | life/skills/fork-file/specs/fork-file-spec.md | 1.0 |
 | Setup Wizard | skill | core/skills/setup-wizard/specs/setup-wizard-spec.md | 1.1 |
-| Claude Desktop UI | desktop | desktop/docs/claude-desktop-ui-spec.md | 1.4 |
-| Transcript Watcher | desktop | desktop/docs/transcript-watcher-spec.md | 1.2 |
+| Theme Builder | skill | core/skills/theme-builder/SKILL.md | 1.0 |
+| Sync | skill | core/skills/sync/SKILL.md | 1.0 |
+| Theme System | desktop (destincode repo) | destincode/desktop/docs/theme-spec.md | 1.0 |
+| Transcript Watcher | desktop (destincode repo) | destincode/desktop/docs/transcript-watcher-spec.md | 1.2 |
 
 ## External Admin Tooling
 

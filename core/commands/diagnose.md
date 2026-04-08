@@ -20,7 +20,7 @@ echo "" && echo "=== Sync Warnings ===" && cat ~/.claude/.sync-warnings 2>/dev/n
 ```bash
 echo "=== Git Status ===" && cd ~/.claude && git status --short 2>/dev/null | head -20
 echo "" && echo "Unpushed commits:" && git log --oneline origin/main..HEAD 2>/dev/null | wc -l
-echo "" && echo "Last push marker:" && if [ -f ~/.claude/.push-marker ]; then echo "$(( $(date +%s) - $(cat ~/.claude/.push-marker) ))s ago"; else echo "(no marker)"; fi
+echo "" && echo "Last sync marker:" && if [ -f ~/.claude/toolkit-state/.sync-marker ]; then echo "$(( $(date +%s) - $(cat ~/.claude/toolkit-state/.sync-marker) ))s ago"; else echo "(no marker)"; fi
 ```
 
 ## 3. Recent Errors
@@ -38,7 +38,7 @@ echo "=== Active Sessions ===" && for f in ~/.claude/sessions/*.json 2>/dev/null
 ## 5. Debounce State
 
 ```bash
-echo "=== Debounce State ===" && for marker in ~/.claude/.push-marker ~/.claude/toolkit-state/.personal-sync-marker ~/.claude/toolkit-state/.session-sync-marker; do if [ -f "$marker" ]; then age=$(( $(date +%s) - $(cat "$marker") )); echo "  $(basename $marker): ${age}s ago"; else echo "  $(basename $marker): (not set)"; fi; done
+echo "=== Debounce State ===" && for marker in ~/.claude/toolkit-state/.sync-marker ~/.claude/toolkit-state/.session-sync-marker; do if [ -f "$marker" ]; then age=$(( $(date +%s) - $(cat "$marker") )); echo "  $(basename $marker): ${age}s ago"; else echo "  $(basename $marker): (not set)"; fi; done
 ```
 
 ## 6. Drive Connectivity

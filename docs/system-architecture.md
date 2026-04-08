@@ -31,7 +31,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 |------|-------|---------|
 | `session-start.sh` | SessionStart | Git pull, encyclopedia sync, MCP config extraction, version check, inbox check |
 | `statusline.sh` | Statusline | Renders sync status, model info, context remaining, toolkit version |
-| `git-sync.sh` | PostToolUse | Commits and syncs changes after file modifications (skips toolkit-owned symlinks) |
+| `sync.sh` | PostToolUse | Backs up personal data and system config to configured backends (Drive, GitHub, iCloud). Updates write registry. 15-min debounce. |
 | `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
 | `worktree-guard.sh` | PreToolUse | Blocks branch switches in main plugin directory — enforces worktree usage for concurrent sessions |
 | `tool-router.sh` | PreToolUse | Blocks Claude.ai Gmail/Calendar MCP tools, redirects to GWS CLI |
@@ -41,7 +41,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `checklist-reminder.sh` | Stop | Reminds about system change checklist if system files were modified |
 | `usage-fetch.js` | PostToolUse | Tracks API usage statistics |
 | `announcement-fetch.js` | SessionStart | Fetches announcements from GitHub, caches to `~/.claude/.announcement-cache.json` |
-| `personal-sync.sh` | PostToolUse | Backs up personal data (memory, CLAUDE.md, config, encyclopedia, skills) to all configured backends: Drive, GitHub, iCloud (15-min debounce) |
+| `check-inbox.sh` | SessionStart | Checks configured inbox sources for unprocessed items |
 | `session-end-sync.sh` | SessionEnd | Ensures all conversation JSONL files are backed up on session exit (bypasses debounce) |
 | `done-sound.sh` | Stop | Plays audio notification when Claude finishes a task (cross-platform) |
 | `lib/hook-preamble.sh` | (sourced library) | Shared hook infrastructure: trap handlers, cleanup registration, error capture, portable timeout, log rotation, atomic writes |
@@ -49,8 +49,6 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `lib/migrate.sh` | (sourced library) | Backup schema migration runner — reads backup-meta.json, runs sequential vN-to-vN+1 scripts |
 
 **Hook composition:** If a user already has hooks at the same trigger points, the setup wizard offers to merge logic (preserving both) or let the user choose which to keep. The backup system ensures nothing is lost.
-
-The life layer adds `sync-encyclopedia.sh` (rclone-based Google Drive sync for encyclopedia files).
 
 **Hook settings manifest:** `core/hooks/hooks-manifest.json` declares the desired state for all hook registrations in `settings.json`. The `/update` command's `settings-migrate` phase reconciles the user's settings against this manifest — adding new hooks, updating properties, and enforcing minimum timeouts (MAX of user value and manifest value).
 
@@ -90,7 +88,7 @@ The life layer's encyclopedia system maintains a living biography through 8 modu
 
 **Compilation:** The `encyclopedia-compile` skill merges all 8 files into a single narrative document. It supports four detail levels (Full, Personal, Professional, Public) that control how much intimate detail appears.
 
-**Sync architecture:** Files are stored in Google Drive (`gdrive:Claude/The Journal/System/`) and cached locally at `~/.claude/encyclopedia/`. The `sync-encyclopedia.sh` hook syncs on session start. The encyclopedia-update skill writes changes back to Drive after user approval.
+**Sync architecture:** Files are stored in Google Drive (`gdrive:Claude/The Journal/System/`) and cached locally at `~/.claude/encyclopedia/`. The unified `sync.sh` hook handles encyclopedia sync alongside other backends. The encyclopedia-update skill writes changes back to Drive after user approval.
 
 ## Fork File
 
@@ -122,11 +120,7 @@ The `/setup-wizard` skill is the primary entry point for both first-time install
 
 ## Backup and Sync
 
-**Git sync:** The `git-sync.sh` hook commits and pushes changes to a private git remote after file modifications. This provides cross-device sync and version history.
-
-**Google Drive sync:** rclone handles bidirectional sync for encyclopedia files and journal entries. Configured during setup with `rclone config` for Google Drive OAuth.
-
-**Personal data sync:** The `personal-sync.sh` hook (PostToolUse, 15-min debounce) backs up memory files, CLAUDE.md, and `toolkit-state/config.json` to all configured backends (Google Drive, GitHub, and/or iCloud). The `session-start.sh` hook pulls the latest personal data from the primary backend at the start of every session for cross-device continuity. On a brand-new device, the setup wizard or `/restore` command performs the initial pull.
+**Unified sync:** The `sync.sh` hook (PostToolUse, 15-min debounce) backs up all personal data and system config to configured backends (Google Drive, GitHub, and/or iCloud). This includes memory files, CLAUDE.md, encyclopedia, user-created skills, conversation transcripts, and system config (settings.json, keybindings.json, config.json). It also updates the write registry for the write guard. The `session-start.sh` hook pulls the latest personal data from configured backends at the start of every session for cross-device continuity. The `session-end-sync.sh` hook ensures conversation data is synced on session exit (bypasses debounce). On a brand-new device, the setup wizard or `/restore` command performs the initial pull.
 
 ## Memory System
 
@@ -190,14 +184,10 @@ Personal data is protected through multiple layers:
 
 ## DestinCode Desktop App
 
-An Electron + React GUI that wraps Claude Code CLI. Located at `desktop/` in the toolkit repo.
+An Electron + React GUI that wraps Claude Code CLI. Now lives in the [destincode repo](https://github.com/itsdestin/destincode) at `desktop/`.
 
-- **Main process** (`desktop/src/main/`) — SessionManager (PTY pool, multi-session), TranscriptWatcher (JSONL file watcher, primary chat state source), HookRelay (permissions only — named pipe server for permission request/response flow), IPC handlers, StatusPoller (centralized async status file polling), structured logger (`logger.ts`), shared transcript reader (`transcript-utils.ts`)
-- **Renderer** (`desktop/src/renderer/`) — Terminal view (xterm.js), chat view (message bubbles, tool cards), command drawer (skill discovery), PartyKit-powered Connect 4 multiplayer game
-- **Hook scripts** (`desktop/hook-scripts/`) — Relay scripts that forward Claude Code hook events to the desktop app via named pipe. Includes `relay-blocking.js` for bidirectional permission hooks (holds socket open for approve/deny response, 300s timeout, fail-closed)
-- **Permission hooks** — Blocking permission relay: when Claude Code requests tool approval, the desktop app shows Yes/Always Allow/No buttons on a ToolCard. The relay holds the hook socket open until the user responds or the 300s timeout expires (auto-deny). Design doc at `docs/superpowers/specs/2026-03-23-blocking-permission-hooks-design.md`
-- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI build workflow at `.github/workflows/build.yml`
-- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `desktop/scripts/install-app.sh`
+- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI workflow at `destincode/.github/workflows/build-desktop.yml`, triggered by `desktop-v*` tags
+- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `scripts/install-app.sh` (downloads from destincode releases)
 
 ## State Files
 
@@ -218,9 +208,10 @@ Three GitHub Actions workflows handle versioning, releases, and builds:
 |----------|---------|---------|
 | `auto-tag.yml` | Push to `master` that changes `plugin.json` | Detects version bump, creates and pushes a `vX.Y.Z` git tag |
 | `release.yml` | Push of a `v*` tag | Extracts the matching section from `CHANGELOG.md` and creates a GitHub Release |
-| `build.yml` | Push of a `v*` tag | Builds cross-platform DestinCode desktop app installers (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`) |
 
-**Release flow:** The `/release` skill orchestrates the full release process — 7 parallel review agents validate changes, then it bumps `VERSION`, `plugin.json`, and `desktop/package.json`, generates the CHANGELOG entry, captures the Claude Code version, triggers a build verification, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes → `build.yml` builds and attaches desktop installers.
+Desktop app builds are now in the destincode repo (`build-desktop.yml`, triggered by `desktop-v*` tags).
+
+**Release flow:** The `/release` skill orchestrates the toolkit release — 7 parallel review agents validate changes, then it bumps `VERSION` and `plugin.json`, generates the CHANGELOG entry, captures the Claude Code version, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes. Desktop releases are managed separately in the destincode repo.
 
 **Versioning policy** (documented in CHANGELOG.md):
 - **Major (X.0.0)** — Breaking changes requiring `/setup-wizard` re-run or manual migration
@@ -250,7 +241,7 @@ For detailed guidance on each component type, ask Claude: "How do I create a new
 1. **Read the relevant spec(s)** before making any changes. If the feature has a spec, confirm you understand its mandates and design decisions.
 2. **Update CLAUDE.md fragments** (`core/templates/claude-md-fragments/`) if the change affects user-facing instructions, skill tables, or MCP server tables.
 3. **Update `.gitignore`** if new files or directories need to be tracked or excluded from version control.
-4. **Update `git-sync.sh`** if new paths need to be included in or excluded from automatic backup.
+4. **Update `sync.sh`** if new paths need to be included in or excluded from automatic backup.
 5. **Bump the spec version** if you changed a user mandate, reversed a design decision, or made an architectural shift. Batch multiple changes in one session into a single bump.
 6. **Update `README.md`** if the change is user-facing (new feature, changed command, removed capability).
 7. **Update `core/specs/INDEX.md`** if a spec was added, removed, or had its version bumped.

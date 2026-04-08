@@ -2,6 +2,34 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.3.0] - 2026-04-07
+
+### Added
+- **Sync consolidation** — Unified `sync.sh` replaces separate `git-sync.sh` and `personal-sync.sh`. Single hook handles all backup backends (Drive, GitHub, iCloud) with improved mutex, snapshot-before-upload, and direction-aware sync.
+- **Theme builder** — New `/theme-builder` skill for creating immersive DestinCode theme packs with custom colors, wallpapers, mascots, particles, and pattern overlays. Two-phase workflow: concept browser → full theme pack generation.
+- **Conversation index** — Cross-device topic continuity via `.conversation-index.json`, synced at session start and end.
+- **Contribution detector** — New hook notices improvements to the toolkit and offers to share them upstream.
+- **Session-end sync** — Multi-backend session-end backup for Drive, GitHub, and iCloud.
+- **Theme marketplace** — Browse, install, preview, and publish community themes from the desktop app.
+- **Theme preview generator** — Playwright-based preview generation with pattern overlays and custom_css support.
+
+### Changed
+- **Repo restructure** — Desktop app moved to `itsdestin/destincode`. The destinclaude repo is now toolkit-only (skills, hooks, commands, specs).
+- **README** — Repositioned as the toolkit supplementing the DestinCode app, not the main product.
+- **Landing page** — Redesigned `docs/index.html` for DestinCode as a product page.
+- **CI** — Deleted dead `release.yml` stub. Only `auto-tag.yml` remains.
+- **install-app.sh** — Updated to use unified `v*` tags instead of `desktop-v*`.
+
+### Fixed
+- **Session-end sync** — Fixed config key casing and missing `gdrive:` prefix that made the hook a silent no-op.
+- **Cross-platform portability** — Fixed Windows PID liveness check in sync.sh, added tasklist fallback to theme-builder server scripts, added python3 readlink fallback for macOS <12.3, added platform guard for ps command on Windows.
+- **Setup wizard** — Updated sync test marker path from `.personal-sync-marker` to `.sync-marker`.
+- **Theme builder** — Corrected wallpaper/pattern overlay approach, differentiated input styles under glassmorphism, disabled WebGL renderer when glassmorphism is active.
+- **Theme preview** — CSS-based card preview fallback, always-visible Preview button, static asset serving rules.
+- **Orphaned files** — Removed 14 stale desktop/ files from restructure merge. Removed stale sync-encyclopedia hook reference.
+- **Stale references** — Updated git-sync comments in session-start.sh, fixed desktop/ path references in specs.
+- **Execute bits** — Set +x on install-app.sh and migrations/2.2.0.sh.
+
 ## [2.2.1] - 2026-03-30
 
 ### Fixed

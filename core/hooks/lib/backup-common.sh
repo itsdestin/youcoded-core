@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # backup-common.sh — Shared utilities for backup hooks
-# Sourced by git-sync.sh, personal-sync.sh, session-start.sh
+# Sourced by sync.sh, session-start.sh, session-end-sync.sh
 # Design ref: backup-system-refactor-design (03-22-2026).md D1
 
 # NOTE: Do not set shell options (set -euo pipefail) in sourced libraries.
@@ -106,6 +106,7 @@ is_toolkit_owned() {
     local resolved_root
     resolved_root=$(realpath "$TOOLKIT_ROOT" 2>/dev/null \
         || readlink -f "$TOOLKIT_ROOT" 2>/dev/null \
+        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$TOOLKIT_ROOT" 2>/dev/null \
         || echo "$TOOLKIT_ROOT")
 
     # Walk up the directory tree checking for symlinks into TOOLKIT_ROOT
@@ -114,7 +115,8 @@ is_toolkit_owned() {
         if [[ -L "$check_path" ]]; then
             local target
             target=$(realpath "$check_path" 2>/dev/null \
-                || readlink -f "$check_path" 2>/dev/null) || return 1
+                || readlink -f "$check_path" 2>/dev/null \
+                || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$check_path" 2>/dev/null) || return 1
             [[ "$target" == "$resolved_root/"* || "$target" == "$resolved_root" ]] && return 0
         fi
         check_path=$(dirname "$check_path")
@@ -459,4 +461,193 @@ conv_safe_pull() {
     # Remote > local: safe to pull (remote has more data)
     # Full prefix verification would require downloading — defer to rclone
     return 0
+}
+
+# ---------------------------------------------------------------------------
+# Conversation Index — cross-device topic/title sync
+# Design ref: conversation-index-spec.md
+#
+# Topics are written locally by Claude (echo "Topic" > ~/.claude/topics/topic-{ID}).
+# The index is built lazily by scanning topic files during sync, then pushed
+# to remote backends. On pull, the remote index is merged with local and
+# topic cache files are regenerated for cross-device sessions.
+# ---------------------------------------------------------------------------
+
+# Stable device identifier for the index's "device" field.
+get_device_name() {
+    local _hostname _platform
+    _hostname="${HOSTNAME:-$(hostname 2>/dev/null || echo unknown)}"
+    # Truncate long hostnames
+    _hostname="${_hostname:0:32}"
+    # Read platform from config.local.json (rebuilt every session)
+    _platform=$(config_get "platform" "")
+    if [[ -z "$_platform" ]]; then
+        case "$(uname -s)" in
+            Darwin)       _platform="macos" ;;
+            MINGW*|MSYS*) _platform="windows" ;;
+            Linux)        _platform="linux" ;;
+            *)            _platform="unknown" ;;
+        esac
+    fi
+    echo "${_hostname}-${_platform}"
+}
+
+# Scan topic files and upsert entries into conversation-index.json.
+# No-ops gracefully if node is unavailable.
+update_conversation_index() {
+    command -v node &>/dev/null || {
+        log_backup "WARN" "Node unavailable — skipping conversation index update" "index.update"
+        return 0
+    }
+
+    local _TOPIC_DIR="$CLAUDE_DIR/topics"
+    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    [[ ! -d "$_TOPIC_DIR" ]] && return 0
+
+    # Collect topic files into a temp manifest (session_id\ttopic\tmtime_iso)
+    local _manifest=""
+    local _slug _device
+    _slug=$(get_current_project_slug 2>/dev/null || echo "")
+    _device=$(get_device_name 2>/dev/null || echo "unknown")
+
+    for _tf in "$_TOPIC_DIR"/topic-*; do
+        [[ ! -f "$_tf" ]] && continue
+        local _sid="${_tf##*/topic-}"
+        local _topic
+        _topic=$(head -1 "$_tf" 2>/dev/null | tr -d '\r\n')
+        # Skip empty or default topics
+        [[ -z "$_topic" || "$_topic" == "New Session" ]] && continue
+        # Get mtime as ISO string via node (cross-platform)
+        local _mtime
+        _mtime=$(node -e "console.log(new Date(require('fs').statSync(process.argv[1]).mtimeMs).toISOString())" "$_tf" 2>/dev/null) || continue
+        _manifest+="${_sid}	${_topic}	${_mtime}"$'\n'
+    done
+
+    [[ -z "$_manifest" ]] && return 0
+
+    # Upsert entries into the index via node
+    node -e "
+        const fs = require('fs');
+        const indexPath = process.argv[1];
+        const slug = process.argv[2];
+        const device = process.argv[3];
+        const PRUNE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+        const now = Date.now();
+
+        // Read existing index (corruption-resilient)
+        let index = { version: 1, sessions: {} };
+        try {
+            if (fs.existsSync(indexPath)) {
+                index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+                if (!index.sessions) index.sessions = {};
+            }
+        } catch (e) {
+            index = { version: 1, sessions: {} };
+        }
+
+        // Parse manifest from stdin
+        const lines = process.argv[4].trim().split('\n');
+        for (const line of lines) {
+            const [sid, topic, mtime] = line.split('\t');
+            if (!sid || !topic || !mtime) continue;
+            const existing = index.sessions[sid];
+            // Only upsert if newer than existing entry
+            if (!existing || new Date(mtime) > new Date(existing.lastActive)) {
+                index.sessions[sid] = { topic, lastActive: mtime, slug, device };
+            }
+        }
+
+        // Prune old entries
+        for (const [sid, entry] of Object.entries(index.sessions)) {
+            if (now - new Date(entry.lastActive).getTime() > PRUNE_MS) {
+                delete index.sessions[sid];
+            }
+        }
+
+        // Atomic write via temp file
+        const tmp = indexPath + '.tmp.' + process.pid;
+        fs.writeFileSync(tmp, JSON.stringify(index, null, 2) + '\n');
+        fs.renameSync(tmp, indexPath);
+    " "$_INDEX_FILE" "$_slug" "$_device" "$_manifest" 2>/dev/null || {
+        log_backup "WARN" "Conversation index update failed" "index.update"
+        return 0
+    }
+}
+
+# Merge a remote conversation index into the local one.
+# Arguments: $1 = remote index path, $2 = local index path (optional)
+# Merge strategy: union by session ID, latest lastActive wins.
+merge_conversation_index() {
+    local _remote_path="$1"
+    local _local_path="${2:-$CLAUDE_DIR/conversation-index.json}"
+
+    command -v node &>/dev/null || return 0
+    [[ ! -f "$_remote_path" ]] && return 0
+
+    node -e "
+        const fs = require('fs');
+        const remotePath = process.argv[1];
+        const localPath = process.argv[2];
+
+        function safeRead(p) {
+            try { const d = JSON.parse(fs.readFileSync(p, 'utf8')); return d.sessions || {}; }
+            catch { return {}; }
+        }
+
+        const remote = safeRead(remotePath);
+        const local_ = fs.existsSync(localPath) ? safeRead(localPath) : {};
+
+        // Merge: union by session ID, latest lastActive wins
+        const merged = { ...local_ };
+        for (const [sid, entry] of Object.entries(remote)) {
+            if (!merged[sid] || new Date(entry.lastActive) > new Date(merged[sid].lastActive)) {
+                merged[sid] = entry;
+            }
+        }
+
+        const index = { version: 1, sessions: merged };
+        const tmp = localPath + '.tmp.' + process.pid;
+        fs.writeFileSync(tmp, JSON.stringify(index, null, 2) + '\n');
+        fs.renameSync(tmp, localPath);
+    " "$_remote_path" "$_local_path" 2>/dev/null || {
+        log_backup "WARN" "Conversation index merge failed" "index.merge"
+        return 0
+    }
+}
+
+# Regenerate topic cache files from the conversation index.
+# Only creates files for sessions that DON'T already have a local topic file
+# (local topic files are authoritative for sessions on this device).
+regenerate_topic_cache() {
+    command -v node &>/dev/null || return 0
+
+    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    local _TOPIC_DIR="$CLAUDE_DIR/topics"
+    [[ ! -f "$_INDEX_FILE" ]] && return 0
+
+    mkdir -p "$_TOPIC_DIR"
+
+    node -e "
+        const fs = require('fs');
+        const path = require('path');
+        const indexPath = process.argv[1];
+        const topicDir = process.argv[2];
+        let created = 0;
+
+        try {
+            const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+            for (const [sid, entry] of Object.entries(index.sessions || {})) {
+                if (!entry.topic || entry.topic === 'New Session') continue;
+                const topicFile = path.join(topicDir, 'topic-' + sid);
+                // Never overwrite existing local topic files
+                if (!fs.existsSync(topicFile)) {
+                    fs.writeFileSync(topicFile, entry.topic);
+                    created++;
+                }
+            }
+            if (created > 0) {
+                process.stderr.write('Regenerated ' + created + ' topic cache file(s) from index\n');
+            }
+        } catch {}
+    " "$_INDEX_FILE" "$_TOPIC_DIR" 2>/dev/null || true
 }

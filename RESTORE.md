@@ -20,11 +20,11 @@ Or use the standalone restore command on an existing install:
 
 | Data | Location | Backed Up By |
 |------|----------|-------------|
-| Claude Code config (.claude/) | Git repo (private) | `git-sync.sh` (PostToolUse) |
-| Memory files, CLAUDE.md | Git repo + configured backends | `personal-sync.sh` |
-| Conversation transcripts (.jsonl) | Configured backends (per-slug) | `personal-sync.sh` |
+| Claude Code config (.claude/) | Configured backends | `sync.sh` (PostToolUse) |
+| Memory files, CLAUDE.md | Configured backends | `sync.sh` |
+| Conversation transcripts (.jsonl) | Configured backends (per-slug) | `sync.sh` |
 | Encyclopedia source files | Google Drive (configurable path) | `session-start.sh` |
-| Toolkit state (config.json) | Git repo | `git-sync.sh` |
+| Toolkit state (config.json) | Configured backends | `sync.sh` |
 
 ### What Does NOT Get Backed Up
 
@@ -39,7 +39,7 @@ Or use the standalone restore command on an existing install:
 Personal data can replicate to one or more of these backends (configured in `config.json`):
 
 1. **Google Drive** — via rclone (`gdrive:` remote). Files go to `<DRIVE_ROOT>/Backup/personal/` (including `conversations/<slug>/`).
-2. **GitHub** — private config repo. Committed and pushed by `git-sync.sh`. Personal data via `personal-sync.sh`.
+2. **GitHub** — private config repo. Personal data pushed by `sync.sh`.
 3. **iCloud** — via iCloud Drive folder detection. macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/DestinClaude/`. Windows: `~/iCloudDrive/DestinClaude/`.
 
 All backends are complementary — no primary/secondary hierarchy. Multiple backends can be configured simultaneously.
