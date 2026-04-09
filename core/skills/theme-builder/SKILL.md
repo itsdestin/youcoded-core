@@ -761,6 +761,10 @@ Before rendering a concept, verify these contrast ratios mentally. If any fail, 
 - `fg-2` on `canvas` — 3.5:1 minimum. Secondary text should be comfortable to read.
 - `edge` must be visually distinct from both `canvas` and `panel`. If the user can't tell where a panel ends, the border is too subtle.
 
+**Soft requirements for bubble timestamps:**
+- `fg-muted` at 60% opacity on `inset` — 2:1 minimum. Timestamp text in assistant bubbles uses `fg-muted/60`; it should be visible but clearly secondary.
+- `on-accent` at 50% opacity on `accent` — 2:1 minimum. Timestamp text in user bubbles uses `on-accent/50`; same principle.
+
 **No requirements (decorative — creative freedom):**
 - `fg-dim`, `fg-muted`, `fg-faint` — These tokens exist to de-emphasize. Low contrast is intentional and allowed.
 

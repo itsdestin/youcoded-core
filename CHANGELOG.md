@@ -2,6 +2,19 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.3.1] - 2026-04-08
+
+### Added
+- **Output styles** — Three new Claude Code plugins (conversational, academic, professional) that reposition Claude as a general assistant instead of a coding tool. Mirrors the official Anthropic output style plugin structure (SessionStart hook + additionalContext).
+- **Output styles spec** — New spec at `core/specs/output-styles-spec.md` with design decisions, user mandates, and implementation details.
+
+### Changed
+- **Theme builder** — Added soft contrast requirements for bubble timestamps: `fg-muted/60` on `inset` (2:1 min) and `on-accent/50` on `accent` (2:1 min).
+
+### Fixed
+- **Specs index** — Added missing output-styles-spec.md entry to INDEX.md.
+- **README** — Added output styles to Core Features list.
+
 ## [2.3.0] - 2026-04-07
 
 ### Added

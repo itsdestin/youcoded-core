@@ -33,6 +33,7 @@ Three layers, each a standalone [Claude Code plugin](https://docs.anthropic.com/
 - **Commands** — `/setup-wizard`, `/update`, `/health`, `/diagnose`, `/sync`, `/toolkit`, `/theme-builder`
 - **Theme builder** — build immersive DestinCode theme packs with custom colors, wallpapers, mascots, and effects
 - **Contribution detector** — notices your improvements and offers to share them upstream
+- **Output styles** — Conversational, Academic, and Professional modes that reposition Claude as a general assistant instead of a coding tool. Great for students, professionals, and anyone who uses Claude Code as their primary Claude interface
 
 ### Life Features
 - **Journaling assistant** — conversational daily journaling with Socratic prompts

@@ -1,0 +1,8 @@
+{
+  "name": "conversational-output-style",
+  "version": "1.0.0",
+  "description": "General-purpose conversational assistant — like claude.ai, not a coding tool",
+  "author": {
+    "name": "itsdestin"
+  }
+}

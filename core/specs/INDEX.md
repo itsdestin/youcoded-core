@@ -17,6 +17,7 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Statusline | system | core/specs/statusline-spec.md | 1.10 |
 | DestinTip | system | core/specs/destintip-spec.md | 1.2 |
 | Landing Page | system | core/specs/landing-page-spec.md | 1.4 |
+| Output Styles | system | core/specs/output-styles-spec.md | 1.0 |
 | Encyclopedia System | skill | life/skills/encyclopedia-update/specs/encyclopedia-system-spec.md | 1.0 |
 | Journaling Assistant | skill | life/skills/journaling-assistant/specs/journaling-assistant-spec.md | 1.4 |
 | Encyclopedia Update | skill | life/skills/encyclopedia-update/specs/encyclopedia-update-spec.md | 1.4 |
