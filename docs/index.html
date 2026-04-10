@@ -566,6 +566,13 @@
   /* --- DEMO APP MOCKUP --- */
   .demo-section { padding: 16px 0; }
 
+  /* ═══════════════════════════════════════════════════════════════════
+     Shared app mockup CSS — matches real DestinCode component styling.
+     Uses --m-* tokens so both animated (.demo-app) and static (.mock-frame)
+     mockups share the same rules. The animated demo aliases --demo-* to --m-*.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* --- Animated demo container --- */
   .demo-app {
     border-radius: 16px;
     overflow: hidden;
@@ -574,292 +581,552 @@
     max-width: 680px;
     margin: 0 auto;
     position: relative;
-    /* Midnight theme initial state */
-    --demo-canvas: #0D1117;
-    --demo-panel: #161B22;
-    --demo-inset: #21262D;
-    --demo-accent: #B1BAC4;
-    --demo-on-accent: #0D1117;
-    --demo-fg: #C9D1D9;
-    --demo-fg-dim: #8B949E;
-    --demo-fg-muted: #6E7681;
-    --demo-edge: #30363D;
+    /* Midnight initial state — aliased to --m-* for shared CSS */
+    --m-canvas: #0D1117; --m-panel: #161B22; --m-inset: #21262D;
+    --m-accent: #B1BAC4; --m-on-accent: #0D1117;
+    --m-fg: #C9D1D9; --m-fg-2: #A0AAB4; --m-fg-dim: #8B949E; --m-fg-muted: #6E7681; --m-fg-faint: #484F58;
+    --m-edge: #30363D; --m-edge-dim: #30363D80;
+    /* Shape — default radii */
+    --m-radius-sm: 4px; --m-radius-md: 8px; --m-radius-lg: 12px;
+    --m-radius-xl: 16px; --m-radius-2xl: 24px; --m-radius-toggle: 6px;
     transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .demo-app.theme-golden {
-    --demo-canvas: #08080e;
-    --demo-panel: #140e1a;
-    --demo-inset: #1c1428;
-    --demo-accent: #ffc030;
-    --demo-on-accent: #000000;
-    --demo-fg: #f8e8c8;
-    --demo-fg-dim: #b09060;
-    --demo-fg-muted: #806840;
-    --demo-edge: #281e10;
+    --m-canvas: #08080e; --m-panel: #140e1a; --m-inset: #1c1428;
+    --m-accent: #ffc030; --m-on-accent: #000000;
+    --m-fg: #f8e8c8; --m-fg-2: #dcc898; --m-fg-dim: #b09060; --m-fg-muted: #806840; --m-fg-faint: #504028;
+    --m-edge: #281e10; --m-edge-dim: #281e1080;
+    /* Golden sunbreak shape overrides — larger radii */
+    --m-radius-sm: 8px; --m-radius-md: 16px; --m-radius-lg: 24px;
+    --m-radius-xl: 32px; --m-radius-2xl: 36px; --m-radius-toggle: 14px;
   }
 
-  .demo-wallpaper {
-    position: absolute;
-    inset: 0;
+  /* --- Static mockup container --- */
+  .mock-frame {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
+    position: relative;
+  }
+
+  /* --- Theme palettes for static mocks --- */
+  .mock-midnight {
+    --m-canvas: #0D1117; --m-panel: #161B22; --m-inset: #21262D;
+    --m-accent: #88B4D8; --m-on-accent: #0D1117;
+    --m-fg: #C9D1D9; --m-fg-2: #A0AAB4; --m-fg-dim: #8B949E; --m-fg-muted: #6E7681; --m-fg-faint: #484F58;
+    --m-edge: #30363D; --m-edge-dim: #30363D80;
+    --m-radius-sm: 4px; --m-radius-md: 8px; --m-radius-lg: 12px;
+    --m-radius-xl: 16px; --m-radius-2xl: 24px; --m-radius-toggle: 6px;
+  }
+  .mock-midnight .mock-wallpaper { display: none; }
+  .mock-midnight .mock-chat { background: var(--m-canvas); }
+  .mock-midnight .mock-header,
+  .mock-midnight .mock-statusbar,
+  .mock-midnight .mock-inputbar { background: var(--m-panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .mock-midnight .mock-bubble.user { background: var(--m-accent); color: var(--m-on-accent); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+  .mock-midnight .mock-bubble.assistant { background: var(--m-inset); color: var(--m-fg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .mock-midnight .mock-tool-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--m-inset); }
+  .mock-midnight .mock-input-inner { backdrop-filter: none; background: var(--m-inset); }
+  .mock-midnight .mock-send { background: var(--m-accent); box-shadow: none; }
+
+  .mock-halftone-dim {
+    --m-canvas: #08060e; --m-panel: #100e1c; --m-inset: #181430;
+    --m-accent: #e8234a; --m-on-accent: #ffffff;
+    --m-fg: #f0e8f8; --m-fg-2: #c8b8e0; --m-fg-dim: #a498c0; --m-fg-muted: #7468a0; --m-fg-faint: #504080;
+    --m-edge: #322850; --m-edge-dim: #32285080;
+    --m-radius-sm: 4px; --m-radius-md: 8px; --m-radius-lg: 12px;
+    --m-radius-xl: 16px; --m-radius-2xl: 24px; --m-radius-toggle: 6px;
+  }
+  .mock-halftone-dim .mock-wallpaper { display: none; }
+  .mock-halftone-dim .mock-chat { background: var(--m-canvas); }
+  .mock-halftone-dim .mock-header,
+  .mock-halftone-dim .mock-statusbar,
+  .mock-halftone-dim .mock-inputbar { background: var(--m-panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .mock-halftone-dim .mock-bubble.user { background: var(--m-accent); color: var(--m-on-accent); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 0 18px rgba(232, 35, 74, 0.25); }
+  .mock-halftone-dim .mock-bubble.assistant { background: var(--m-inset); color: var(--m-fg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .mock-halftone-dim .mock-tool-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--m-inset); }
+  .mock-halftone-dim .mock-model-chip { background: rgba(232, 35, 74, 0.15); color: #e8234a; border-color: rgba(232, 35, 74, 0.25); }
+  .mock-halftone-dim .mock-input-inner { backdrop-filter: none; background: var(--m-inset); }
+  .mock-halftone-dim .mock-send { background: var(--m-accent); box-shadow: 0 0 12px rgba(232, 35, 74, 0.4); }
+
+  .mock-golden {
+    --m-canvas: #08080e; --m-panel: #140e1a; --m-inset: #1c1428;
+    --m-accent: #ffc030; --m-on-accent: #000000;
+    --m-fg: #f8e8c8; --m-fg-2: #dcc898; --m-fg-dim: #b09060; --m-fg-muted: #806840; --m-fg-faint: #504028;
+    --m-edge: #281e10; --m-edge-dim: #281e1080;
+    --m-radius-sm: 8px; --m-radius-md: 16px; --m-radius-lg: 24px;
+    --m-radius-xl: 32px; --m-radius-2xl: 36px; --m-radius-toggle: 14px;
+  }
+
+  /* --- Wallpaper layer --- */
+  .demo-wallpaper, .mock-wallpaper {
+    position: absolute; inset: 0;
     background: url('assets/golden-sunbreak-wallpaper.jpg') center/cover;
-    opacity: 0;
-    transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 0;
   }
-
+  .demo-wallpaper { opacity: 0; transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1); }
   .demo-app.theme-golden .demo-wallpaper { opacity: 0.95; }
+  .mock-wallpaper { opacity: 0.95; }
 
-  .demo-header {
-    height: 36px;
-    background: var(--demo-panel);
-    border-bottom: 1px solid var(--demo-edge);
+  /* ═══ HEADER BAR — 40px, 3-section flex layout ═══ */
+  .demo-header, .mock-header {
+    height: 40px;
+    background: var(--m-panel);
+    border-bottom: 1px solid var(--m-edge);
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    gap: 8px;
+    padding: 0 8px 0 12px;
+    gap: 6px;
     position: relative;
     z-index: 2;
+    font-family: var(--font-mono);
     transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  .demo-app.theme-golden .demo-header {
+  .demo-app.theme-golden .demo-header,
+  .mock-golden .mock-header {
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--demo-panel) 82%, transparent);
+    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
   }
 
-  .demo-header-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    opacity: 0.6;
+  /* Settings gear icon — left side of header */
+  .mock-settings-btn {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--m-radius-sm, 4px);
+    color: var(--m-fg-muted);
+    flex-shrink: 0;
+    flex: 1;
+    justify-content: flex-start;
   }
-  .demo-header-dot.red { background: #ff5f57; }
-  .demo-header-dot.yellow { background: #febc2e; }
-  .demo-header-dot.green { background: #28c840; }
+  .mock-settings-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 
-  .demo-header-tabs {
-    display: flex;
-    gap: 2px;
-    margin-left: auto;
-    font-size: 0.6rem;
-    font-family: var(--font-mono);
-  }
-
-  .demo-header-tab {
-    padding: 3px 8px;
-    border-radius: 4px;
-    color: var(--demo-fg-muted);
-    transition: all 1.8s;
-  }
-  .demo-header-tab.active {
-    background: var(--demo-inset);
-    color: var(--demo-fg);
-    transition: all 1.8s;
-  }
-
-  .demo-header-session {
-    font-size: 0.65rem;
-    font-family: var(--font-mono);
-    color: var(--demo-fg-dim);
-    margin-left: 12px;
-    transition: color 1.8s;
-  }
-
-  .demo-chat {
-    background: var(--demo-canvas);
-    min-height: 260px;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-    z-index: 1;
-    transition: background 1.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .demo-app.theme-golden .demo-chat {
-    background: transparent;
-  }
-
-  .demo-bubble {
-    max-width: 80%;
-    padding: 10px 16px;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.4s, transform 0.4s, background 1.8s, color 1.8s, border-color 1.8s, box-shadow 1.8s, backdrop-filter 1.8s;
-  }
-
-  .demo-bubble.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .demo-bubble.user {
-    align-self: flex-end;
-    background: var(--demo-accent);
-    color: var(--demo-on-accent);
-    border-radius: 16px 16px 4px 16px;
-  }
-
-  .demo-app.theme-golden .demo-bubble.user {
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--demo-accent) 55%, transparent);
-    box-shadow: 0 0 18px rgba(255, 192, 48, 0.2);
-  }
-
-  .demo-bubble.assistant {
-    align-self: flex-start;
-    background: var(--demo-inset);
-    color: var(--demo-fg);
-    border-radius: 16px 16px 16px 4px;
-  }
-
-  .demo-app.theme-golden .demo-bubble.assistant {
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--demo-inset) 85%, transparent);
-  }
-
-  .demo-tool-card {
-    align-self: flex-start;
-    max-width: 85%;
-    background: var(--demo-inset);
-    border: 1px solid var(--demo-edge);
-    border-radius: 12px;
-    padding: 8px 14px;
-    font-size: 0.72rem;
-    font-family: var(--font-mono);
-    color: var(--demo-fg-dim);
+  /* Session strip — center, pill-shaped container */
+  .mock-session-strip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.4s, transform 0.4s, background 1.8s, border-color 1.8s, color 1.8s, backdrop-filter 1.8s;
+    gap: 2px;
+    background: var(--m-inset);
+    border-radius: 9999px;
+    padding: 2px 6px;
+    min-width: 0;
+    flex-shrink: 1;
+    transition: background 1.8s;
+  }
+  .demo-app.theme-golden .mock-session-strip,
+  .mock-golden .mock-session-strip {
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
   }
 
-  .demo-tool-card.show {
-    opacity: 1;
-    transform: translateY(0);
+  /* Session pill inside the strip */
+  .mock-session-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 9999px;
+    padding: 1px 6px;
+    border: 1px solid var(--m-edge);
+    background: var(--m-panel);
+    transition: all 1.8s;
+  }
+  .demo-app.theme-golden .mock-session-pill,
+  .mock-golden .mock-session-pill {
+    background: color-mix(in srgb, var(--m-panel) 80%, transparent);
+    border-color: var(--m-edge);
   }
 
-  .demo-app.theme-golden .demo-tool-card {
+  .mock-session-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4CAF50;
+    flex-shrink: 0;
+    animation: mock-breathe 2s ease-in-out infinite;
+  }
+  @keyframes mock-breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  .mock-session-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--m-fg-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
+
+  .mock-session-chevron {
+    width: 12px; height: 12px;
+    color: var(--m-fg-muted);
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Right side of header — toggle + games */
+  .mock-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  /* Chat/Terminal segmented toggle */
+  .mock-toggle-group {
+    display: flex;
+    background: var(--m-inset);
+    border-radius: var(--m-radius-md, 8px);
+    padding: 2px;
+    gap: 2px;
+    transition: background 1.8s, border-radius 1.8s;
+  }
+  .demo-app.theme-golden .mock-toggle-group,
+  .mock-golden .mock-toggle-group {
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
+  }
+
+  .mock-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    border-radius: var(--m-radius-toggle, 6px);
+    color: var(--m-fg-dim);
+    transition: all 1.8s;
+  }
+  .mock-toggle-btn.active {
+    background: var(--m-accent);
+    color: var(--m-on-accent);
+  }
+  .mock-toggle-btn svg { width: 13px; height: 13px; }
+
+  /* Games button — separate container */
+  .mock-games-btn-wrap {
+    display: flex;
+    background: var(--m-inset);
+    border-radius: var(--m-radius-md, 8px);
+    padding: 2px;
+    transition: background 1.8s, border-radius 1.8s;
+  }
+  .demo-app.theme-golden .mock-games-btn-wrap,
+  .mock-golden .mock-games-btn-wrap {
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
+  }
+
+  .mock-games-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: var(--m-radius-toggle, 6px);
+    color: var(--m-fg-dim);
+    transition: all 1.8s;
+  }
+  .mock-games-btn.active {
+    background: var(--m-accent);
+    color: var(--m-on-accent);
+  }
+  .mock-games-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .mock-games-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4CAF50;
+    flex-shrink: 0;
+  }
+
+  /* ═══ CHAT AREA ═══ */
+  .demo-chat, .mock-chat {
+    min-height: 260px;
+    padding: 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+    background: var(--m-canvas);
+    transition: background 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .demo-app.theme-golden .demo-chat,
+  .mock-golden .mock-chat { background: transparent; }
+
+  /* ═══ CHAT BUBBLES — matches real app radius/padding/font ═══ */
+  .demo-bubble, .mock-bubble {
+    padding: 14px 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: var(--font-mono);
+    transition: opacity 0.4s, transform 0.4s, background 1.8s, color 1.8s, border-radius 1.8s, box-shadow 1.8s, backdrop-filter 1.8s;
+  }
+
+  .demo-bubble { opacity: 0; transform: translateY(8px); }
+  .demo-bubble.show { opacity: 1; transform: translateY(0); }
+
+  .demo-bubble.user, .mock-bubble.user {
+    align-self: flex-end;
+    max-width: 80%;
+    background: var(--m-accent);
+    color: var(--m-on-accent);
+    border-radius: var(--m-radius-2xl, 24px) var(--m-radius-2xl, 24px) var(--m-radius-sm, 4px) var(--m-radius-2xl, 24px);
+  }
+
+  .demo-bubble.assistant, .mock-bubble.assistant {
+    align-self: flex-start;
+    max-width: 85%;
+    background: var(--m-inset);
+    color: var(--m-fg);
+    border-radius: var(--m-radius-2xl, 24px) var(--m-radius-2xl, 24px) var(--m-radius-2xl, 24px) var(--m-radius-sm, 4px);
+  }
+
+  /* Glassmorphism on bubbles */
+  .demo-app.theme-golden .demo-bubble.user, .mock-golden .mock-bubble.user {
     backdrop-filter: blur(16px) saturate(1.1);
     -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--demo-inset) 85%, transparent);
+    background: color-mix(in srgb, var(--m-accent) 55%, transparent);
+    box-shadow: 0 0 18px rgba(255, 192, 48, 0.2);
   }
+  .demo-app.theme-golden .demo-bubble.assistant, .mock-golden .mock-bubble.assistant {
+    backdrop-filter: blur(16px) saturate(1.1);
+    -webkit-backdrop-filter: blur(16px) saturate(1.1);
+    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
+  }
+
+  /* ═══ TOOL CARDS — inside assistant bubble, structured layout ═══ */
+  .mock-tool-card {
+    border: 1px solid var(--m-edge);
+    border-radius: var(--m-radius-lg, 12px);
+    overflow: hidden;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    transition: all 1.8s;
+  }
+
+  .mock-tool-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .mock-tool-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mock-tool-icon.check { color: #4CAF50; font-weight: 700; font-size: 13px; }
+  .mock-tool-icon.spinner { color: var(--m-fg-muted); }
+
+  .mock-tool-sep {
+    color: var(--m-fg-faint);
+    font-size: 12px;
+    user-select: none;
+  }
+
+  .mock-tool-label {
+    font-weight: 500;
+    color: var(--m-fg-2);
+    font-size: 12px;
+  }
+
+  .mock-tool-detail {
+    color: var(--m-fg-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mock-tool-chevron {
+    width: 14px; height: 14px;
+    color: var(--m-fg-muted);
+    flex-shrink: 0;
+  }
+
+  /* Animated tool cards in demo */
+  .demo-tool-card {
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .demo-tool-card.show { opacity: 1; transform: translateY(0); }
 
   .demo-spinner {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--demo-fg-muted);
-    border-top-color: var(--demo-accent);
+    width: 12px; height: 12px;
+    border: 2px solid var(--m-fg-muted);
+    border-top-color: var(--m-accent);
     border-radius: 50%;
     animation: demo-spin 0.8s linear infinite;
     transition: border-color 1.8s;
   }
-
-  .demo-check {
-    color: #4CAF50;
-    font-weight: 700;
-  }
-
   @keyframes demo-spin { to { transform: rotate(360deg); } }
 
-  .demo-statusbar {
-    height: 24px;
-    background: var(--demo-panel);
-    border-top: 1px solid var(--demo-edge);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 12px;
-    font-size: 0.55rem;
-    font-family: var(--font-mono);
-    color: var(--demo-fg-muted);
+  /* ═══ INPUT BAR — matches real app: outer container + inner form ═══ */
+  .demo-inputbar, .mock-inputbar {
+    background: var(--m-panel);
+    padding: 4px 8px 6px;
     position: relative;
     z-index: 2;
     transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  .demo-app.theme-golden .demo-statusbar {
+  .demo-app.theme-golden .demo-inputbar,
+  .mock-golden .mock-inputbar {
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--demo-panel) 82%, transparent);
+    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
+    /* Floating style for golden sunbreak */
+    margin: 0 8px;
+    border-radius: var(--m-radius-2xl, 36px);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+    padding: 4px 8px;
   }
 
-  .demo-model-badge {
-    padding: 1px 6px;
-    border-radius: 4px;
-    background: rgba(129, 140, 248, 0.15);
-    color: #818CF8;
-    font-weight: 600;
-  }
-
-  .demo-inputbar {
-    height: 44px;
-    background: var(--demo-panel);
-    border-top: 1px solid var(--demo-edge);
+  /* Inner form — the rounded inset bar */
+  .mock-input-inner {
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    gap: 8px;
-    position: relative;
-    z-index: 2;
-    transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 6px;
+    background: var(--m-inset);
+    border-radius: var(--m-radius-xl, 16px);
+    padding: 6px 10px;
+    transition: all 1.8s;
+  }
+  .demo-app.theme-golden .mock-input-inner,
+  .mock-golden .mock-input-inner {
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--m-inset) 80%, transparent);
   }
 
-  .demo-app.theme-golden .demo-inputbar {
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--demo-panel) 82%, transparent);
+  /* Icon buttons inside input (attach, compass) */
+  .mock-input-icon {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--m-fg-dim);
+    flex-shrink: 0;
   }
+  .mock-input-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 
-  .demo-input-field {
+  /* Textarea placeholder */
+  .mock-input-text {
     flex: 1;
-    height: 28px;
-    background: var(--demo-inset);
-    border: 1px solid var(--demo-edge);
-    border-radius: 8px;
-    padding: 0 10px;
-    font-size: 0.72rem;
+    font-size: 14px;
     font-family: var(--font-mono);
-    color: var(--demo-fg-dim);
+    color: var(--m-fg-muted);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* Send button */
+  .mock-send {
+    width: 28px; height: 28px;
+    background: var(--m-accent);
+    border-radius: var(--m-radius-lg, 12px);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 1.8s;
+  }
+  .demo-app.theme-golden .mock-send,
+  .mock-golden .mock-send { box-shadow: 0 0 12px rgba(255, 192, 48, 0.4); }
+  .mock-send svg { width: 14px; height: 14px; transition: stroke 1.8s; }
+
+  /* Quick chips row above input */
+  .mock-chips {
+    display: flex;
+    gap: 4px;
+    padding: 4px 12px;
+    overflow-x: auto;
+  }
+  .mock-chip {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: var(--m-radius-md, 8px);
+    background: var(--m-panel);
+    border: 1px solid var(--m-edge-dim);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--m-fg-2);
     display: flex;
     align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition: all 1.8s;
   }
 
-  .demo-send-btn {
-    width: 28px;
-    height: 28px;
-    background: var(--demo-accent);
-    border-radius: 8px;
+  /* ═══ STATUS BAR — flex-wrap, real chip pills ═══ */
+  .demo-statusbar, .mock-statusbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: var(--m-panel);
+    border-top: 1px solid var(--m-edge-dim);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--m-fg-muted);
+    position: relative;
+    z-index: 2;
+    transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .demo-app.theme-golden .demo-statusbar,
+  .mock-golden .mock-statusbar {
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
+  }
+
+  /* Model chip — colored per model */
+  .mock-model-chip {
+    padding: 2px 6px;
+    border-radius: var(--m-radius-sm, 4px);
+    font-weight: 600;
+    border: 1px solid;
+    transition: all 1.8s;
+  }
+  .mock-model-chip.opus { background: rgba(129, 140, 248, 0.15); color: #818CF8; border-color: rgba(129, 140, 248, 0.25); }
+  .mock-model-chip.sonnet { background: rgba(156, 163, 175, 0.15); color: #9CA3AF; border-color: rgba(156, 163, 175, 0.25); }
+  .mock-model-chip.haiku { background: rgba(45, 212, 191, 0.15); color: #2DD4BF; border-color: rgba(45, 212, 191, 0.25); }
+
+  /* Permission mode chip */
+  .mock-perm-chip {
+    padding: 2px 6px;
+    border-radius: var(--m-radius-sm, 4px);
+    background: var(--m-inset);
+    color: var(--m-fg-muted);
+    border: 1px solid var(--m-edge-dim);
     transition: all 1.8s;
   }
 
-  .demo-app.theme-golden .demo-send-btn {
-    box-shadow: 0 0 12px rgba(255, 192, 48, 0.4);
+  /* Generic status bar pill (context, theme, usage) */
+  .mock-status-pill {
+    padding: 2px 6px;
+    border-radius: var(--m-radius-sm, 4px);
+    background: var(--m-panel);
+    border: 1px solid var(--m-edge-dim);
+    transition: all 1.8s;
   }
 
-  .demo-send-btn svg {
-    width: 14px;
-    height: 14px;
-    fill: var(--demo-on-accent);
-    transition: fill 1.8s;
-  }
+  .mock-status-spacer { margin-left: auto; }
 
-  /* --- Showcase static mockups --- */
+  /* Pencil customize button */
+  .mock-customize-btn {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--m-radius-sm, 4px);
+    background: var(--m-panel);
+    border: 1px solid var(--m-edge-dim);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .mock-customize-btn svg { width: 10px; height: 10px; fill: none; stroke: var(--m-fg-muted); stroke-width: 2; }
+
+  /* ═══ Showcase layout ═══ */
   .showcase-grid {
     display: flex;
     flex-direction: column;
@@ -901,309 +1168,16 @@
     line-height: 1.6;
   }
 
-  /* Static mockup — Midnight themed */
-  .mock-midnight {
-    --m-canvas: #0D1117;
-    --m-panel: #161B22;
-    --m-inset: #21262D;
-    --m-accent: #88B4D8;
-    --m-on-accent: #0D1117;
-    --m-fg: #C9D1D9;
-    --m-fg-dim: #8B949E;
-    --m-fg-muted: #6E7681;
-    --m-edge: #30363D;
-  }
-
-  .mock-midnight .mock-wallpaper { display: none; }
-  .mock-midnight .mock-chat { background: var(--m-canvas); }
-  .mock-midnight .mock-header { background: var(--m-panel); }
-  .mock-midnight .mock-statusbar { background: var(--m-panel); }
-  .mock-midnight .mock-inputbar { background: var(--m-panel); }
-  .mock-midnight .mock-bubble.user {
-    background: var(--m-accent);
-    color: var(--m-on-accent);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: none;
-  }
-  .mock-midnight .mock-bubble.assistant {
-    background: var(--m-inset);
-    color: var(--m-fg);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .mock-midnight .mock-tool {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--m-inset);
-  }
-  .mock-midnight .mock-input {
-    backdrop-filter: none;
-    background: var(--m-inset);
-  }
-  .mock-midnight .mock-send {
-    background: var(--m-accent);
-    box-shadow: none;
-  }
-
-  /* Static mockup — Halftone themed */
-  .mock-halftone-dim {
-    --m-canvas: #08060e;
-    --m-panel: #100e1c;
-    --m-inset: #181430;
-    --m-accent: #e8234a;
-    --m-on-accent: #ffffff;
-    --m-fg: #f0e8f8;
-    --m-fg-dim: #a498c0;
-    --m-fg-muted: #7468a0;
-    --m-edge: #322850;
-  }
-
-  .mock-halftone-dim .mock-wallpaper { display: none; }
-  .mock-halftone-dim .mock-chat { background: var(--m-canvas); }
-  .mock-halftone-dim .mock-header { background: var(--m-panel); }
-  .mock-halftone-dim .mock-statusbar { background: var(--m-panel); }
-  .mock-halftone-dim .mock-inputbar { background: var(--m-panel); }
-  .mock-halftone-dim .mock-bubble.user {
-    background: var(--m-accent);
-    color: var(--m-on-accent);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: 0 0 18px rgba(232, 35, 74, 0.25);
-  }
-  .mock-halftone-dim .mock-bubble.assistant {
-    background: var(--m-inset);
-    color: var(--m-fg);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .mock-halftone-dim .mock-tool {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--m-inset);
-  }
-  .mock-halftone-dim .mock-model {
-    background: rgba(232, 35, 74, 0.15);
-    color: #e8234a;
-  }
-  .mock-halftone-dim .mock-input {
-    backdrop-filter: none;
-    background: var(--m-inset);
-  }
-  .mock-halftone-dim .mock-send {
-    background: var(--m-accent);
-    box-shadow: 0 0 12px rgba(232, 35, 74, 0.4);
-  }
-
-  /* Static mockup — Golden Sunbreak themed */
-  .mock-golden {
-    --m-canvas: #08080e;
-    --m-panel: #140e1a;
-    --m-inset: #1c1428;
-    --m-accent: #ffc030;
-    --m-on-accent: #000000;
-    --m-fg: #f8e8c8;
-    --m-fg-dim: #b09060;
-    --m-fg-muted: #806840;
-    --m-edge: #281e10;
-  }
-
-  .mock-frame {
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
-    position: relative;
-  }
-
-  .mock-wallpaper {
-    position: absolute;
-    inset: 0;
-    background: url('assets/golden-sunbreak-wallpaper.jpg') center/cover;
-    opacity: 0.95;
-    z-index: 0;
-  }
-
-  .mock-header {
-    height: 36px;
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
-    border-bottom: 1px solid var(--m-edge);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 8px;
-    position: relative;
-    z-index: 2;
-  }
-
-  .mock-dot { width: 10px; height: 10px; border-radius: 50%; opacity: 0.6; }
-  .mock-dot.red { background: #ff5f57; }
-  .mock-dot.yellow { background: #febc2e; }
-  .mock-dot.green { background: #28c840; }
-
-  .mock-header-text {
-    font-size: 0.65rem;
-    font-family: var(--font-mono);
-    color: var(--m-fg-dim);
-    margin-left: 12px;
-  }
-
-  .mock-tabs {
-    display: flex;
-    gap: 2px;
-    margin-left: auto;
-    font-size: 0.6rem;
-    font-family: var(--font-mono);
-  }
-
-  .mock-tab {
-    padding: 3px 8px;
-    border-radius: 4px;
-    color: var(--m-fg-muted);
-  }
-  .mock-tab.active {
-    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
-    backdrop-filter: blur(8px);
-    color: var(--m-fg);
-  }
-
-  .mock-chat {
-    min-height: 280px;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .mock-bubble {
-    max-width: 82%;
-    padding: 10px 16px;
-    font-size: 0.78rem;
-    line-height: 1.55;
-  }
-
-  .mock-bubble.user {
-    align-self: flex-end;
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--m-accent) 55%, transparent);
-    color: var(--m-on-accent);
-    border-radius: 16px 16px 4px 16px;
-    box-shadow: 0 0 18px rgba(255, 192, 48, 0.2);
-  }
-
-  .mock-bubble.assistant {
-    align-self: flex-start;
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
-    color: var(--m-fg);
-    border-radius: 16px 16px 16px 4px;
-  }
-
-  .mock-tool {
-    align-self: flex-start;
-    max-width: 85%;
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    background: color-mix(in srgb, var(--m-inset) 85%, transparent);
-    border: 1px solid var(--m-edge);
-    border-radius: 12px;
-    padding: 8px 14px;
-    font-size: 0.7rem;
-    font-family: var(--font-mono);
-    color: var(--m-fg-dim);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mock-check { color: #4CAF50; font-weight: 700; }
-
-  .mock-statusbar {
-    height: 24px;
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
-    border-top: 1px solid var(--m-edge);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 12px;
-    font-size: 0.55rem;
-    font-family: var(--font-mono);
-    color: var(--m-fg-muted);
-    position: relative;
-    z-index: 2;
-  }
-
-  .mock-model {
-    padding: 1px 6px;
-    border-radius: 4px;
-    background: rgba(129, 140, 248, 0.15);
-    color: #818CF8;
-    font-weight: 600;
-  }
-
-  .mock-inputbar {
-    height: 44px;
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    background: color-mix(in srgb, var(--m-panel) 82%, transparent);
-    border-top: 1px solid var(--m-edge);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 8px;
-    position: relative;
-    z-index: 2;
-  }
-
-  .mock-input {
-    flex: 1;
-    height: 28px;
-    backdrop-filter: blur(8px);
-    background: color-mix(in srgb, var(--m-inset) 80%, transparent);
-    border: 1px solid var(--m-edge);
-    border-radius: 8px;
-    padding: 0 10px;
-    font-size: 0.72rem;
-    font-family: var(--font-mono);
-    color: var(--m-fg-dim);
-    display: flex;
-    align-items: center;
-  }
-
-  .mock-send {
-    width: 28px;
-    height: 28px;
-    background: var(--m-accent);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 12px rgba(255, 192, 48, 0.4);
-  }
-  .mock-send svg { width: 14px; height: 14px; fill: var(--m-on-accent); }
-
-  /* --- Connect 4 mockup --- */
-  .mock-game-layout {
-    display: flex;
-    position: relative;
-    z-index: 1;
-  }
+  /* ═══ Connect 4 game mockup ═══ */
+  .mock-game-layout { display: flex; position: relative; z-index: 1; }
 
   .mock-game-chat {
     flex: 1;
-    min-height: 280px;
-    padding: 16px 12px;
+    min-height: 260px;
+    padding: 16px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 2px;
   }
 
   .mock-game-panel {
@@ -1219,58 +1193,35 @@
   }
 
   .mock-game-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 8px 12px;
     border-bottom: 1px solid var(--m-edge);
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--m-fg);
+    font-size: 0.78rem; font-weight: 600; color: var(--m-fg);
   }
 
   .mock-game-turn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 6px 12px;
-    font-size: 0.65rem;
-    color: var(--m-fg-dim);
+    font-size: 0.65rem; color: var(--m-fg-dim);
   }
 
   .mock-game-turn-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 4px;
-    vertical-align: middle;
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; margin-right: 4px; vertical-align: middle;
   }
 
   .mock-game-turn-badge {
-    font-size: 0.6rem;
-    padding: 2px 8px;
-    border-radius: 100px;
+    font-size: 0.6rem; padding: 2px 8px; border-radius: 100px;
     background: color-mix(in srgb, var(--m-inset) 80%, transparent);
     color: var(--m-fg-dim);
   }
 
   .mock-c4-board {
-    margin: 8px;
-    background: #1d4ed8;
-    border-radius: 10px;
-    padding: 6px;
-    display: flex;
-    gap: 3px;
+    margin: 8px; background: #1d4ed8; border-radius: 10px;
+    padding: 6px; display: flex; gap: 3px;
   }
-
   .mock-c4-col { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-
-  .mock-c4-cell {
-    aspect-ratio: 1;
-    border-radius: 50%;
-    transition: background 0.2s;
-  }
+  .mock-c4-cell { aspect-ratio: 1; border-radius: 50%; transition: background 0.2s; }
   .mock-c4-cell.empty { background: var(--m-panel); }
   .mock-c4-cell.red { background: #ef4444; }
   .mock-c4-cell.yellow { background: #facc15; }
@@ -1278,41 +1229,22 @@
   .mock-c4-cell.yellow.win { background: #facc15; box-shadow: 0 0 0 2px #fff; }
 
   .mock-game-chat-area {
-    flex: 1;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    overflow: hidden;
+    flex: 1; padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 4px; overflow: hidden;
   }
-
-  .mock-game-msg {
-    font-size: 0.62rem;
-    color: var(--m-fg-dim);
-    line-height: 1.4;
-  }
+  .mock-game-msg { font-size: 0.62rem; color: var(--m-fg-dim); line-height: 1.4; }
   .mock-game-msg strong { color: var(--m-fg); font-weight: 600; }
 
   .mock-game-input {
-    height: 32px;
-    border-top: 1px solid var(--m-edge);
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    gap: 6px;
+    height: 32px; border-top: 1px solid var(--m-edge);
+    display: flex; align-items: center; padding: 0 8px; gap: 6px;
   }
-
   .mock-game-input-field {
-    flex: 1;
-    height: 22px;
+    flex: 1; height: 22px;
     background: color-mix(in srgb, var(--m-inset) 80%, transparent);
-    border: 1px solid var(--m-edge);
-    border-radius: 6px;
-    font-size: 0.6rem;
-    color: var(--m-fg-muted);
-    padding: 0 8px;
-    display: flex;
-    align-items: center;
+    border: 1px solid var(--m-edge); border-radius: 6px;
+    font-size: 0.6rem; color: var(--m-fg-muted);
+    padding: 0 8px; display: flex; align-items: center;
   }
 
   @media (max-width: 768px) {
@@ -1321,6 +1253,7 @@
       direction: ltr;
     }
     .mock-game-panel { width: 180px; }
+    .mock-games-btn-wrap { display: none; }
   }
 
   @media (max-width: 480px) {
@@ -1960,38 +1893,81 @@
           </div>
           <div class="demo-app reveal" id="demo-app">
             <div class="demo-wallpaper"></div>
+            <!-- Header — matches real app: settings | session strip | toggle + games -->
             <div class="demo-header">
-              <div class="demo-header-dot red"></div>
-              <div class="demo-header-dot yellow"></div>
-              <div class="demo-header-dot green"></div>
-              <span class="demo-header-session">Session 1</span>
-              <div class="demo-header-tabs">
-                <span class="demo-header-tab active">Chat</span>
-                <span class="demo-header-tab">Terminal</span>
-                <span class="demo-header-tab">Games</span>
+              <div class="mock-settings-btn">
+                <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div class="mock-session-strip">
+                <div class="mock-session-pill">
+                  <div class="mock-session-dot"></div>
+                  <span class="mock-session-name">Session 1</span>
+                </div>
+                <svg class="mock-session-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="mock-header-right">
+                <div class="mock-toggle-group">
+                  <div class="mock-toggle-btn active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round"/></svg>
+                  </div>
+                  <div class="mock-toggle-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round"/></svg>
+                  </div>
+                </div>
+                <div class="mock-games-btn-wrap">
+                  <div class="mock-games-btn">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="11" y1="10" x2="13" y2="10"/></svg>
+                    <div class="mock-games-dot"></div>
+                  </div>
+                </div>
               </div>
             </div>
+            <!-- Chat area -->
             <div class="demo-chat" id="demo-chat">
               <div class="demo-bubble user" data-delay="300">build me a theme with the vibe of outdoor anime art</div>
-              <div class="demo-bubble assistant" data-delay="1400">I'll create a warm, atmospheric theme inspired by outdoor anime scenes — think golden hour light, lush landscapes, and that hand-painted glow. Let me build that for you.</div>
-              <div class="demo-tool-card" data-delay="2400">
-                <span class="demo-spinner" id="demo-tool-spinner"></span>
-                <span id="demo-tool-text">Writing theme manifest&hellip;</span>
-              </div>
-              <div class="demo-tool-card" data-delay="3200" id="demo-tool-2" style="display:none;">
-                <span class="demo-check">&#10003;</span>
-                <span>Theme "Golden Sunbreak" installed &mdash; applying now</span>
+              <div class="demo-bubble assistant" data-delay="1400">
+                I'll create a warm, atmospheric theme inspired by outdoor anime scenes — think golden hour light, lush landscapes, and that hand-painted glow. Let me build that for you.
+                <!-- Tool cards inside assistant bubble — matches real app structure -->
+                <div class="demo-tool-card mock-tool-card" data-delay="2400">
+                  <div class="mock-tool-card-header">
+                    <div class="mock-tool-icon spinner"><span class="demo-spinner" id="demo-tool-spinner"></span></div>
+                    <span class="mock-tool-sep">|</span>
+                    <span class="mock-tool-label" id="demo-tool-label">Write</span>
+                    <span class="mock-tool-detail" id="demo-tool-text">manifest.json</span>
+                    <svg class="mock-tool-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div class="demo-tool-card mock-tool-card" data-delay="3200" id="demo-tool-2" style="display:none;">
+                  <div class="mock-tool-card-header">
+                    <div class="mock-tool-icon check">&#10003;</div>
+                    <span class="mock-tool-sep">|</span>
+                    <span class="mock-tool-label">Write</span>
+                    <span class="mock-tool-detail">Golden Sunbreak installed &mdash; applying</span>
+                    <svg class="mock-tool-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="demo-statusbar">
-              <span class="demo-model-badge">Opus 1M</span>
-              <span>context 24%</span>
-              <span style="margin-left: auto;">midnight</span>
-            </div>
+            <!-- Input bar — outer container + inner form -->
             <div class="demo-inputbar">
-              <div class="demo-input-field">Type a message&hellip;</div>
-              <div class="demo-send-btn">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              <div class="mock-input-inner">
+                <div class="mock-input-icon">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+                <div class="mock-input-text">Message Claude&hellip;</div>
+                <div class="mock-send">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--m-on-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+              </div>
+            </div>
+            <!-- Status bar — real chip pills -->
+            <div class="demo-statusbar">
+              <span class="mock-model-chip opus">Opus 1M</span>
+              <span class="mock-perm-chip">Normal</span>
+              <span class="mock-status-pill">Context: 24%</span>
+              <span class="mock-status-pill mock-status-spacer" id="demo-theme-pill">midnight</span>
+              <div class="mock-customize-btn">
+                <svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
               </div>
             </div>
           </div>
@@ -2008,67 +1984,73 @@
           <div class="mock-frame mock-midnight reveal">
             <div class="mock-wallpaper"></div>
             <div class="mock-header">
-              <div class="mock-dot red"></div>
-              <div class="mock-dot yellow"></div>
-              <div class="mock-dot green"></div>
-              <span class="mock-header-text">Marketplace</span>
-              <div class="mock-tabs">
-                <span class="mock-tab active">Browse</span>
-                <span class="mock-tab">Installed</span>
-                <span class="mock-tab">My Stuff</span>
+              <div class="mock-settings-btn"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div class="mock-session-strip">
+                <div class="mock-session-pill"><div class="mock-session-dot"></div><span class="mock-session-name">Session 1</span></div>
+                <svg class="mock-session-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="mock-header-right">
+                <div class="mock-toggle-group">
+                  <div class="mock-toggle-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <div class="mock-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round"/></svg></div>
+                </div>
+                <div class="mock-games-btn-wrap"><div class="mock-games-btn"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="11" y1="10" x2="13" y2="10"/></svg><div class="mock-games-dot"></div></div></div>
               </div>
             </div>
             <div class="mock-chat" style="padding: 12px; gap: 8px; min-height: 260px;">
               <!-- Category pills -->
               <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
-                <span style="font-size: 0.6rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: 100px; background: var(--m-accent); color: var(--m-on-accent); font-weight: 600;">All</span>
-                <span style="font-size: 0.6rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: 100px; border: 1px solid var(--m-edge); color: var(--m-fg-dim);">Themes</span>
-                <span style="font-size: 0.6rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: 100px; border: 1px solid var(--m-edge); color: var(--m-fg-dim);">Skills</span>
-                <span style="font-size: 0.6rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: 100px; border: 1px solid var(--m-edge); color: var(--m-fg-dim);">Games</span>
-                <span style="font-size: 0.6rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: 100px; border: 1px solid var(--m-edge); color: var(--m-fg-dim);">Integrations</span>
+                <span class="mock-chip" style="background: var(--m-accent); color: var(--m-on-accent); border-color: transparent; font-weight: 600;">All</span>
+                <span class="mock-chip">Themes</span>
+                <span class="mock-chip">Skills</span>
+                <span class="mock-chip">Games</span>
+                <span class="mock-chip">Integrations</span>
               </div>
               <!-- Marketplace items -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Golden Sunbreak</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Theme &middot; wallpaper + buddy</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(76,175,80,0.15); color: #4CAF50; display: inline-block;">Installed</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Golden Sunbreak</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Theme &middot; wallpaper + buddy</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(76,175,80,0.15); color: #4CAF50; border-color: rgba(76,175,80,0.25);">Installed</span>
                 </div>
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Connect Four</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Game &middot; multiplayer</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(76,175,80,0.15); color: #4CAF50; display: inline-block;">Installed</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Connect Four</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Game &middot; multiplayer</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(76,175,80,0.15); color: #4CAF50; border-color: rgba(76,175,80,0.25);">Installed</span>
                 </div>
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Google Calendar</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Integration &middot; MCP</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(136,180,216,0.15); color: var(--m-accent); display: inline-block;">Install</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Google Calendar</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Integration &middot; MCP</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(136,180,216,0.15); color: var(--m-accent); border-color: rgba(136,180,216,0.25);">Install</span>
                 </div>
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Writing Coach</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Skill &middot; by @destin</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(136,180,216,0.15); color: var(--m-accent); display: inline-block;">Install</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Writing Coach</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Skill &middot; by @destin</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(136,180,216,0.15); color: var(--m-accent); border-color: rgba(136,180,216,0.25);">Install</span>
                 </div>
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Halftone Dimension</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Theme &middot; cyberpunk manga</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(136,180,216,0.15); color: var(--m-accent); display: inline-block;">Install</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Halftone Dimension</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Theme &middot; cyberpunk manga</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(136,180,216,0.15); color: var(--m-accent); border-color: rgba(136,180,216,0.25);">Install</span>
                 </div>
-                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: 10px; padding: 10px;">
-                  <div style="font-size: 0.72rem; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Todoist Sync</div>
-                  <div style="font-size: 0.58rem; color: var(--m-fg-muted); margin-bottom: 6px;">Integration &middot; MCP</div>
-                  <div style="font-size: 0.55rem; font-family: var(--font-mono); padding: 2px 8px; border-radius: 6px; background: rgba(136,180,216,0.15); color: var(--m-accent); display: inline-block;">Install</div>
+                <div style="background: var(--m-inset); border: 1px solid var(--m-edge); border-radius: var(--m-radius-md, 8px); padding: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--m-fg); margin-bottom: 2px;">Todoist Sync</div>
+                  <div style="font-size: 10px; color: var(--m-fg-muted); margin-bottom: 6px;">Integration &middot; MCP</div>
+                  <span class="mock-status-pill" style="font-size: 10px; background: rgba(136,180,216,0.15); color: var(--m-accent); border-color: rgba(136,180,216,0.25);">Install</span>
                 </div>
               </div>
             </div>
-            <div class="mock-statusbar">
-              <span class="mock-model">Opus 1M</span>
-              <span>6 installed &middot; 150+ available</span>
-              <span style="margin-left: auto;">midnight</span>
-            </div>
             <div class="mock-inputbar">
-              <div class="mock-input">Search marketplace&hellip;</div>
-              <div class="mock-send"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg></div>
+              <div class="mock-input-inner">
+                <div class="mock-input-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                <div class="mock-input-text">Search marketplace&hellip;</div>
+              </div>
+            </div>
+            <div class="mock-statusbar">
+              <span class="mock-model-chip opus">Opus 1M</span>
+              <span class="mock-status-pill">6 installed &middot; 150+ available</span>
+              <span class="mock-status-pill mock-status-spacer">midnight</span>
+              <div class="mock-customize-btn"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div>
             </div>
           </div>
         </div>
@@ -2083,33 +2065,35 @@
           <div class="mock-frame mock-midnight reveal">
             <div class="mock-wallpaper"></div>
             <div class="mock-header">
-              <div class="mock-dot red"></div>
-              <div class="mock-dot yellow"></div>
-              <div class="mock-dot green"></div>
-              <span class="mock-header-text">Session 2</span>
-              <div class="mock-tabs">
-                <span class="mock-tab active">Chat</span>
-                <span class="mock-tab">Terminal</span>
-                <span class="mock-tab">Games</span>
+              <div class="mock-settings-btn"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div class="mock-session-strip"><div class="mock-session-pill"><div class="mock-session-dot"></div><span class="mock-session-name">Session 2</span></div><svg class="mock-session-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="mock-header-right">
+                <div class="mock-toggle-group"><div class="mock-toggle-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round"/></svg></div><div class="mock-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round"/></svg></div></div>
+                <div class="mock-games-btn-wrap"><div class="mock-games-btn"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="11" y1="10" x2="13" y2="10"/></svg><div class="mock-games-dot"></div></div></div>
               </div>
             </div>
             <div class="mock-chat">
               <div class="mock-bubble user">let's journal. today was a lot — had that meeting with Sarah about the nonprofit rebrand, then spent the afternoon prepping my talk for Friday.</div>
               <div class="mock-bubble assistant">Got it. How did the meeting with Sarah go? Any decisions made on the direction?</div>
               <div class="mock-bubble user">yeah, we're going with the warm palette. she wants a first draft by March 28th. oh, and remind me — I need to email Jake the slide deck before my talk.</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Created task: "Email Jake slide deck" — due Friday morning</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Created task: "Nonprofit rebrand first draft" — due March 28</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Updated Encyclopedia: Sarah &rarr; nonprofit rebrand collaboration</div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Created task: "Email Jake slide deck" — due Friday morning</span></div></div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Created task: "Nonprofit rebrand first draft" — due March 28</span></div></div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Updated Encyclopedia: Sarah &rarr; nonprofit rebrand collaboration</span></div></div>
               <div class="mock-bubble assistant">All captured. The slide deck task is set for Friday morning so you'll see it before your talk. What else happened today — anything outside of work?</div>
             </div>
-            <div class="mock-statusbar">
-              <span class="mock-model">Opus 1M</span>
-              <span>context 31%</span>
-              <span style="margin-left: auto;">midnight</span>
-            </div>
             <div class="mock-inputbar">
-              <div class="mock-input">Type a message&hellip;</div>
-              <div class="mock-send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></div>
+              <div class="mock-input-inner">
+                <div class="mock-input-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                <div class="mock-input-text">Message Claude&hellip;</div>
+                <div class="mock-send"><svg viewBox="0 0 24 24" fill="none" stroke="var(--m-on-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+              </div>
+            </div>
+            <div class="mock-statusbar">
+              <span class="mock-model-chip opus">Opus 1M</span>
+              <span class="mock-perm-chip">Normal</span>
+              <span class="mock-status-pill">Context: 31%</span>
+              <span class="mock-status-pill mock-status-spacer">midnight</span>
+              <div class="mock-customize-btn"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div>
             </div>
           </div>
         </div>
@@ -2124,31 +2108,33 @@
           <div class="mock-frame mock-halftone-dim reveal">
             <div class="mock-wallpaper"></div>
             <div class="mock-header">
-              <div class="mock-dot red"></div>
-              <div class="mock-dot yellow"></div>
-              <div class="mock-dot green"></div>
-              <span class="mock-header-text">Session 1</span>
-              <div class="mock-tabs">
-                <span class="mock-tab active">Chat</span>
-                <span class="mock-tab">Terminal</span>
-                <span class="mock-tab">Games</span>
+              <div class="mock-settings-btn"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div class="mock-session-strip"><div class="mock-session-pill"><div class="mock-session-dot"></div><span class="mock-session-name">Session 1</span></div><svg class="mock-session-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="mock-header-right">
+                <div class="mock-toggle-group"><div class="mock-toggle-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round"/></svg></div><div class="mock-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round"/></svg></div></div>
+                <div class="mock-games-btn-wrap"><div class="mock-games-btn"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="11" y1="10" x2="13" y2="10"/></svg><div class="mock-games-dot"></div></div></div>
               </div>
             </div>
             <div class="mock-chat">
               <div class="mock-bubble user">brief me on Sarah — I have a call with her tomorrow and I can't remember half of what we've discussed</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Reading encyclopedia: People Database</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Searching journal entries for "Sarah"</div>
-              <div class="mock-tool"><span class="mock-check">&#10003;</span> Deep searching text messages</div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Reading encyclopedia: People Database</span></div></div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Searching journal entries for "Sarah"</span></div></div>
+              <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Deep searching text messages</span></div></div>
               <div class="mock-bubble assistant"><strong>Sarah Chen — Person Briefing</strong><br><br><strong>Who:</strong> Creative director at Bright Futures Nonprofit. Met at the Austin Design Conference (Oct 2025). Connected through mutual friend Jake.<br><br><strong>Current project:</strong> Nonprofit rebrand — you're collaborating on the visual identity. Decided on warm palette (March 18). First draft due March 28.<br><br><strong>Recent context:</strong> She texted you last week about moving the deadline to April 2. You haven't responded yet.<br><br><strong>Personal notes:</strong> Has a daughter named Lily (age 7). Mentioned she's training for a half marathon. Prefers morning meetings.</div>
             </div>
-            <div class="mock-statusbar">
-              <span class="mock-model">Opus 1M</span>
-              <span>context 48%</span>
-              <span style="margin-left: auto;">halftone-dimension</span>
-            </div>
             <div class="mock-inputbar">
-              <div class="mock-input">Type a message&hellip;</div>
-              <div class="mock-send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></div>
+              <div class="mock-input-inner">
+                <div class="mock-input-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                <div class="mock-input-text">Message Claude&hellip;</div>
+                <div class="mock-send"><svg viewBox="0 0 24 24" fill="none" stroke="var(--m-on-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+              </div>
+            </div>
+            <div class="mock-statusbar">
+              <span class="mock-model-chip opus">Opus 1M</span>
+              <span class="mock-perm-chip">Normal</span>
+              <span class="mock-status-pill">Context: 48%</span>
+              <span class="mock-status-pill mock-status-spacer">halftone-dimension</span>
+              <div class="mock-customize-btn"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div>
             </div>
           </div>
         </div>
@@ -2163,14 +2149,11 @@
           <div class="mock-frame mock-golden reveal">
             <div class="mock-wallpaper"></div>
             <div class="mock-header">
-              <div class="mock-dot red"></div>
-              <div class="mock-dot yellow"></div>
-              <div class="mock-dot green"></div>
-              <span class="mock-header-text">Session 1</span>
-              <div class="mock-tabs">
-                <span class="mock-tab">Chat</span>
-                <span class="mock-tab">Terminal</span>
-                <span class="mock-tab active">Games</span>
+              <div class="mock-settings-btn"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div class="mock-session-strip"><div class="mock-session-pill"><div class="mock-session-dot"></div><span class="mock-session-name">Session 1</span></div><svg class="mock-session-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="mock-header-right">
+                <div class="mock-toggle-group"><div class="mock-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round"/><path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round"/></svg></div><div class="mock-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round"/></svg></div></div>
+                <div class="mock-games-btn-wrap"><div class="mock-games-btn active"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="11" y1="10" x2="13" y2="10"/></svg><div class="mock-games-dot"></div></div></div>
               </div>
             </div>
             <div class="mock-game-layout">
@@ -2178,12 +2161,9 @@
               <div class="mock-game-chat">
                 <div class="mock-bubble user" style="font-size:0.72rem;">refactor the authentication module to use JWT tokens instead of sessions</div>
                 <div class="mock-bubble assistant" style="font-size:0.72rem;">I'll refactor the auth module. This will touch several files — let me start by reading the current implementation.</div>
-                <div class="mock-tool"><span class="mock-check">&#10003;</span> Reading auth/session-manager.ts</div>
-                <div class="mock-tool"><span class="mock-check">&#10003;</span> Reading auth/middleware.ts</div>
-                <div class="mock-tool" style="border-color: rgba(255,192,48,0.3);">
-                  <span style="display:inline-block;width:12px;height:12px;border:2px solid #806840;border-top-color:#ffc030;border-radius:50%;animation:demo-spin 0.8s linear infinite;"></span>
-                  Writing auth/jwt-provider.ts&hellip;
-                </div>
+                <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Reading auth/session-manager.ts</span></div></div>
+                <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon check">&#10003;</div><span class="mock-tool-sep">|</span><span class="mock-tool-detail"> Reading auth/middleware.ts</span></div></div>
+                <div class="mock-tool-card"><div class="mock-tool-card-header"><div class="mock-tool-icon spinner"><span class="demo-spinner"></span></div><span class="mock-tool-sep">|</span><span class="mock-tool-label">Write</span><span class="mock-tool-detail">auth/jwt-provider.ts&hellip;</span></div></div>
               </div>
               <!-- Game panel -->
               <div class="mock-game-panel">
@@ -2209,14 +2189,19 @@
                 </div>
               </div>
             </div>
-            <div class="mock-statusbar">
-              <span class="mock-model">Opus 1M</span>
-              <span>context 15%</span>
-              <span style="margin-left: auto;">golden-sunbreak</span>
-            </div>
             <div class="mock-inputbar">
-              <div class="mock-input">Type a message&hellip;</div>
-              <div class="mock-send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></div>
+              <div class="mock-input-inner">
+                <div class="mock-input-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                <div class="mock-input-text">Message Claude&hellip;</div>
+                <div class="mock-send"><svg viewBox="0 0 24 24" fill="none" stroke="var(--m-on-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+              </div>
+            </div>
+            <div class="mock-statusbar">
+              <span class="mock-model-chip opus">Opus 1M</span>
+              <span class="mock-perm-chip">Normal</span>
+              <span class="mock-status-pill">Context: 15%</span>
+              <span class="mock-status-pill mock-status-spacer">golden-sunbreak</span>
+              <div class="mock-customize-btn"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div>
             </div>
           </div>
         </div>
@@ -2593,42 +2578,54 @@
     function runDemo() {
       var app = document.getElementById('demo-app');
       var chat = document.getElementById('demo-chat');
-      var elements = chat.querySelectorAll('.demo-bubble, .demo-tool-card');
+      var bubbles = chat.querySelectorAll('.demo-bubble');
+      var toolCards = chat.querySelectorAll('.demo-tool-card');
       var tool2 = document.getElementById('demo-tool-2');
       var spinner = document.getElementById('demo-tool-spinner');
+      var toolLabel = document.getElementById('demo-tool-label');
       var toolText = document.getElementById('demo-tool-text');
-      var statusTheme = app.querySelector('.demo-statusbar span:last-child');
+      var themePill = document.getElementById('demo-theme-pill');
 
-      // Reset
+      // Reset — clear theme, hide elements, restore spinner
       app.classList.remove('theme-golden');
       tool2.style.display = 'none';
-      if (spinner) { spinner.className = 'demo-spinner'; spinner.innerHTML = ''; }
-      if (toolText) { toolText.innerHTML = 'Writing theme manifest\u2026'; }
-      if (statusTheme) { statusTheme.textContent = 'midnight'; }
-      elements.forEach(function(el) { el.classList.remove('show'); });
+      if (spinner) { spinner.className = 'demo-spinner'; }
+      if (toolLabel) { toolLabel.textContent = 'Write'; }
+      if (toolText) { toolText.textContent = 'manifest.json'; }
+      if (themePill) { themePill.textContent = 'midnight'; }
+      bubbles.forEach(function(el) { el.classList.remove('show'); });
+      toolCards.forEach(function(el) { el.classList.remove('show'); });
 
-      // Animate messages in sequence
-      elements.forEach(function(el) {
+      // Animate bubbles by data-delay
+      bubbles.forEach(function(el) {
         var delay = parseInt(el.getAttribute('data-delay') || 0);
         setTimeout(function() { el.classList.add('show'); }, delay);
       });
 
-      // Spinner completes
+      // Show first tool card (inside assistant bubble)
+      toolCards.forEach(function(el) {
+        var delay = parseInt(el.getAttribute('data-delay') || 0);
+        if (delay) setTimeout(function() { el.classList.add('show'); }, delay);
+      });
+
+      // Spinner completes — swap icon to checkmark
       setTimeout(function() {
-        if (spinner) { spinner.className = 'demo-check'; spinner.innerHTML = '\u2713'; }
-        if (toolText) { toolText.textContent = 'Theme manifest written'; }
+        if (spinner) {
+          spinner.outerHTML = '<span style="color:#4CAF50;font-weight:700;font-size:13px;">&#10003;</span>';
+        }
+        if (toolText) { toolText.textContent = 'manifest.json — complete'; }
       }, 3800);
 
       // Show install card
       setTimeout(function() {
-        tool2.style.display = 'flex';
+        tool2.style.display = '';
         tool2.classList.add('show');
       }, 4200);
 
-      // Transition to Golden Sunbreak
+      // Transition to Golden Sunbreak theme
       setTimeout(function() {
         app.classList.add('theme-golden');
-        if (statusTheme) { statusTheme.textContent = 'golden-sunbreak'; }
+        if (themePill) { themePill.textContent = 'golden-sunbreak'; }
       }, 5000);
     }
 

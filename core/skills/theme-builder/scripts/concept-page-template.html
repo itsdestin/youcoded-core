@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Theme Concepts</title>
+  <link rel="stylesheet" href="/files/theme-preview.css">
+  <!-- GOOGLE_FONTS — Claude inserts <link> tags for each concept's Google Font here -->
+  <style>
+    /* Concept browser page layout — neutral dark backdrop so all
+       themes are evaluated against the same background. */
+    body {
+      background: #1a1a1a;
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      max-width: 1400px;
+      margin: 0 auto 20px;
+      color: #aaa;
+      font-size: 13px;
+    }
+    .page-header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-bottom: 4px;
+    }
+
+    /* Clickable concept cards for selection */
+    .concept-card {
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .concept-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .concept-card.selected {
+      box-shadow: 0 0 0 3px #6c8aff, 0 4px 20px rgba(108,138,255,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1><!-- PAGE_TITLE (e.g. "Cyberpunk Theme — 3 Concepts") --></h1>
+    <p>Click a concept to select it, then return to the terminal.</p>
+  </div>
+
+  <div class="concept-grid">
+    <!-- CONCEPT_CARDS — Claude inserts concept card divs here.
+         Each card is a .concept-card div with scoped CSS variables.
+         See SKILL.md Concept Card Rendering Spec for structure. -->
+  </div>
+
+  <script src="/files/helper.js"></script>
+  <script>
+    // Wire concept cards to selection + brainstorm events.
+    // Cards use data-choice="A", "B", "C" etc.
+    document.querySelectorAll('.concept-card').forEach(card => {
+      card.addEventListener('click', () => {
+        // Deselect all, select this one
+        document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        // Send choice event via brainstorm WebSocket
+        if (window.brainstorm) {
+          window.brainstorm.choice(card.dataset.choice, {
+            name: card.querySelector('h2')?.textContent?.trim() || ''
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

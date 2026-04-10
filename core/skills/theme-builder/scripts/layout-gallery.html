@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Layout Styles</title>
+  <link rel="stylesheet" href="/files/theme-preview.css">
+  <style>
+    body {
+      background: #1a1a1a;
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .page-header {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      color: #aaa;
+      font-size: 13px;
+    }
+    .page-header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-bottom: 4px;
+    }
+    .layout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .layout-card {
+      background: #242424;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .layout-card:hover {
+      border-color: #6c8aff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .layout-card.selected {
+      border-color: #6c8aff;
+      box-shadow: 0 0 0 3px #6c8aff, 0 4px 20px rgba(108,138,255,0.3);
+    }
+    .layout-card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-bottom: 2px;
+    }
+    .layout-card .layout-desc {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .layout-card .layout-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .layout-card .layout-tags span {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #333;
+      color: #999;
+      border: 1px solid #444;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Choose a Layout Style</h1>
+    <p>Pick how the app chrome should look. Click to select, then return to the terminal — or skip and Claude will choose based on your vibe.</p>
+  </div>
+
+  <div class="layout-grid">
+
+    <!-- ═══ CLASSIC ═══ -->
+    <div class="layout-card" data-choice="classic" onclick="selectLayout(this)">
+      <h2>Classic</h2>
+      <p class="layout-desc">Traditional chat app. Solid bars, clean edges, familiar feel.</p>
+      <div style="
+        --canvas: #1e1e1e; --panel: #262626; --inset: #2e2e2e; --well: #222222;
+        --accent: #6c8aff; --on-accent: #ffffff;
+        --fg: #e0e0e0; --fg-2: #b0b0b0; --fg-dim: #888888;
+        --fg-muted: #666666; --fg-faint: #444444;
+        --edge: #3a3a3a; --edge-dim: #3a3a3a80;
+        --scrollbar-thumb: #444; --scrollbar-hover: #555;
+        --radius: 4px; --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+        --radius-xl: 16px; --radius-2xl: 24px; --radius-full: 9999px;
+        --font-sans: system-ui, monospace; --font-mono: monospace;
+      ">
+        <div class="app-mockup"
+             data-chrome-style="default"
+             data-input-style="default"
+             data-bubble-style="default"
+             data-header-style="default"
+             data-statusbar-style="default">
+          <div class="header-bar bg-panel">
+            <span style="font-size:14px;">&#9679;</span>
+            DestinCode
+            <div style="margin-left:auto; display:flex; gap:2px; background:var(--inset); border-radius:var(--radius-md); padding:2px;">
+              <span style="padding:2px 8px; border-radius:var(--radius-sm); background:var(--accent); color:var(--on-accent); font-size:11px;">Chat</span>
+              <span style="padding:2px 8px; font-size:11px; color:var(--fg-dim);">Term</span>
+            </div>
+          </div>
+          <div class="chat-area">
+            <div class="chat-bubble assistant">Hello! How can I help you today?</div>
+            <div class="chat-bubble user">Can you explain how this works?</div>
+            <div class="chat-bubble assistant">Sure! Let me walk you through it.</div>
+          </div>
+          <div class="input-bar-container bg-panel">
+            <div class="input-form">
+              <span class="attach-btn">&#8853;</span>
+              <div class="input-field">Message Claude...</div>
+              <div class="send-btn">&#8594;</div>
+            </div>
+          </div>
+          <div class="status-bar bg-panel">
+            <span>Classic</span>
+            <span class="text-fg-faint">Opus 4.6</span>
+          </div>
+        </div>
+      </div>
+      <div class="layout-tags">
+        <span>default chrome</span>
+        <span>default input</span>
+        <span>default bubbles</span>
+      </div>
+    </div>
+
+    <!-- ═══ FLOATING ═══ -->
+    <div class="layout-card" data-choice="floating" onclick="selectLayout(this)">
+      <h2>Floating</h2>
+      <p class="layout-desc">Airy, modern. Chrome bars float as detached rounded cards.</p>
+      <div style="
+        --canvas: #1e1e1e; --panel: #262626; --inset: #2e2e2e; --well: #222222;
+        --accent: #6c8aff; --on-accent: #ffffff;
+        --fg: #e0e0e0; --fg-2: #b0b0b0; --fg-dim: #888888;
+        --fg-muted: #666666; --fg-faint: #444444;
+        --edge: #3a3a3a; --edge-dim: #3a3a3a80;
+        --scrollbar-thumb: #444; --scrollbar-hover: #555;
+        --radius: 4px; --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+        --radius-xl: 16px; --radius-2xl: 24px; --radius-full: 9999px;
+        --font-sans: system-ui, monospace; --font-mono: monospace;
+      ">
+        <div class="app-mockup"
+             data-chrome-style="floating"
+             data-input-style="floating"
+             data-bubble-style="default"
+             data-header-style="default"
+             data-statusbar-style="minimal">
+          <div class="header-bar bg-panel">
+            <span style="font-size:14px;">&#9679;</span>
+            DestinCode
+            <div style="margin-left:auto; display:flex; gap:2px; background:var(--inset); border-radius:var(--radius-md); padding:2px;">
+              <span style="padding:2px 8px; border-radius:var(--radius-sm); background:var(--accent); color:var(--on-accent); font-size:11px;">Chat</span>
+              <span style="padding:2px 8px; font-size:11px; color:var(--fg-dim);">Term</span>
+            </div>
+          </div>
+          <div class="chat-area">
+            <div class="chat-bubble assistant">Hello! How can I help you today?</div>
+            <div class="chat-bubble user">Can you explain how this works?</div>
+            <div class="chat-bubble assistant">Sure! Let me walk you through it.</div>
+          </div>
+          <div class="status-bar bg-panel">
+            <span>Floating</span>
+            <span class="text-fg-faint">Opus 4.6</span>
+          </div>
+          <div class="input-bar-container bg-panel">
+            <div class="input-form">
+              <span class="attach-btn">&#8853;</span>
+              <div class="input-field">Message Claude...</div>
+              <div class="send-btn">&#8594;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="layout-tags">
+        <span>floating chrome</span>
+        <span>floating input</span>
+        <span>minimal statusbar</span>
+      </div>
+    </div>
+
+    <!-- ═══ MINIMAL ═══ -->
+    <div class="layout-card" data-choice="minimal" onclick="selectLayout(this)">
+      <h2>Minimal</h2>
+      <p class="layout-desc">Content-first. Header fades away, input is transparent, no chrome borders.</p>
+      <div style="
+        --canvas: #1e1e1e; --panel: #262626; --inset: #2e2e2e; --well: #222222;
+        --accent: #6c8aff; --on-accent: #ffffff;
+        --fg: #e0e0e0; --fg-2: #b0b0b0; --fg-dim: #888888;
+        --fg-muted: #666666; --fg-faint: #444444;
+        --edge: #3a3a3a; --edge-dim: #3a3a3a80;
+        --scrollbar-thumb: #444; --scrollbar-hover: #555;
+        --radius: 4px; --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+        --radius-xl: 16px; --radius-2xl: 24px; --radius-full: 9999px;
+        --font-sans: system-ui, monospace; --font-mono: monospace;
+      ">
+        <div class="app-mockup"
+             data-chrome-style="default"
+             data-input-style="minimal"
+             data-bubble-style="flat"
+             data-header-style="minimal"
+             data-statusbar-style="minimal">
+          <div class="header-bar bg-panel">
+            <span style="font-size:14px;">&#9679;</span>
+            DestinCode
+            <div style="margin-left:auto; display:flex; gap:2px; background:var(--inset); border-radius:var(--radius-md); padding:2px;">
+              <span style="padding:2px 8px; border-radius:var(--radius-sm); background:var(--accent); color:var(--on-accent); font-size:11px;">Chat</span>
+              <span style="padding:2px 8px; font-size:11px; color:var(--fg-dim);">Term</span>
+            </div>
+          </div>
+          <div class="chat-area">
+            <div class="chat-bubble assistant">Hello! How can I help you today?</div>
+            <div class="chat-bubble user">Can you explain how this works?</div>
+            <div class="chat-bubble assistant">Sure! Let me walk you through it.</div>
+          </div>
+          <div class="input-bar-container bg-panel">
+            <div class="input-form">
+              <span class="attach-btn">&#8853;</span>
+              <div class="input-field">Message Claude...</div>
+              <div class="send-btn">&#8594;</div>
+            </div>
+          </div>
+          <div class="status-bar bg-panel">
+            <span>Minimal</span>
+            <span class="text-fg-faint">Opus 4.6</span>
+          </div>
+        </div>
+      </div>
+      <div class="layout-tags">
+        <span>minimal header</span>
+        <span>minimal input</span>
+        <span>flat bubbles</span>
+        <span>minimal statusbar</span>
+      </div>
+    </div>
+
+    <!-- ═══ TERMINAL ═══ -->
+    <div class="layout-card" data-choice="terminal" onclick="selectLayout(this)">
+      <h2>Terminal</h2>
+      <p class="layout-desc">Developer aesthetic. Sharp edges, bordered bubbles, monospace feel.</p>
+      <div style="
+        --canvas: #1e1e1e; --panel: #262626; --inset: #2e2e2e; --well: #222222;
+        --accent: #6c8aff; --on-accent: #ffffff;
+        --fg: #e0e0e0; --fg-2: #b0b0b0; --fg-dim: #888888;
+        --fg-muted: #666666; --fg-faint: #444444;
+        --edge: #3a3a3a; --edge-dim: #3a3a3a80;
+        --scrollbar-thumb: #444; --scrollbar-hover: #555;
+        --radius: 2px; --radius-sm: 2px; --radius-md: 4px; --radius-lg: 6px;
+        --radius-xl: 8px; --radius-2xl: 12px; --radius-full: 9999px;
+        --font-sans: monospace; --font-mono: monospace;
+      ">
+        <div class="app-mockup"
+             data-chrome-style="default"
+             data-input-style="terminal"
+             data-bubble-style="bordered"
+             data-header-style="minimal"
+             data-statusbar-style="default">
+          <div class="header-bar bg-panel">
+            <span style="font-size:14px;">&#9679;</span>
+            DestinCode
+            <div style="margin-left:auto; display:flex; gap:2px; background:var(--inset); border-radius:var(--radius-md); padding:2px;">
+              <span style="padding:2px 8px; border-radius:var(--radius-sm); background:var(--accent); color:var(--on-accent); font-size:11px;">Chat</span>
+              <span style="padding:2px 8px; font-size:11px; color:var(--fg-dim);">Term</span>
+            </div>
+          </div>
+          <div class="chat-area">
+            <div class="chat-bubble assistant">Hello! How can I help you today?</div>
+            <div class="chat-bubble user">Can you explain how this works?</div>
+            <div class="chat-bubble assistant">Sure! Let me walk you through it.</div>
+          </div>
+          <div class="input-bar-container bg-panel">
+            <div class="input-form">
+              <span class="attach-btn">&#8853;</span>
+              <div class="input-field">Message Claude...</div>
+              <div class="send-btn">&#8594;</div>
+            </div>
+          </div>
+          <div class="status-bar bg-panel">
+            <span>Terminal</span>
+            <span class="text-fg-faint">Opus 4.6</span>
+          </div>
+        </div>
+      </div>
+      <div class="layout-tags">
+        <span>minimal header</span>
+        <span>terminal input</span>
+        <span>bordered bubbles</span>
+        <span>sharp corners</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/files/helper.js"></script>
+  <script>
+    function selectLayout(card) {
+      document.querySelectorAll('.layout-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      if (window.brainstorm) {
+        window.brainstorm.choice(card.dataset.choice, {
+          name: card.querySelector('h2').textContent.trim()
+        });
+      }
+    }
+  </script>
+</body>
+</html>

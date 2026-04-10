@@ -1,0 +1,107 @@
+// Theme Manifest Template
+// Copy this structure, fill in values, remove unused optional sections.
+// All asset paths are RELATIVE to the theme folder (e.g. "assets/wallpaper.png").
+// Omit optional fields rather than including them with null/empty values.
+{
+  "name": "Display Name Here",
+  "slug": "kebab-case-slug",
+  "dark": true,
+  "author": "claude",
+  "created": "YYYY-MM-DD",
+
+  // ── Required: 15 color tokens ──
+  "tokens": {
+    "canvas": "#hex",       // Base background — darkest surface (dark themes)
+    "panel": "#hex",        // Secondary surface — headers, status bar, dropdowns
+    "inset": "#hex",        // Tertiary surface — bubbles, buttons, toggles. Must be visually distinct from panel (session pills sit on header)
+    "well": "#hex",         // Deepest recess — search bars, form containers. Must be distinct from panel
+    "accent": "#hex",       // Interactive — user bubbles, active buttons, links
+    "on-accent": "#hex",    // Text on accent — use #FFFFFF if accent luminance < 0.179, else #000000
+    "fg": "#hex",           // Primary text — 4.5:1 minimum on canvas, inset, AND panel
+    "fg-2": "#hex",         // Secondary text — 3.5:1 on canvas and inset (session pill labels)
+    "fg-dim": "#hex",       // Dimmed text — 2.5:1 on inset (tool card labels), 2.0:1 on panel
+    "fg-muted": "#hex",     // Muted labels — decorative, low contrast OK
+    "fg-faint": "#hex",     // Very faint — decorative
+    "edge": "#hex",         // Primary border — must be visible on panel (1.5:1 minimum)
+    "edge-dim": "#hex80",   // Semi-transparent border (append 80 for 50% alpha) — chips and code blocks rely on this
+    "scrollbar-thumb": "#hex",
+    "scrollbar-hover": "#hex"
+  },
+
+  // ── Required: corner rounding ──
+  "shape": {
+    "radius": "Npx",       // Bare rounding — status pills, quick chips, permission buttons. Defaults to radius-sm if omitted
+    "radius-sm": "Npx",
+    "radius-md": "Npx",
+    "radius-lg": "Npx",
+    "radius-full": "9999px"
+  },
+
+  // ── Required: typography ──
+  "font": {
+    "family": "'Font Name', 'Cascadia Mono', monospace",  // Applied to --font-sans and --font-mono
+    "google-font-url": "https://fonts.googleapis.com/css2?family=Font+Name:wght@400;600;700&display=swap"  // Omit if system font
+  },
+
+  // ── Required: background ──
+  "background": {
+    "type": "solid",        // "solid" | "gradient" | "image"
+    "value": "#hex",        // Color, gradient string, or relative path ("assets/wallpaper.png")
+    "opacity": 1,           // Background opacity (0-1)
+    "panels-blur": 0,       // Glassmorphism blur in px (0 = off, 12-20 = typical)
+    "panels-opacity": 1.0,  // Panel glass opacity (0.70-0.85 for glass effect)
+    "bubble-blur": 16,      // Chat bubble blur in px — app sets --bubble-blur CSS var
+    "bubble-opacity": 0.88, // Chat bubble opacity — app sets --bubble-opacity CSS var
+    "pattern": "assets/pattern.svg",      // Optional: omit if no pattern
+    "pattern-opacity": 0.06              // Optional: 0.04-0.08 typical
+  },
+
+  // ── Required: layout presets ──
+  "layout": {
+    "chrome-style": "default",     // "default" | "floating" — floating elevates ALL chrome bars
+    "input-style": "default",      // "default" | "floating" | "minimal" | "terminal"
+    "bubble-style": "default",     // "default" | "pill" | "flat" | "bordered"
+    "header-style": "default",     // "default" | "minimal" | "hidden"
+    "statusbar-style": "default"   // "default" | "minimal"
+  },
+
+  // ── Optional: particle effects ──
+  "effects": {
+    "particles": "none",           // "none" | "rain" | "dust" | "ember" | "snow" | "custom"
+    "particle-shape": "assets/heart.svg",  // Only when particles is "custom"
+    "particle-count": 30,          // 20-30 typical, >50 is distracting
+    "particle-speed": 0.4,         // 0.3-0.5 typical
+    "particle-drift": 0.3,         // 0.2-0.4 typical
+    "particle-size-range": [4, 12],
+    "scan-lines": false,
+    "vignette": 0,                 // 0.15-0.25 typical, >0.4 is tunnel vision
+    "noise": 0                     // 0.02-0.05 typical, >0.1 is TV static
+  },
+
+  // ── Optional: icon overrides (only include if you generated the SVGs) ──
+  // Supported slots: send, new-chat, settings, theme-cycle, close, menu
+  "icons": {
+    "send": "assets/icon-send.svg"
+  },
+
+  // ── Optional: mascot crossovers ──
+  "mascot": {
+    "idle": "assets/mascot-idle.svg",
+    "welcome": "assets/mascot-welcome.svg",
+    "shocked": "assets/mascot-shocked.svg",
+    "dizzy": "assets/mascot-dizzy.svg"
+  },
+
+  // ── Optional: custom cursor (32x32 viewBox, hotspot at top-left) ──
+  "cursor": "assets/cursor.svg",
+
+  // ── Optional: scrollbar art ──
+  "scrollbar": {
+    "thumb-image": "assets/scrollbar-thumb.svg",
+    "track-color": "transparent"
+  },
+
+  // ── Custom CSS (always include ::selection at minimum) ──
+  // See scripts/custom-css-reference.md for required and optional patterns
+  "custom_css": "::selection { background: rgba(R,G,B,0.3); }"
+}
