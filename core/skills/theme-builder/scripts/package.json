@@ -1,0 +1,9 @@
+{
+  "name": "theme-builder-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Helper scripts for the /theme-builder skill. Sharp is used to pre-blur terminal-view wallpapers.",
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}

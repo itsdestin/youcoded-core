@@ -216,6 +216,29 @@ mkdir -p ~/.claude/destinclaude-themes/<slug>/assets
 - **Brand/IP Mode:** WebSearch for official/fan art → WebFetch → save to assets + `screen_dir`. Prefer 1920x1080+.
 - **Vibe/Abstract Mode:** WebSearch stock photos (Unsplash, Pexels) → WebFetch → save. Or use CSS gradient if no wallpaper needed.
 
+### Step 2b: Bake the Terminal-View Wallpaper
+
+Only for `type: "image"` themes. TerminalView renders a pre-blurred + darkened version of the wallpaper behind xterm so text stays readable over high-frequency image detail. Skip this step for gradient/solid themes.
+
+```bash
+node scripts/prep-terminal-bg.cjs \
+  ~/.claude/destinclaude-themes/<slug>/assets/wallpaper.<ext> \
+  ~/.claude/destinclaude-themes/<slug>/assets/wallpaper-terminal.webp
+```
+
+Output is ~5–20 KB (blurred low-frequency content compresses ruthlessly well). Then add to `manifest.json`:
+
+```json
+"background": {
+  "type": "image",
+  "value": "theme-asset://<slug>/assets/wallpaper.<ext>",
+  "terminal-value": "theme-asset://<slug>/assets/wallpaper-terminal.webp",
+  ...
+}
+```
+
+If you skip this step, TerminalView falls back to a runtime CSS `filter: blur()` on the sharp wallpaper — visually similar but costs GPU, and is automatically disabled under reduced-effects. Always pre-bake for shipped themes.
+
 ### Step 3: Generate SVG Assets
 
 Write each SVG to the assets folder. Guidelines:
@@ -434,6 +457,7 @@ Never use `position: absolute` on layout-flow elements in `custom_css` — the f
 - [ ] `scripts/manifest-template.jsonc` has been read before writing manifest.json
 - [ ] `scripts/custom-css-reference.md` has been read before writing custom CSS
 - [ ] Wallpaper copied to BOTH `<slug>/assets/` AND `screen_dir`
+- [ ] For image themes: `wallpaper-terminal.webp` baked via `prep-terminal-bg.cjs` AND manifest includes `background.terminal-value`
 - [ ] Read base mascot SVGs before generating crossovers, AND follow the Mascot rendering rules (white body + currentColor stroke; features drawn on top, not cutouts; verified distinct at 24 px)
 - [ ] Manifest uses relative asset paths only
 - [ ] Bubble blur/opacity are manifest fields, NOT hardcoded in `custom_css`
