@@ -15,7 +15,10 @@ Claude generates concept options in a browser window first — no app changes �
 
 ### Wallpaper recommendation (ask early)
 
-Most themes use a wallpaper. **Always recommend the user provide their own** — it saves tokens and speeds things up. Ask upfront before generating concepts. If the user provides one, use it as the visual anchor. If they prefer Claude find one, proceed with web search.
+Most themes use a wallpaper. **Always recommend the user provide their own** — it saves tokens and speeds things up. Ask upfront before generating concepts. Then:
+
+- **User provides one wallpaper** — use it as the visual anchor for all 3 concepts. Differentiate concepts through palette, overlay tint, and effects — not by swapping the wallpaper out.
+- **User wants Claude to find one** — search for and download **3 separate wallpapers**, one per concept. Each wallpaper should match that concept's specific interpretation of the prompt. Do this before rendering concepts so each mockup has its own hero image.
 
 ---
 
@@ -55,17 +58,23 @@ Analyze the user's prompt and determine the mode **automatically** — never ask
 
 ### Step 4: Generate 3 Theme Concepts
 
-Generate **3 genuinely different interpretations** of the prompt — not 3 slight variations. For each concept, decide:
+**Before designing anything, read the template:**
+
+```
+scripts/concept-page-template.html
+```
+
+This is the page shell you will fill in. Do NOT write the concepts HTML from scratch — read the template, then insert your cards into the `<!-- CONCEPT_CARDS -->` placeholder, add Google Font `<link>` tags at `<!-- GOOGLE_FONTS -->`, fill in the page title, and write the completed file to `screen_dir`. The template handles page layout, script wiring, and the click→brainstorm event — none of that belongs in your generated HTML.
+
+Once you have the template in context, design **3 genuinely different interpretations** of the prompt — not 3 slight variations. For each concept, decide:
 
 - A palette (all 15 tokens — see Token Design Rules below)
 - Shape radius values
 - A font choice — Google Font or system font that reinforces the vibe. Set `--font-sans` and `--font-mono`. Include a `<link>` for the Google Font in the page `<head>`.
-- Background type (solid, gradient, or image)
+- Background type (solid, gradient, or image) — if wallpapers were downloaded (one per concept), each concept uses its own wallpaper. Only use gradient/solid if a concept's design identity explicitly calls for it.
 - Layout presets (input-style, bubble-style, header-style, statusbar-style)
 - Effects (particles, scan-lines, vignette, noise)
 - Pattern overlay, icon overrides, mascot crossover plan, custom CSS effects
-
-**Render using the concept page template:** Read `scripts/concept-page-template.html`, insert your concept cards into the `<!-- CONCEPT_CARDS -->` placeholder, add Google Font `<link>` tags at `<!-- GOOGLE_FONTS -->`, set the page title, and write the completed HTML to `screen_dir`.
 
 #### Concept Card Structure
 
@@ -122,7 +131,13 @@ User requests changes → re-render in the browser. Proceed to Phase 2 when they
 
 ### Phase 2a: Visual Refinement (consolidated single page)
 
-After the user approves a concept direction, generate all visual assets and show them on a **single refinement page** for review. Read `scripts/screen-refinement-template.html` and fill in the three section bodies:
+**Before generating any assets, read the refinement page template:**
+
+```
+scripts/screen-refinement-template.html
+```
+
+Do NOT write the refinement page from scratch — read the template, then fill in the three section placeholders. After the user approves a concept direction, generate all visual assets and render them into the template sections:
 
 **Section 1: Background & Atmosphere** (`<!-- BACKGROUND_CONTENT -->`)
 - Full-width wallpaper preview (download wallpaper first, copy to `screen_dir`, reference as `/files/wallpaper.<ext>`)
@@ -185,7 +200,7 @@ Write all 4 variants to `<slug>/assets/mascot-{idle,welcome,shocked,dizzy}.svg`.
 
 ### Step 5: Write the Manifest
 
-Read `scripts/manifest-template.jsonc` for the complete schema with field documentation. Copy the structure, fill in values, remove unused optional sections. Write to `<slug>/manifest.json`.
+**Read `scripts/manifest-template.jsonc` before writing anything.** Do NOT reconstruct the manifest schema from memory — the template has field documentation, required vs optional markers, and correct structure. Copy it, fill in values, remove unused optional sections. Write to `<slug>/manifest.json`.
 
 Key rules:
 - All asset paths are **relative** to the theme folder
@@ -196,7 +211,7 @@ Key rules:
 
 ### Step 6: Write Custom CSS
 
-Read `scripts/custom-css-reference.md` for the required and optional CSS patterns. Include at minimum:
+**Read `scripts/custom-css-reference.md` before writing any CSS.** Do NOT write custom CSS from memory — the reference has required patterns and known-good snippets. Include at minimum:
 - `::selection` highlight (always)
 - `body::after` pattern overlay (when theme has a pattern)
 - Glassmorphism block (when `panels-blur > 0`)
@@ -333,16 +348,21 @@ Never use `position: absolute` on layout-flow elements in `custom_css` — the f
 - Particle shapes should work at 8-16px
 - When generating mascots, ALWAYS read the base templates first — never create from scratch
 - The preview CSS (`theme-preview.css`) and the app's `globals.css` are a CONTRACT — if either changes, both must stay in sync
+- NEVER write the concepts page HTML from scratch — always read `scripts/concept-page-template.html` first and fill in the placeholders. The template owns the page shell, script wiring, and click events.
 
 ### Phase Checklists
 
 **Before rendering concepts (Phase 1):**
+- [ ] `scripts/concept-page-template.html` has been read and will be used as the page shell
 - [ ] All asset references use `/files/` prefix
 - [ ] CSS linked, not inlined
 - [ ] Glassmorphism mockups set all four glass vars: `--panels-blur`, `--panels-opacity`, `--bubble-blur`, `--bubble-opacity`
 - [ ] `on-accent` passes 4.5:1 against `accent`
 
 **Before writing theme pack (Phase 2):**
+- [ ] `scripts/screen-refinement-template.html` has been read and will be used as the page shell
+- [ ] `scripts/manifest-template.jsonc` has been read before writing manifest.json
+- [ ] `scripts/custom-css-reference.md` has been read before writing custom CSS
 - [ ] Wallpaper copied to BOTH `<slug>/assets/` AND `screen_dir`
 - [ ] Read base mascot SVGs before generating crossovers
 - [ ] Manifest uses relative asset paths only
