@@ -47,6 +47,7 @@
   "background": {
     "type": "solid",        // "solid" | "gradient" | "image"
     "value": "#hex",        // Color, gradient string, or relative path ("assets/wallpaper.png")
+    "terminal-value": "assets/wallpaper-terminal.webp", // Image themes only — pre-blurred asset from prep-terminal-bg.cjs (omit for solid/gradient)
     "opacity": 1,           // Background opacity (0-1)
     "panels-blur": 0,       // Glassmorphism blur in px (0 = off, 12-20 = typical)
     "panels-opacity": 1.0,  // Panel glass opacity (0.70-0.85 for glass effect)
