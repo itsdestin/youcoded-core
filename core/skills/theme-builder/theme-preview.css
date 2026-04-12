@@ -58,54 +58,67 @@ body {
   opacity: 1;
 }
 
-/* Glassmorphism — unified model. --panels-blur / --panels-opacity and
-   --bubble-blur / --bubble-opacity are ALWAYS set by the theme engine
-   (defaults: 0px / 1). Rules apply unconditionally; at default values
-   they're a visual no-op. See GLASSMORPHISM-REFACTOR-PLAN.md. */
+/* Glassmorphism — blur and opacity are INDEPENDENT knobs.
+   Opacity always applies (via color-mix). backdrop-filter is gated on
+   [data-panels-blur] / [data-bubble-blur] so non-blur themes don't
+   create spurious stacking contexts. See GLASSMORPHISM-REFACTOR-PLAN.md. */
 
-/* Header bar — slider-controlled blur + opacity */
+/* Header bar — opacity always, blur gated */
 .header-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 20;
-  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
   background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
+[data-panels-blur] .header-bar {
+  backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+}
 
-/* Status bar — slider-controlled blur + opacity */
+/* Status bar — opacity always, blur gated */
 .status-bar {
-  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
   background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
+[data-panels-blur] .status-bar {
+  backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+}
 
-/* Input bar — slider-controlled blur + opacity */
+/* Input bar — opacity always, blur gated */
 .input-bar-container {
-  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
   background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
+[data-panels-blur] .input-bar-container {
+  backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur)) saturate(1.2);
+}
 
-/* Assistant bubbles — opacity always, blur wallpaper-gated (preview mocks
-   the opacity layer only; perf gate for blur is in the live app). */
+/* Assistant bubbles — opacity always, blur gated */
 .chat-bubble.assistant,
 .assistant-bubble,
 .bg-inset {
-  backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
   background-color: color-mix(in srgb, var(--inset) calc(var(--bubble-opacity, 1) * 100%), transparent);
+}
+[data-bubble-blur] .chat-bubble.assistant,
+[data-bubble-blur] .assistant-bubble,
+[data-bubble-blur] .bg-inset {
+  backdrop-filter: blur(var(--bubble-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--bubble-blur)) saturate(1.1);
 }
 
 /* User bubbles — frosted accent */
 .chat-bubble.user,
 .user-bubble,
 .bg-accent {
-  backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
   background-color: color-mix(in srgb, var(--accent) calc(var(--bubble-opacity, 1) * 100%), transparent);
+}
+[data-bubble-blur] .chat-bubble.user,
+[data-bubble-blur] .user-bubble,
+[data-bubble-blur] .bg-accent {
+  backdrop-filter: blur(var(--bubble-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--bubble-blur)) saturate(1.1);
 }
 
 /* Chat area — top padding to clear header in preview mockup */
