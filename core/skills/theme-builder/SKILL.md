@@ -277,7 +277,7 @@ If somehow the wallpaper isn't in `_preview/assets/` yet (user started with grad
 
 ### Step 2b: Bake the Terminal-View Wallpaper
 
-Only for `type: "image"` themes. TerminalView renders a subtly blurred + darkened version of the wallpaper behind xterm so fine wallpaper detail doesn't fight with the terminal text. Subtle means subtle — default blur is 8px sigma, enough to soften but not obliterate the wallpaper. Skip this step for gradient/solid themes.
+Only for `type: "image"` themes. TerminalView renders a subtly blurred + darkened version of the wallpaper behind xterm so fine wallpaper detail doesn't fight with the terminal text. Default blur is 14px sigma + brightness 0.86 — enough to soften sharp detail and take the edge off bright wallpapers, while xterm sits at 0.82 opacity on top so the color still reads through. Skip this step for gradient/solid themes.
 
 ```bash
 node scripts/prep-terminal-bg.cjs \
@@ -372,8 +372,9 @@ Key rules:
 
 **Read `scripts/custom-css-reference.md` before writing any CSS.** Do NOT write custom CSS from memory — the reference has required patterns and known-good snippets. Include at minimum:
 - `::selection` highlight (always)
-- `body::after` pattern overlay (when theme has a pattern)
 - Glassmorphism block (when `panels-blur > 0`)
+
+Wallpaper and pattern are **manifest fields** (`background.value`, `background.pattern`), NOT `custom_css`. The engine renders them via `#theme-bg` and `#theme-pattern` at `z-index: -1` — above the canvas color, behind chat bubbles. Do NOT re-inject them via `body::before`/`body::after` in `custom_css` (old pattern from before the April 8 terminal-opacity fix — now obsolete and actively harmful: the old template prescribed `z-index: 0` which puts pattern in front of bubble text, hurting readability).
 
 Adapt the reference patterns to fit the theme. Do NOT blindly copy — adjust opacity, blur, saturate values. Add decorative effects (glows, animated borders, text shadows) when they fit.
 
@@ -546,6 +547,6 @@ Never use `position: absolute` on layout-flow elements in `custom_css` — the f
 - [ ] If mascots were regenerated during Kit, they already follow the Mascot rendering rules (white body + currentColor stroke; features drawn on top, not cutouts; verified distinct at 24 px)
 - [ ] Manifest uses relative asset paths only
 - [ ] Bubble blur/opacity are manifest fields, NOT hardcoded in `custom_css`
-- [ ] `body::after` (not `::before`) for pattern overlay
+- [ ] Wallpaper + pattern come from `background.value` / `background.pattern` manifest fields — NOT from `body::before`/`body::after` in `custom_css`
 - [ ] `check-contrast.cjs` passes with no HARD or SURFACE failures
 - [ ] `_preview/` deleted after successful pack creation

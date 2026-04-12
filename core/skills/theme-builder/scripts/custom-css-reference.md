@@ -15,20 +15,16 @@ Replace `SLUG` with the theme's slug. Adjust opacity/blur values to taste.
 
 ---
 
-## REQUIRED when theme has a pattern overlay
+## DO NOT put wallpaper or pattern in custom_css
 
-The pattern MUST be `body::after` (not `::before`) so it renders ON TOP of
-the terminal's WebGL canvas. Omit entirely if the theme has no pattern.
+Use the **manifest fields**, not `custom_css`:
 
-```css
-body::after {
-  content: ''; position: fixed; inset: 0;
-  background-image: url('theme-asset://SLUG/assets/pattern.svg');
-  background-size: 30px 30px; background-repeat: repeat;
-  opacity: 0.10;
-  pointer-events: none; z-index: 0;
-}
-```
+- **Wallpaper** → `background.type: "image"` + `background.value: "theme-asset://SLUG/assets/wallpaper.png"`. Engine renders via `#theme-bg` at `z-index: -1`.
+- **Pattern overlay** → `background.pattern: "theme-asset://SLUG/assets/pattern.svg"` + `background.pattern-opacity: 0.10` (start with 0.10–0.15; pattern only shows in gaps between bubbles, so needs a bit more than if it overlaid everything). Engine renders via `#theme-pattern` at `z-index: -1`.
+
+The old `body::before` / `body::after` prescription at `z-index: 0` is **obsolete and actively harmful** — it came from when the xterm WebGL canvas was opaque (pre-April-8, before commit `e3cc7ce2`). The terminal now uses container opacity 0.82, so negative-z-index layers show through. Any `custom_css` overlay at `z-index: 0` or higher will render **in front of chat bubbles**, hurting readability.
+
+If you have a theme asset other than wallpaper/pattern that needs a full-screen overlay (rare — e.g. a blend-mode layer or mask), put it in `custom_css` at `z-index: -1`, never `z-index: 0` or higher.
 
 ---
 
