@@ -66,21 +66,24 @@ const globals = readFile(GLOBALS);
 const preview = readFile(PREVIEW);
 
 const CHECKS = [
+  // Glass selectors are now unconditional (no [data-panels-blur] gate) —
+  // anchored to a preceding newline so we don't match nested rules like
+  // ".layer-surface .bg-inset".
   {
     name: 'Glassmorphism — header-bar',
-    pattern: '\\[data-panels-blur\\]\\s+\\.header-bar',
+    pattern: '\\n\\.header-bar',
   },
   {
     name: 'Glassmorphism — status-bar',
-    pattern: '\\[data-panels-blur\\]\\s+\\.status-bar',
+    pattern: '\\n\\.status-bar',
   },
   {
     name: 'Glassmorphism — bg-inset (assistant bubbles)',
-    pattern: '\\[data-panels-blur\\]\\s+\\.bg-inset',
+    pattern: '\\n\\.bg-inset',
   },
   {
     name: 'Glassmorphism — bg-accent (user bubbles)',
-    pattern: '\\[data-panels-blur\\]\\s+\\.bg-accent',
+    pattern: '\\n\\.bg-accent',
   },
   {
     name: 'Layout — floating input',

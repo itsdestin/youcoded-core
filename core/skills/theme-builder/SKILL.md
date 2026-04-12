@@ -85,7 +85,7 @@ Each concept card is a `.concept-card` div with `data-choice="A"` (or B, C). Set
 
 Use the exact CSS classes from `theme-preview.css`. All colors from CSS custom properties — never hardcode hex in element styles except on the scoping div.
 
-**Glassmorphism in mockups** requires BOTH `data-panels-blur` attribute and `style="--panels-blur: Npx; --panel-glass: rgba(R,G,B,OPACITY);"` on the `.app-mockup` wrapper. Compute `--panel-glass` from panel hex + `panels-opacity`.
+**Glassmorphism in mockups**: set `style="--panels-blur: Npx; --panels-opacity: N; --bubble-blur: Npx; --bubble-opacity: N;"` on the `.app-mockup` wrapper. `theme-preview.css` applies glass unconditionally via `color-mix()` + `backdrop-filter`, so you don't need any attribute gate. At defaults (`0px` / `1`) rules are a visual no-op.
 
 ### Step 5: Tell the User + Quick-Apply
 
@@ -339,7 +339,7 @@ Never use `position: absolute` on layout-flow elements in `custom_css` — the f
 **Before rendering concepts (Phase 1):**
 - [ ] All asset references use `/files/` prefix
 - [ ] CSS linked, not inlined
-- [ ] Glassmorphism mockups have both `data-panels-blur` and `--panel-glass`
+- [ ] Glassmorphism mockups set all four glass vars: `--panels-blur`, `--panels-opacity`, `--bubble-blur`, `--bubble-opacity`
 - [ ] `on-accent` passes 4.5:1 against `accent`
 
 **Before writing theme pack (Phase 2):**
