@@ -2,6 +2,42 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.4.0] - 2026-04-15
+
+Major release. The toolkit is now flat (no `core/`, `life/`, `productivity/`); the DestinCode app owns install, update, and reconciliation; pure-CLI install is no longer supported. See the rewritten `specs/destinclaude-spec.md` v3.0 for the full new architecture.
+
+### Added
+- **Theme builder Kit refinement page** — Replaces the guess-and-refine loop. Pre-blurred terminal wallpapers baked at theme generation time. Wallpaper fidelity rule, canonical chrome via JS, 1080p rule, mascot rendering rules to prevent invisible eyes. Default to art/illustration over photos for wallpapers.
+- **On-demand reference files for theme-builder** — `SKILL.md` slimmed; deep references load only when needed.
+- **Landing page overhaul** — Marketplace showcase, OS detection, theme-aware glows, custom SVG icons, hero rewrite. Download buttons wired to latest release assets.
+- **Hooks-manifest desired-state format** — Manifest declares required hooks with matchers and timeouts; the app's `HookReconciler` merges and prunes against this declaration.
+
+### Changed
+- **Phase-3 decomposition (major)** — `core/`, `life/`, `productivity/` directories deleted. Hooks, commands, skills, scripts, specs, and templates moved to the repo root. Extracted skills (encyclopedia, journaling, drive, fork-file, claudes-inbox, skill-creator, theme-builder, sync, output styles) now ship as optional marketplace packages, not as bundled layers.
+- **Install model** — The DestinCode app's reconcilers (`hook-reconciler`, `mcp-reconciler`, `integration-reconciler`, `cleanupOrphanSymlinks`) now run on every app launch and own all install/update concerns. The conversational setup-wizard is no longer the install conductor.
+- **`/update` orchestration** — `scripts/post-update.sh` slimmed to four phases: `self-check | migrations | verify | post-update`. The remaining `/update` command is for manual maintenance only; routine updates happen via the app.
+- **`commands/health.md`** — Rewritten for the post-decomposition layout. Verifies the app's reconcilers ran rather than asserting filesystem symlinks. Most failure modes now resolve to "restart the app."
+- **`session-start.sh` + `setup-wizard/SKILL.md` slimmed** — Aligned with the new install model. `session-start.sh` no longer writes `config.local.json`.
+- **`TOOLKIT_ROOT` resolution** — Hardcoded in `/update`; corrected path + migrations dispatch arg.
+- **Glassmorphism CSS** — Synced with destincode `globals.css`. Theme-builder preview CSS aligned with unconditional glassmorphism. Backdrop-filter gating dropped; tuned to subtle blur (8px) + gentler brightness (0.86).
+- **`destinclaude-spec.md` → 3.0** — Documents the flat layout, app-owned reconciliation, marketplace extension model, and the explicit "CLI-only install unsupported" stance. Supersedes the 2026-03-16 symlink-registration mandate.
+- **`setup-wizard/specs/setup-wizard-spec.md` → 2.0** — Scoped to a 3-question profile intake (name, comfort level, sync backend). Install responsibilities removed; halts cleanly when the DestinCode app is absent.
+- **`specs/INDEX.md`** — All paths corrected; extracted skills moved to a "Moved to marketplace packages" section.
+
+### Fixed
+- **Theme builder slug invariant** — Manifest-last write order + verify step prevents partial writes.
+- **Theme builder template reads** — Required before generating HTML/CSS/manifest.
+- **Theme builder body::after pattern** — Dropped obsolete pattern; manifest fields used instead.
+
+### Removed
+- **`core/`, `life/`, `productivity/` directory trees** — Phase-3 flatten.
+- **8 hooks** — `sync.sh`, `title-update.sh`, `todo-capture.sh`, `checklist-reminder.sh`, `done-sound.sh`, `session-end-sync.sh`, `contribution-detector.sh`, `check-inbox.sh`. Functionality moves to the app or to extracted marketplace packages. **The DestinCode app's `HookReconciler` automatically prunes the corresponding stale entries from existing users' `settings.json` on first launch of v2.4.0.**
+- **Layer-specific commands** — `/toolkit`, `/contribute`, `/toolkit-uninstall`, `/appupdate`. Use the app for these flows.
+
+### Migration notes
+- **Existing v2.3.x installs** — Update by downloading the new DestinCode app installer (`.exe` / `.dmg` / `.AppImage` / `.apk`). The app cleans up stale `settings.json` hook entries and orphan symlinks automatically on first launch. The `/update` slash command path is **not** the supported upgrade route for this release.
+- **Pure-CLI users (no DestinCode app)** — Install is unsupported in this release. A future "CLI Compatibility" skill is planned to fill this gap.
+
 ## [2.3.2] - 2026-04-08
 
 ### Added
