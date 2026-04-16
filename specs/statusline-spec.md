@@ -7,7 +7,7 @@
 
 ## Purpose
 
-A real-time information display system for Claude Code sessions. Four components work together: (1) **statusline.sh** renders a multi-line status bar showing session topic, sync status, model/context info, rate limits, announcements, and toolkit version; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint; (4) **announcement-fetch.js** fetches broadcast announcements from the destinclaude GitHub repo.
+A real-time information display system for Claude Code sessions. Four components work together: (1) **statusline.sh** renders a multi-line status bar showing session topic, sync status, model/context info, rate limits, announcements, and toolkit version; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint; (4) **announcement-fetch.js** fetches broadcast announcements from the youcoded-core GitHub repo.
 
 ## User Mandates
 
@@ -64,7 +64,7 @@ A real-time information display system for Claude Code sessions. Four components
   └─ Launches announcement-fetch.js in the background (nohup, non-blocking)
 
 [Announcement fetch] → announcement-fetch.js
-  ├─ Fetches https://raw.githubusercontent.com/itsdestin/destinclaude/master/announcements.txt
+  ├─ Fetches https://raw.githubusercontent.com/itsdestin/youcoded-core/master/announcements.txt
   ├─ Parses message + optional YYYY-MM-DD expiry prefix (zero-padded only)
   └─ Writes ~/.claude/.announcement-cache.json atomically (tmp → rename)
 ```
@@ -112,7 +112,7 @@ A real-time information display system for Claude Code sessions. Four components
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Change Log
 

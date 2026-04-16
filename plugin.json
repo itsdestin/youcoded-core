@@ -1,12 +1,12 @@
 {
-  "name": "destinclaude",
-  "description": "DestinClaude core — safety hooks, commands, setup wizard, sync infrastructure. Extended by optional marketplace packages (encyclopedia, inbox, themes, drive, messaging, output styles).",
-  "version": "2.4.3",
+  "name": "youcoded-core",
+  "description": "YouCoded core — safety hooks, commands, setup wizard, sync infrastructure. Extended by optional marketplace packages (encyclopedia, inbox, themes, drive, messaging, output styles).",
+  "version": "1.0.0",
   "author": {
     "name": "itsdestin"
   },
-  "homepage": "https://github.com/itsdestin/destinclaude",
-  "repository": "https://github.com/itsdestin/destinclaude",
+  "homepage": "https://github.com/itsdestin/youcoded-core",
+  "repository": "https://github.com/itsdestin/youcoded-core",
   "license": "MIT",
   "keywords": [
     "claude-code",
@@ -20,7 +20,7 @@
       "skill": "setup-wizard"
     },
     "remote-setup": {
-      "description": "Configure the DestinCode remote access bridge",
+      "description": "Configure the YouCoded remote access bridge",
       "skill": "remote-setup"
     }
   }

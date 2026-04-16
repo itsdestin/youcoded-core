@@ -1,5 +1,5 @@
 #!/bin/bash
-# DestinClaude Bootstrap Installer — macOS / Linux
+# YouCoded Bootstrap Installer — macOS / Linux
 # Downloads prerequisites and clones the toolkit so Claude Code can finish setup.
 set -e
 
@@ -8,7 +8,7 @@ set -e
 # (We do NOT use `exec < /dev/tty` because that kills the curl pipe.)
 
 echo "==================================="
-echo "  DestinClaude Installer"
+echo "  YouCoded Installer"
 echo "==================================="
 echo ""
 
@@ -172,7 +172,7 @@ else
 fi
 
 # --- Clone the toolkit ---
-TOOLKIT_DIR="$HOME/.claude/plugins/destinclaude"
+TOOLKIT_DIR="$HOME/.claude/plugins/youcoded-core"
 if [ -d "$TOOLKIT_DIR" ]; then
     echo "  Updating toolkit..."
     if git -C "$TOOLKIT_DIR" pull --ff-only 2>/dev/null; then
@@ -183,7 +183,7 @@ if [ -d "$TOOLKIT_DIR" ]; then
 else
     echo "  Downloading toolkit (this may take a minute)..."
     mkdir -p "$HOME/.claude/plugins"
-    git clone --progress https://github.com/itsdestin/destinclaude.git "$TOOLKIT_DIR"
+    git clone --progress https://github.com/itsdestin/youcoded-core.git "$TOOLKIT_DIR"
     echo "  Toolkit downloaded"
 fi
 
@@ -239,13 +239,13 @@ fi
 
 echo ""
 
-# --- Install DestinCode desktop app ---
-echo "  Installing DestinCode desktop app..."
+# --- Install YouCoded desktop app ---
+echo "  Installing YouCoded desktop app..."
 DESKTOP_INSTALLED=false
 INSTALL_SCRIPT="$TOOLKIT_DIR/scripts/install-app.sh"
 if [ -f "$INSTALL_SCRIPT" ]; then
     if bash "$INSTALL_SCRIPT"; then
-        echo "  DestinCode desktop app installed"
+        echo "  YouCoded desktop app installed"
         DESKTOP_INSTALLED=true
     else
         echo "  Desktop app install failed — you can install it later with /setup-wizard"
@@ -267,20 +267,20 @@ echo ""
 
 # --- Auto-launch the app ---
 if [ "$DESKTOP_INSTALLED" = true ]; then
-    echo "  Launching DestinCode..."
+    echo "  Launching YouCoded..."
     case "$(uname -s)" in
         Darwin)
-            open /Applications/DestinCode.app 2>/dev/null &
+            open /Applications/YouCoded.app 2>/dev/null &
             ;;
         Linux)
-            if [ -x "$HOME/.local/bin/DestinCode.AppImage" ]; then
-                nohup "$HOME/.local/bin/DestinCode.AppImage" >/dev/null 2>&1 &
+            if [ -x "$HOME/.local/bin/YouCoded.AppImage" ]; then
+                nohup "$HOME/.local/bin/YouCoded.AppImage" >/dev/null 2>&1 &
             else
-                echo "  Note: DestinCode.AppImage not found or not executable. Launch Claude Code manually."
+                echo "  Note: YouCoded.AppImage not found or not executable. Launch Claude Code manually."
             fi
             ;;
         MINGW*|MSYS*|CYGWIN*)
-            cmd.exe /c start "" "DestinCode" 2>/dev/null &
+            cmd.exe /c start "" "YouCoded" 2>/dev/null &
             ;;
     esac
 else

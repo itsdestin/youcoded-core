@@ -4,9 +4,9 @@ Made an improvement to the toolkit? Here's how to share it.
 
 ## Filing Issues
 
-Found a bug or have a feature idea? [Open a GitHub Issue](https://github.com/itsdestin/destinclaude/issues/new/choose).
+Found a bug or have a feature idea? [Open a GitHub Issue](https://github.com/itsdestin/youcoded-core/issues/new/choose).
 
-- **Bug reports** — Use the bug report template. Include your DestinClaude version and steps to reproduce.
+- **Bug reports** — Use the bug report template. Include your YouCoded version and steps to reproduce.
 - **Feature requests** — Use the feature request template. Describe what you'd like and why.
 
 You don't need to know which spec a bug relates to — just describe the problem and we'll triage it.

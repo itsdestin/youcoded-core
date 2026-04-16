@@ -12,7 +12,7 @@
 
 ---
 
-## Part 1: Desktop App (DestinClaude)
+## Part 1: Desktop App (YouCoded)
 
 All files relative to `desktop/` in this repo.
 
@@ -525,9 +525,9 @@ Trigger a setup prompt (theme selection or trust folder). Verify the PromptCard 
 
 ---
 
-## Part 2: Mobile App (DestinCode)
+## Part 2: Mobile App (YouCoded)
 
-All files relative to `app/src/main/kotlin/com/destin/code/` in the DestinCode repo at `/data/data/com.destin.code/files/home/destincode`, branch `feature/blocking-permission-hooks`.
+All files relative to `app/src/main/kotlin/com/destin/code/` in the YouCoded repo at `/data/data/com.destin.code/files/home/youcoded`, branch `feature/blocking-permission-hooks`.
 
 ### File Map
 
@@ -616,7 +616,7 @@ Expected: No output
 - [ ] **Step 3: Commit**
 
 ```bash
-cd ~/destincode
+cd ~/youcoded
 git add app/src/main/assets/hook-relay-blocking.js
 git commit -m "feat(mobile): add blocking relay script for PermissionRequest"
 ```

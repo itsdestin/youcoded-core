@@ -1,17 +1,17 @@
-# DestinClaude
+# YouCoded
 
-**The plugin toolkit that powers [DestinCode](https://github.com/itsdestin/destincode).**
+**The plugin toolkit that powers [YouCoded](https://github.com/itsdestin/youcoded).**
 
-DestinClaude is a collection of skills, hooks, commands, and tools for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It adds journaling, a living personal encyclopedia, task management, text messaging, cross-device sync, and more — all through plain-English conversation.
+YouCoded is a collection of skills, hooks, commands, and tools for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It adds journaling, a living personal encyclopedia, task management, text messaging, cross-device sync, and more — all through plain-English conversation.
 
-Looking for the app? See **[DestinCode](https://github.com/itsdestin/destincode)** — available on Windows, macOS, Linux, and Android.
+Looking for the app? See **[YouCoded](https://github.com/itsdestin/youcoded)** — available on Windows, macOS, Linux, and Android.
 
 ## Install
 
-The DestinCode app installs this toolkit automatically. If you want to install it standalone with Claude Code:
+The YouCoded app installs this toolkit automatically. If you want to install it standalone with Claude Code:
 
 ```bash
-git clone https://github.com/itsdestin/destinclaude.git ~/.claude/plugins/destinclaude
+git clone https://github.com/itsdestin/youcoded-core.git ~/.claude/plugins/youcoded-core
 claude
 > /setup-wizard
 ```
@@ -31,7 +31,7 @@ Three layers, each a standalone [Claude Code plugin](https://docs.anthropic.com/
 - **Specs system** — structured, versioned documentation that persists across conversations
 - **Memory templates** — organized persistent memory for Claude
 - **Commands** — `/setup-wizard`, `/update`, `/health`, `/diagnose`, `/sync`, `/toolkit`, `/theme-builder`
-- **Theme builder** — build immersive DestinCode theme packs with custom colors, wallpapers, mascots, and effects
+- **Theme builder** — build immersive YouCoded theme packs with custom colors, wallpapers, mascots, and effects
 - **Contribution detector** — notices your improvements and offers to share them upstream
 - **Output styles** — Conversational, Academic, and Professional modes that reposition Claude as a general assistant instead of a coding tool. Great for students, professionals, and anyone who uses Claude Code as their primary Claude interface
 
@@ -61,7 +61,7 @@ After setup, type `/toolkit` to see all installed features and available modules
 
 ## Contributing
 
-Report bugs or request features via [GitHub Issues](https://github.com/itsdestin/destinclaude/issues). See the [Contributing Guide](docs/contributing.md) for details, or type `/contribute` and Claude handles the rest.
+Report bugs or request features via [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues). See the [Contributing Guide](docs/contributing.md) for details, or type `/contribute` and Claude handles the rest.
 
 ## License
 

@@ -137,7 +137,7 @@ Added to `~/.claude/settings.json` (user-level settings, same file as existing h
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Change Log
 

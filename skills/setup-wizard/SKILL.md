@@ -1,11 +1,11 @@
 ---
 name: setup-wizard
-description: CLI-only fallback first-run setup for DestinClaude toolkit users who aren't using the DestinCode app. Collects name, comfort level, and sync backend, then writes them to config.json. Invoked via /setup-wizard or when a pure-CLI user says "set me up."
+description: CLI-only fallback first-run setup for YouCoded toolkit users who aren't using the YouCoded app. Collects name, comfort level, and sync backend, then writes them to config.json. Invoked via /setup-wizard or when a pure-CLI user says "set me up."
 ---
 
-# DestinClaude Setup Wizard (CLI Fallback)
+# YouCoded Setup Wizard (CLI Fallback)
 
-You are the setup wizard for pure-CLI users of the DestinClaude toolkit. Most users install DestinClaude through the DestinCode app, which runs its own onboarding screen (name, comfort, sync, curated packages) and handles hooks, MCPs, and plugin registration automatically. **This wizard only runs for users working directly in Claude Code without the app.**
+You are the setup wizard for pure-CLI users of the YouCoded toolkit. Most users install YouCoded through the YouCoded app, which runs its own onboarding screen (name, comfort, sync, curated packages) and handles hooks, MCPs, and plugin registration automatically. **This wizard only runs for users working directly in Claude Code without the app.**
 
 Walk the user through setup conversationally. Explain each step in plain language — the user may be non-technical, so never assume familiarity with developer tools. Keep it short: three questions, then done.
 
@@ -74,7 +74,7 @@ Confirm config was written, then say:
 > You're set. A few things to know:
 >
 > - Run `/health` any time to verify the toolkit is working.
-> - Curated packages (skills, themes, tools) can be installed from the **DestinCode app's marketplace**, or via `/plugin` inside Claude Code.
+> - Curated packages (skills, themes, tools) can be installed from the **YouCoded app's marketplace**, or via `/plugin` inside Claude Code.
 > - Your settings live at `~/.claude/toolkit-state/config.json`. Safe to edit by hand if you know what you're doing.
 
-Stop here. Do not attempt to install plugins, register hooks, configure MCPs, or create symlinks — the DestinCode app handles those, and pure-CLI users manage them through `/plugin`.
+Stop here. Do not attempt to install plugins, register hooks, configure MCPs, or create symlinks — the YouCoded app handles those, and pure-CLI users manage them through `/plugin`.

@@ -2,11 +2,11 @@
 description: Check for toolkit updates and install the latest version
 ---
 
-Check for and install updates to the DestinClaude toolkit.
+Check for and install updates to the YouCoded toolkit.
 
 ## Steps
 
-0. **Resolve TOOLKIT_ROOT.** The decomposed toolkit installs to a fixed path — set `TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude"` and use it as the working directory for ALL subsequent git and file operations. If the directory doesn't exist, tell the user: "Can't find destinclaude at $TOOLKIT_ROOT — run `/health` to diagnose."
+0. **Resolve TOOLKIT_ROOT.** The decomposed toolkit installs to a fixed path — set `TOOLKIT_ROOT="$HOME/.claude/plugins/youcoded-core"` and use it as the working directory for ALL subsequent git and file operations. If the directory doesn't exist, tell the user: "Can't find youcoded-core at $TOOLKIT_ROOT — run `/health` to diagnose."
 
 1. **Read current version.** Read `$TOOLKIT_ROOT/VERSION`. Store this as `CURRENT_VERSION`. You will need it later as the pre-merge version.
 
@@ -159,7 +159,7 @@ Check for and install updates to the DestinClaude toolkit.
 
 21. **Final confirmation.**
     ```
-    Update complete — DestinClaude vX.Y.Z
+    Update complete — YouCoded vX.Y.Z
 
     All N checks passed. Restart Claude Code to pick up the new session-start hook.
     ```
@@ -167,7 +167,7 @@ Check for and install updates to the DestinClaude toolkit.
 22. **Desktop app update prompt.** If `$TOOLKIT_ROOT/scripts/install-app.sh` exists, show this as the VERY LAST thing — visually separated and prominent:
     ```
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    📱  **DestinCode Desktop App**
+    📱  **YouCoded Desktop App**
 
     The desktop app ships separately and may also have updates.
     Run `/appupdate` to download and install the latest version.

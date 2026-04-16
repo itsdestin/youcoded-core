@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# hook-preamble.sh — Shared infrastructure for all DestinClaude hooks.
+# hook-preamble.sh — Shared infrastructure for all YouCoded hooks.
 # Source this as the first action in every hook script.
 # Provides: trap handlers, cleanup registration, error capture,
 #           portable timeout, log rotation, atomic file writes.

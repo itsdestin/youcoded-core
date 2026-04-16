@@ -1,8 +1,8 @@
-﻿# DestinClaude Bootstrap Installer - Windows
+﻿# YouCoded Bootstrap Installer - Windows
 # Downloads prerequisites and clones the toolkit so Claude Code can finish setup.
 
 Write-Host "===================================" -ForegroundColor Cyan
-Write-Host "  DestinClaude Installer" -ForegroundColor Cyan
+Write-Host "  YouCoded Installer" -ForegroundColor Cyan
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -111,7 +111,7 @@ if (-not $claudeFound) {
 }
 
 # --- Clone the toolkit ---
-$toolkitDir = Join-Path $HOME ".claude\plugins\destinclaude"
+$toolkitDir = Join-Path $HOME ".claude\plugins\youcoded-core"
 if (Test-Path $toolkitDir) {
     Write-Host "  Updating toolkit..." -ForegroundColor Yellow
     Push-Location $toolkitDir
@@ -126,7 +126,7 @@ if (Test-Path $toolkitDir) {
     Write-Host "  Downloading toolkit (this may take a minute)..." -ForegroundColor Yellow
     $pluginsDir = Join-Path $HOME ".claude\plugins"
     if (-not (Test-Path $pluginsDir)) { New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null }
-    git clone --progress https://github.com/itsdestin/destinclaude.git $toolkitDir
+    git clone --progress https://github.com/itsdestin/youcoded-core.git $toolkitDir
     Write-Host "  Toolkit downloaded" -ForegroundColor Green
 }
 
@@ -211,14 +211,14 @@ try {
 
 Write-Host ""
 
-# --- Install DestinCode desktop app ---
-Write-Host "  Installing DestinCode desktop app..." -ForegroundColor Yellow
+# --- Install YouCoded desktop app ---
+Write-Host "  Installing YouCoded desktop app..." -ForegroundColor Yellow
 $desktopInstalled = $false
 $installScript = (Join-Path $toolkitDir "desktop\scripts\install-app.sh") -replace '\\', '/'
 if (Test-Path $installScript) {
     bash $installScript
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "  DestinCode desktop app installed" -ForegroundColor Green
+        Write-Host "  YouCoded desktop app installed" -ForegroundColor Green
         $desktopInstalled = $true
     } else {
         Write-Host "  Desktop app install failed — you can install it later with /setup-wizard" -ForegroundColor Yellow
@@ -240,8 +240,8 @@ Write-Host ""
 
 # --- Auto-launch the app ---
 if ($desktopInstalled) {
-    Write-Host "  Launching DestinCode..." -ForegroundColor Green
-    Start-Process "DestinCode" -ErrorAction SilentlyContinue
+    Write-Host "  Launching YouCoded..." -ForegroundColor Green
+    Start-Process "YouCoded" -ErrorAction SilentlyContinue
 } else {
     Write-Host "  Launching Claude Code..." -ForegroundColor Green
     try {

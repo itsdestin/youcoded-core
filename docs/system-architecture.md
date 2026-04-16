@@ -1,13 +1,13 @@
 # System Architecture
 
-This document covers the technical architecture of DestinClaude for power users and developers who want to understand, extend, or contribute to the system. For the governance spec (mandates, design decisions, enforcement mechanisms), see `core/specs/system-architecture-spec.md`.
+This document covers the technical architecture of YouCoded for power users and developers who want to understand, extend, or contribute to the system. For the governance spec (mandates, design decisions, enforcement mechanisms), see `core/specs/system-architecture-spec.md`.
 
 ## Layer System
 
 The toolkit is organized into four installable layers, each a standalone Claude Code plugin:
 
 ```
-destinclaude/
+youcoded-core/
 ├── core/           → Foundation (required)
 ├── life/           → Personal knowledge system
 ├── productivity/   → Task management & communication
@@ -107,11 +107,11 @@ Receipt photos can be processed via either the `imessages` (macOS) or `gmessages
 
 The `/setup-wizard` skill is the primary entry point for both first-time installs and returns from another device. It runs as a guided conversation — no executable code, just structured prompts that Claude follows.
 
-**Phase 0 — Prior use check:** The wizard's first question is whether the user has run DestinClaude before on another device. Returning users choose from three restore sources (GitHub, Google Drive, or iCloud) and enter a restore sub-flow; new users proceed to Phase 1.
+**Phase 0 — Prior use check:** The wizard's first question is whether the user has run YouCoded before on another device. Returning users choose from three restore sources (GitHub, Google Drive, or iCloud) and enter a restore sub-flow; new users proceed to Phase 1.
 
 - **Phase 0A (GitHub restore):** Clones or pulls the user's private config repo into `~/.claude/`, rewrites hardcoded HOME paths and project slugs, and merges `mcp-servers/mcp-config.json` back into `~/.claude.json`. Then jumps to Phase 0D.
 - **Phase 0B (Drive restore):** Installs rclone if missing, configures the `gdrive:` remote, and syncs encyclopedia files, personal data (memory, CLAUDE.md, config), and conversation transcripts from Drive. Then jumps to Phase 0D.
-- **Phase 0C (iCloud restore):** Detects the iCloud Drive folder (macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/DestinClaude/`, Windows: `~/iCloudDrive/DestinClaude/`), copies personal data, and proceeds to Phase 0D.
+- **Phase 0C (iCloud restore):** Detects the iCloud Drive folder (macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/YouCoded/`, Windows: `~/iCloudDrive/YouCoded/`), copies personal data, and proceeds to Phase 0D.
 - **Phase 0D (abbreviated dependency check):** Runs the same dependency checks as Phase 4 but frames them as "confirming everything your restored config needs." Skips Phase 5 (personalization) entirely since templates and config already exist from backup. Proceeds directly to Phase 6 (verification).
 
 **Phases 1–6 (fresh install):** Environment check → conflict resolution → layer selection → dependency install → personalization (encyclopedia templates, CLAUDE.md fragments, marketplace plugins) → verification.
@@ -182,12 +182,12 @@ Personal data is protected through multiple layers:
 3. **Contribution filter** — The `/contribute` command and contribution detector both exclude private content.
 4. **Setup marker comments** — CLAUDE.md modifications are wrapped in `<!-- DESTINCLAUDE BEGIN/END -->` markers for clean removal.
 
-## DestinCode Desktop App
+## YouCoded Desktop App
 
-An Electron + React GUI that wraps Claude Code CLI. Now lives in the [destincode repo](https://github.com/itsdestin/destincode) at `desktop/`.
+An Electron + React GUI that wraps Claude Code CLI. Now lives in the [youcoded repo](https://github.com/itsdestin/youcoded) at `desktop/`.
 
-- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI workflow at `destincode/.github/workflows/build-desktop.yml`, triggered by `desktop-v*` tags
-- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `scripts/install-app.sh` (downloads from destincode releases)
+- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI workflow at `youcoded/.github/workflows/build-desktop.yml`, triggered by `desktop-v*` tags
+- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `scripts/install-app.sh` (downloads from youcoded releases)
 
 ## State Files
 
@@ -209,9 +209,9 @@ Three GitHub Actions workflows handle versioning, releases, and builds:
 | `auto-tag.yml` | Push to `master` that changes `plugin.json` | Detects version bump, creates and pushes a `vX.Y.Z` git tag |
 | `release.yml` | Push of a `v*` tag | Extracts the matching section from `CHANGELOG.md` and creates a GitHub Release |
 
-Desktop app builds are now in the destincode repo (`build-desktop.yml`, triggered by `desktop-v*` tags).
+Desktop app builds are now in the youcoded repo (`build-desktop.yml`, triggered by `desktop-v*` tags).
 
-**Release flow:** The `/release` skill orchestrates the toolkit release — 7 parallel review agents validate changes, then it bumps `VERSION` and `plugin.json`, generates the CHANGELOG entry, captures the Claude Code version, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes. Desktop releases are managed separately in the destincode repo.
+**Release flow:** The `/release` skill orchestrates the toolkit release — 7 parallel review agents validate changes, then it bumps `VERSION` and `plugin.json`, generates the CHANGELOG entry, captures the Claude Code version, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes. Desktop releases are managed separately in the youcoded repo.
 
 **Versioning policy** (documented in CHANGELOG.md):
 - **Major (X.0.0)** — Breaking changes requiring `/setup-wizard` re-run or manual migration
@@ -220,7 +220,7 @@ Desktop app builds are now in the destincode repo (`build-desktop.yml`, triggere
 
 The `VERSION` file and `plugin.json` version field must stay in sync. The `/update` command and statusline both read from `VERSION` to determine the installed version and check for updates via git tags.
 
-The `/release` skill (in `destinclaude-admin`) is the sole release mechanism. `scripts/release.sh` was removed in v2.1.9 — all release logic now lives in the skill.
+The `/release` skill (in `youcoded-core-admin`) is the sole release mechanism. `scripts/release.sh` was removed in v2.1.9 — all release logic now lives in the skill.
 
 ## Building on Top
 

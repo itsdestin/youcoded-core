@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-23
 **Status:** Approved
-**Scope:** Both DestinCode (mobile, separate repo) and DestinClaude (desktop, this repo)
+**Scope:** Both YouCoded (mobile, separate repo) and YouCoded (desktop, this repo)
 **Branch:** `feature/blocking-permission-hooks` (in both repos)
 
 ## Problem
@@ -21,8 +21,8 @@ Use Claude Code's `PermissionRequest` hook event with a bidirectional blocking r
 
 ## Repository Boundary
 
-- **Desktop (DestinClaude):** This repo. Relay scripts, HookRelay server, IPC, ToolCard changes.
-- **Mobile (DestinCode):** Separate repo at `github.com/itsdestin/destincode`. Bootstrap, EventBridge, ManagedSession, ToolCard changes. Branch name matches.
+- **Desktop (YouCoded):** This repo. Relay scripts, HookRelay server, IPC, ToolCard changes.
+- **Mobile (YouCoded):** Separate repo at `github.com/itsdestin/youcoded`. Bootstrap, EventBridge, ManagedSession, ToolCard changes. Branch name matches.
 
 ## Verified Assumptions
 
@@ -140,9 +140,9 @@ Both platforms generate a UUID server-side when holding a socket open for a `Per
 - Used by the `respond()` method to look up the correct held socket
 - NOT derived from the hook payload (Claude Code doesn't provide one)
 
-## Mobile App Changes (DestinCode)
+## Mobile App Changes (YouCoded)
 
-*Files in separate repo: `github.com/itsdestin/destincode`, branch `feature/blocking-permission-hooks`*
+*Files in separate repo: `github.com/itsdestin/youcoded`, branch `feature/blocking-permission-hooks`*
 
 ### Hook Registration (Bootstrap.kt)
 
@@ -210,7 +210,7 @@ When `requestId` is non-null, the ToolCard uses the structured response path. Wh
 - If both `PermissionRequest` and `Notification` fire for the same prompt, `PermissionRequest` arrives first and transitions the tool card; the Notification handler sees approval is already active and does nothing
 - **Cross-path cleanup:** If the user somehow responds via the fallback path (keystroke injection) while a PermissionRequest socket is held, the socket must be cleaned up. When `ToolAwaitingApproval` transitions to `ToolComplete` or `ToolFailed` (via PostToolUse/PostToolUseFailure hooks), any held socket for that request ID should be closed without sending a response — the relay will see `end` event and exit 0 (fire-and-forget mode).
 
-## Desktop App Changes (DestinClaude)
+## Desktop App Changes (YouCoded)
 
 *Files in this repo, branch `feature/blocking-permission-hooks`*
 

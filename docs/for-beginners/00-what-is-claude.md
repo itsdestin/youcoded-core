@@ -1,6 +1,6 @@
 # What is Claude Code?
 
-> **Prefer a visual overview?** Check out the [DestinClaude website](https://itsdestin.github.io/destinclaude/) for a quick introduction with screenshots.
+> **Prefer a visual overview?** Check out the [YouCoded website](https://itsdestin.github.io/youcoded-core/) for a quick introduction with screenshots.
 
 You've probably chatted with Claude before — you open a browser, type a question, and get a response. Claude Code is that same Claude, but instead of living in a browser tab, it lives on your computer.
 
@@ -36,7 +36,7 @@ Hooks run in the background. They're the invisible assistants that keep everythi
 
 ## What This Toolkit Adds
 
-DestinClaude is a collection of skills, hooks, and tools that transform Claude Code from a general-purpose assistant into a personal knowledge system. Here's what it includes:
+YouCoded is a collection of skills, hooks, and tools that transform Claude Code from a general-purpose assistant into a personal knowledge system. Here's what it includes:
 
 - **Journaling** — A conversational journaling system that helps you document your life
 - **Encyclopedia** — A living biography that Claude maintains about you, your relationships, and your history

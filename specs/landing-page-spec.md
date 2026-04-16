@@ -8,7 +8,7 @@ last_updated: 2026-03-18
 
 A single-page site that non-technical friends can open from a text message, understand what the toolkit does, and install it — without ever seeing GitHub.
 
-**Live URL:** https://itsdestin.github.io/destinclaude/
+**Live URL:** https://itsdestin.github.io/youcoded-core/
 **Source:** `docs/index.html` (served via GitHub Pages from `master` branch, `/docs` path)
 
 ## Architecture
@@ -41,7 +41,7 @@ Framing: rounded rect with accent-color border + subtle horizontal accent lines 
 
 ### 0. Sticky Navigation
 - Fixed top bar (`56px` height) with blur backdrop
-- Left: brand icon (swaps light/dark per theme) + "DestinClaude" wordmark (wordmark hidden on mobile)
+- Left: brand icon (swaps light/dark per theme) + "YouCoded" wordmark (wordmark hidden on mobile)
 - Desktop right: section links (About, Prerequisites, Install, Features, Docs, FAQ) + dark mode toggle button
 - Mobile right: dark mode toggle + hamburger menu button (both 28px, matching icon size). Menu expands to full-width dropdown with all nav links. Auto-closes on link click.
 
@@ -101,12 +101,12 @@ Framing: rounded rect with accent-color border + subtle horizontal accent lines 
 
 ### 7. Integrations
 - Positioned between prerequisites and the install step
-- Intro text: "DestinClaude integrates with the services you already use."
+- Intro text: "YouCoded integrates with the services you already use."
 - Center-justified flexbox row of integration tags (pill-shaped), each with:
   - Icon (self-hosted SVGs in `docs/icons/`, originally sourced from Wikimedia Commons and Simple Icons)
   - Service name
   - `data-desc` attribute with expandable description (click/tap to toggle)
-  - Descriptions use consistent "DestinClaude can..." phrasing
+  - Descriptions use consistent "YouCoded can..." phrasing
 - Integrations listed: Google Drive, Google Docs, Google Sheets, Google Slides, Google Calendar, Gmail, Google Messages, iMessage, iCloud, Apple Notes, Apple Reminders, Apple Calendar, Apple Mail, Todoist, GitHub, Chrome, Safari, Canva
 - "More coming soon..." pill in dimmed style (`.soon` class)
 - Active integration shows description below the tag row with subtle animation
@@ -141,7 +141,7 @@ Framing: rounded rect with accent-color border + subtle horizontal accent lines 
   - Does it work on Mac and Windows?
 
 ### 11. Footer
-- Brand icon (light/dark) + "DestinClaude" wordmark linking to top
+- Brand icon (light/dark) + "YouCoded" wordmark linking to top
 - GitHub link with inline SVG icon, "Built by Destin" link
 - Open Source badge + MIT License text
 - Floating "back to top" button (appears after scrolling past 400px)
@@ -179,16 +179,16 @@ Framing: rounded rect with accent-color border + subtle horizontal accent lines 
 - GitHub Pages source: `master` branch, `/docs` path
 - `.nojekyll` file prevents Jekyll processing
 - `gh-pages` branch exists but is not the active source
-- No custom domain configured (uses `itsdestin.github.io/destinclaude/`)
+- No custom domain configured (uses `itsdestin.github.io/youcoded-core/`)
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Changelog
 
 - **v1.4 (2026-03-18):** Major landing page redesign (mockup in `docs/index-mockup.html`). Added: sticky navigation bar with section links; dark mode toggle (CSS variables, `prefers-color-scheme`, `localStorage`); brand icons — terminal-inspired `> DC` motif with flat-cut chevron, Cascadia Code font, accent cursor block, split into text-based reference icons (`icon-*-reference.svg`) for nav/footer and traced-outline favicons (`favicon-*.svg`) with Consolas Bold glyph paths for font-independent rendering at small sizes; "How It Works" 3-step flow (Install → Chat → It just works); hero tagline + CTA button; animated demo terminal section showing a journaling session; FAQ accordion (6 questions); polished footer with icon, GitHub SVG, back-to-top button; scroll-triggered animations via IntersectionObserver; OS auto-detection for install tabs (defaults to macOS); accessibility fixes (`:focus-visible`, `<button>` integration tags, ARIA attributes); Open Graph + Twitter Card meta tags; adaptive demo terminal (light/dark mode). Live site `index.html` favicon updated from inline diamond to `favicon-light.svg`. Spec updated with Brand Icons subsection (including favicon font-rendering challenge), new sections 0 (Nav), 1.5 (How It Works), 9 (Demo), 10 (FAQ), 11 (Footer). Visual Design split into Light/Dark/Shared subsections.
-- **v1.3 (2026-03-18):** Documented implemented Integrations section (18 services with icons, expandable descriptions, "More coming soon" pill). Updated hero title from "Claudifest Destin-y" to "DestinClaude". Updated prerequisites: GitHub changed to Required, Google changed to "Google or Apple", added PAID/FREE badges, name-first card layout with right-aligned links. Added section numbering for Integrations (new section 7), renumbered Documentation to 8 and Footer to 9.
+- **v1.3 (2026-03-18):** Documented implemented Integrations section (18 services with icons, expandable descriptions, "More coming soon" pill). Updated hero title from "Claudifest Destin-y" to "YouCoded". Updated prerequisites: GitHub changed to Required, Google changed to "Google or Apple", added PAID/FREE badges, name-first card layout with right-aligned links. Added section numbering for Integrations (new section 7), renumbered Documentation to 8 and Footer to 9.
 - **v1.2 (2026-03-17):** Added Planned Updates section with integrations icons feature request (from inbox 2026-03-17).
 - **v1.1 (2026-03-17):** Updated to reflect warm cream/orange color scheme, added sections 2 (What Is This?), 3 (Before You Begin), 5 (Step 2: Talk to Claude). Removed tagline from hero, added title box with subtitle. Updated all color values.
 - **v1.0 (2026-03-16):** Initial spec — dark navy/teal theme.

@@ -34,7 +34,7 @@ Canonical architecture reference for the user's Claude Code automation system. F
 |-----------|----------|-------------------|
 | 10 skills (3 layers) | `~/.claude/skills/{name}/` (symlinked from toolkit) | Each skill's `specs/{name}-spec.md` |
 | 16 hooks | `~/.claude/hooks/` (symlinked from toolkit) | `backup-system-spec.md` (sync, session-start, session-end-sync), `write-guard-spec.md`, `worktree-guard-spec.md`, `statusline-spec.md` (title-update), this spec (checklist-reminder, done-sound) |
-| 7 MCP servers | Configured in `~/.claude.json`, definitions in `core/mcp-manifest.json` | `destinclaude-spec.md` (registration); individual servers documented in CLAUDE.md |
+| 7 MCP servers | Configured in `~/.claude.json`, definitions in `core/mcp-manifest.json` | `youcoded-core-spec.md` (registration); individual servers documented in CLAUDE.md |
 | Statusline | `~/.claude/statusline.sh` + hooks | `statusline-spec.md` |
 | Encyclopedia system | `~/.claude/encyclopedia/` (cache), `gdrive:{DRIVE_ROOT}/The Journal/System/` (source of truth) | `encyclopedia-system-spec.md` |
 | Backup/sync | `core/hooks/sync.sh` + `session-start.sh` | `backup-system-spec.md` |
@@ -173,7 +173,7 @@ These rules are enforced globally. Each has an authoritative spec — do NOT dup
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Change Log
 

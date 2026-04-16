@@ -1,4 +1,4 @@
-# Restoring DestinClaude
+# Restoring YouCoded
 
 If you lose your setup or move to a new device, here's how to get your data back.
 
@@ -40,7 +40,7 @@ Personal data can replicate to one or more of these backends (configured in `con
 
 1. **Google Drive** — via rclone (`gdrive:` remote). Files go to `<DRIVE_ROOT>/Backup/personal/` (including `conversations/<slug>/`).
 2. **GitHub** — private config repo. Personal data pushed by `sync.sh`.
-3. **iCloud** — via iCloud Drive folder detection. macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/DestinClaude/`. Windows: `~/iCloudDrive/DestinClaude/`.
+3. **iCloud** — via iCloud Drive folder detection. macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/YouCoded/`. Windows: `~/iCloudDrive/YouCoded/`.
 
 All backends are complementary — no primary/secondary hierarchy. Multiple backends can be configured simultaneously.
 
@@ -80,7 +80,7 @@ rclone sync "gdrive:<DRIVE_ROOT>/Backup/personal/" ~/.claude/ --progress
 
 ### From iCloud (macOS)
 ```bash
-cp -R ~/Library/Mobile\ Documents/com~apple~CloudDocs/DestinClaude/* ~/.claude/
+cp -R ~/Library/Mobile\ Documents/com~apple~CloudDocs/YouCoded/* ~/.claude/
 ```
 
 After manual restore, run `/setup-wizard` to re-create symlinks and verify the installation.

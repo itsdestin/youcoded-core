@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # =============================================================================
-# post-update.sh — Post-merge hook dispatcher for destinclaude
+# post-update.sh — Post-merge hook dispatcher for youcoded-core
 #
 # Runs after git merge (via .git/hooks/post-merge). In the decomposed toolkit,
 # most responsibilities (hook reconciliation, MCP registration, plugin registry
 # maintenance, dependency checks, marketplace updates) are owned by the host
-# DestinCode app, which runs reconcilers on install and at launch. This script
+# YouCoded app, which runs reconcilers on install and at launch. This script
 # only handles:
 #   - self-check: verify the core package is present and valid
 #   - migrations: run version-specific data migrations
@@ -17,7 +17,7 @@ set -euo pipefail
 # --- Constants ----------------------------------------------------------------
 
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
-TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude"
+TOOLKIT_ROOT="$HOME/.claude/plugins/youcoded-core"
 STATE_DIR="$CLAUDE_HOME/toolkit-state"
 MIGRATION_MARKER="$STATE_DIR/last-migrated-version"
 
@@ -114,7 +114,7 @@ write_last_migrated() {
 # =============================================================================
 
 # ---- phase_self_check --------------------------------------------------------
-# Verify that the destinclaude package is present and structurally valid.
+# Verify that the youcoded-core package is present and structurally valid.
 # Requirements (kept intentionally minimal — the app owns higher-level health):
 #   - node is on PATH (migrations + helpers need it)
 #   - TOOLKIT_ROOT exists
@@ -235,7 +235,7 @@ EOF
 # ---- phase_verify ------------------------------------------------------------
 # Confirm that every hook script settings.json references actually exists on
 # disk. Under the decomposed layout, hooks live at
-#   ~/.claude/plugins/destinclaude/hooks/
+#   ~/.claude/plugins/youcoded-core/hooks/
 # and settings.json commands point at those absolute paths. We don't rewrite
 # settings here (the app owns that); we just flag drift.
 phase_verify() {

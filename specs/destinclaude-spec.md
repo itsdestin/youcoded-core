@@ -1,20 +1,20 @@
-# DestinClaude Toolkit — Spec
+# YouCoded Toolkit — Spec
 
 **Version:** 3.0
 **Last updated:** 2026-04-14
-**Feature location:** `~/.claude/plugins/destinclaude/` (toolkit root)
+**Feature location:** `~/.claude/plugins/youcoded-core/` (toolkit root)
 
 ## Purpose
 
-Canonical reference for the DestinClaude toolkit as a published, installable product. Documents what the toolkit is after the phase-3 decomposition, how it is installed (via the DestinCode desktop/Android app), what ships in core vs. extracted marketplace packages, and how runtime reconciliation works.
+Canonical reference for the YouCoded toolkit as a published, installable product. Documents what the toolkit is after the phase-3 decomposition, how it is installed (via the YouCoded desktop/Android app), what ships in core vs. extracted marketplace packages, and how runtime reconciliation works.
 
 Individual features have their own specs in `specs/` or inside their skill directory — this spec covers the toolkit-level view.
 
 ## User Mandates
 
-- The DestinCode app is the sole supported installer and lifecycle manager for the toolkit. The toolkit must be installable, updatable, and removable entirely through the app. (2026-04-14, supersedes the 2026-03-16 symlink-registration mandate.)
+- The YouCoded app is the sole supported installer and lifecycle manager for the toolkit. The toolkit must be installable, updatable, and removable entirely through the app. (2026-04-14, supersedes the 2026-03-16 symlink-registration mandate.)
 - The toolkit must be non-destructive. The app's reconcilers are the only components authorized to mutate `~/.claude/settings.json`, and they must never remove a user-added hook or MCP server. Prune rules apply only to entries the toolkit itself owns. (2026-04-14)
-- Pure-CLI install (no DestinCode app) is explicitly unsupported for the end-user experience. A future "CLI Compatibility" skill may be published to document the manual install/update path for users without the app; until then, users without the app are directed to install it. (2026-04-14)
+- Pure-CLI install (no YouCoded app) is explicitly unsupported for the end-user experience. A future "CLI Compatibility" skill may be published to document the manual install/update path for users without the app; until then, users without the app are directed to install it. (2026-04-14)
 
 ## Design Decisions
 
@@ -25,7 +25,7 @@ Individual features have their own specs in `specs/` or inside their skill direc
 | Prune rule: remove plugin-owned entries whose target file is gone, never user-added ones | Reconcilers must be self-healing — if a hook is dropped from the manifest in a future release, reconciliation should clean up existing installs' `settings.json`. Scoping the prune to entries whose command path is inside a known plugin root and whose file is missing distinguishes "we dropped this hook" from "user added their own hook." | Blanket "remove any hook whose file is missing" (rejected: could delete user-added hooks referencing out-of-repo paths during temporary conditions), explicit "ever-registered" tracking file (rejected: extra state to maintain; the plugin-root + file-exists rule is sufficient) |
 | No `~/.claude/{hooks,commands,skills}/` symlinks | Claude Code v2.1+ discovers plugin commands/skills via `plugin.json` inside each `enabledPlugin`'s root. Symlinking those directories was a pre-v2.1 compatibility mechanism that no longer does anything except accumulate tombstones when the toolkit restructures. The app's `cleanupOrphanSymlinks()` sweep removes legacy symlinks from existing installs. | Continue creating symlinks for parity with old `/health` checks (rejected: pure technical debt), symlink only the setup-wizard (rejected: wizard isn't CLI-discoverable anymore, per the next decision) |
 | Setup-wizard is a CLI fallback intake, not the install conductor | Post-decomposition the app conducts install. The surviving SKILL.md is a three-question intake (name, comfort level, sync backend) that writes profile data and delegates everything else. See `skills/setup-wizard/specs/setup-wizard-spec.md`. | Keep full Phase 0–6 wizard (rejected: unmaintainable in parallel with the app installer; the two paths drifted), remove the skill entirely (rejected: the 3-question intake captures useful profile data that lives in config, distinct from install state) |
-| Auto-tag on root `plugin.json` version bump | Bumping `plugin.json` version on master is the single release trigger. `auto-tag.yml` creates the `vX.Y.Z` tag; the DestinCode app's own release workflows consume it downstream. | Manual tagging (rejected: forgotten too often), tag from VERSION file (rejected: `plugin.json.version` is what Claude Code reads, so keeping it canonical avoids drift) |
+| Auto-tag on root `plugin.json` version bump | Bumping `plugin.json` version on master is the single release trigger. `auto-tag.yml` creates the `vX.Y.Z` tag; the YouCoded app's own release workflows consume it downstream. | Manual tagging (rejected: forgotten too often), tag from VERSION file (rejected: `plugin.json.version` is what Claude Code reads, so keeping it canonical avoids drift) |
 
 ## Current Implementation
 
@@ -34,7 +34,7 @@ Individual features have their own specs in `specs/` or inside their skill direc
 The toolkit repo root is flat — no more `core/`, `life/`, `productivity/`:
 
 ```
-destinclaude/
+youcoded-core/
 ├── plugin.json                 ← version + manifest Claude Code reads
 ├── VERSION                     ← release target (matches plugin.json.version)
 ├── hooks/
@@ -56,7 +56,7 @@ destinclaude/
 │   └── remote-setup/           ← companion skill for remote-access config
 ├── scripts/
 │   ├── post-update.sh          ← phase dispatcher (self-check | migrations | verify | post-update)
-│   ├── install-app.sh          ← bootstraps the DestinCode app install (one-time)
+│   ├── install-app.sh          ← bootstraps the YouCoded app install (one-time)
 │   └── migrations/             ← shell migration runner
 ├── specs/                      ← system specs (this doc, etc.)
 ├── templates/                  ← CLAUDE.md fragments merged at install time
@@ -66,13 +66,13 @@ destinclaude/
 ### 2. Install flow (app-conducted)
 
 ```
-User installs DestinCode app (.exe/.dmg/.AppImage/.apk) — the app bundles and self-installs its
+User installs YouCoded app (.exe/.dmg/.AppImage/.apk) — the app bundles and self-installs its
         platform dependencies (Node on desktop, Termux + package bundle on Android).
 
 App first-launch flow (prerequisite-installer.ts):
   ├── If Claude Code CLI not present → install via npm
-  ├── If toolkit not present at ~/.claude/plugins/destinclaude/ →
-  │        git clone itsdestin/destinclaude into that path
+  ├── If toolkit not present at ~/.claude/plugins/youcoded-core/ →
+  │        git clone itsdestin/youcoded-core into that path
   ├── Write the four Claude Code registries (see PITFALLS) so the plugin is enabled
   └── Trigger app startup reconciliation (below)
 
@@ -94,7 +94,7 @@ No `~/.claude/{hooks,commands,skills}/` symlinks are created or maintained. Comm
 
 | Kind | Source | How it loads |
 |------|--------|--------------|
-| Plugin manifest | `plugin.json` | Claude Code reads it based on `enabledPlugins["destinclaude@destincode"]: true` in `~/.claude/settings.json` |
+| Plugin manifest | `plugin.json` | Claude Code reads it based on `enabledPlugins["youcoded-core@youcoded"]: true` in `~/.claude/settings.json` |
 | Skills | `skills/<name>/SKILL.md` | Claude Code auto-discovers via `plugin.json` |
 | Commands | `commands/<name>.md` | Same |
 | Hooks | `hooks/*.sh`, `hooks/*.js` | Registered into `~/.claude/settings.json` by the app's HookReconciler, keyed on `hooks-manifest.json` |
@@ -104,26 +104,26 @@ No `~/.claude/{hooks,commands,skills}/` symlinks are created or maintained. Comm
 
 ### 4. Marketplace extension model
 
-Features that were previously in `life/` and `productivity/` now ship as optional marketplace packages installed via the DestinCode app's marketplace UI:
+Features that were previously in `life/` and `productivity/` now ship as optional marketplace packages installed via the YouCoded app's marketplace UI:
 
 | Former location | Marketplace package | Purpose |
 |-----------------|---------------------|---------|
-| `life/skills/journaling-assistant` | `destinclaude-journal` (planned) | Daily journaling flow |
-| `life/skills/encyclopedia-*` | `destinclaude-encyclopedia` (planned) | Personal knowledge base |
-| `life/skills/google-drive` | `destinclaude-drive` (planned) | Drive-backed storage |
-| `life/skills/fork-file` | `destinclaude-fork-file` (planned) | File-versioning utility |
-| `productivity/skills/claudes-inbox` | `destinclaude-inbox` (planned) | Task inbox |
-| `productivity/skills/skill-creator` | `destinclaude-skill-creator` (planned) | Custom skill authoring |
-| `core/skills/theme-builder` | `destinclaude-themes` | Theme creation (ships with desktop app today) |
-| `core/skills/sync` | `destinclaude-sync` (planned) | Cross-device sync |
-| Output styles | `destinclaude-output-styles` (planned) | Comfort-level tonality |
-| Messaging (iMessage / gmessages / windows-control MCPs) | `destinclaude-messaging` (planned) | Platform messaging integrations |
+| `life/skills/journaling-assistant` | `youcoded-core-journal` (planned) | Daily journaling flow |
+| `life/skills/encyclopedia-*` | `youcoded-core-encyclopedia` (planned) | Personal knowledge base |
+| `life/skills/google-drive` | `youcoded-core-drive` (planned) | Drive-backed storage |
+| `life/skills/fork-file` | `youcoded-core-fork-file` (planned) | File-versioning utility |
+| `productivity/skills/claudes-inbox` | `youcoded-core-inbox` (planned) | Task inbox |
+| `productivity/skills/skill-creator` | `youcoded-core-skill-creator` (planned) | Custom skill authoring |
+| `core/skills/theme-builder` | `youcoded-core-themes` | Theme creation (ships with desktop app today) |
+| `core/skills/sync` | `youcoded-core-sync` (planned) | Cross-device sync |
+| Output styles | `youcoded-core-output-styles` (planned) | Comfort-level tonality |
+| Messaging (iMessage / gmessages / windows-control MCPs) | `youcoded-core-messaging` (planned) | Platform messaging integrations |
 
 Each marketplace package ships its own `hooks-manifest.json` / `mcp-manifest.json` / `plugin.json`. The app's reconcilers walk every installed plugin's manifests, so marketplace packages get the same reconciliation guarantees as core.
 
 ### 5. CLI compatibility (planned, not current)
 
-Pure-CLI users (no DestinCode app) have no supported install path in this release. A future "CLI Compatibility" skill may be published that:
+Pure-CLI users (no YouCoded app) have no supported install path in this release. A future "CLI Compatibility" skill may be published that:
 
 - Walks Claude (not the user) through the install/update sequence
 - Reimplements the app's reconciliation logic as a shell script set for CLI-only operation
@@ -133,12 +133,12 @@ This skill is explicitly **not** a rebuild of the old conversational setup-wizar
 
 ## Dependencies
 
-- Depends on: the DestinCode desktop/Android app (bundles Claude Code, conducts install, runs reconcilers on every launch), git, Claude Code CLI (discovery + hook execution), Node (for hook `.js` utilities)
+- Depends on: the YouCoded desktop/Android app (bundles Claude Code, conducts install, runs reconcilers on every launch), git, Claude Code CLI (discovery + hook execution), Node (for hook `.js` utilities)
 - Depended on by: All published marketplace packages (they rely on the core hooks, reconciler semantics, and manifest contracts this spec defines)
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues).
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues).
 
 ## Change Log
 

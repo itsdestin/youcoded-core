@@ -5,7 +5,7 @@ Already using Claude Code? Clone, setup, go.
 ## Install
 
 ```bash
-git clone https://github.com/itsdestin/destinclaude.git ~/.claude/plugins/destinclaude
+git clone https://github.com/itsdestin/youcoded-core.git ~/.claude/plugins/youcoded-core
 ```
 
 ## Configure

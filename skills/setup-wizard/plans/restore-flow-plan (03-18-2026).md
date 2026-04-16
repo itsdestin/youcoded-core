@@ -29,7 +29,7 @@
 ## Task 1: Add Phase 0 (prior use question + routing) to SKILL.md
 
 **Files:**
-- Modify: `plugins/destinclaude/core/skills/setup-wizard/SKILL.md`
+- Modify: `plugins/youcoded-core/core/skills/setup-wizard/SKILL.md`
 
 - [ ] **Step 1: Read the current SKILL.md**
 
@@ -51,7 +51,7 @@ Before inventorying the environment, find out if this is a fresh install or a re
 Say exactly:
 
 ```
-Before we get started — have you used DestinClaude before on another device?
+Before we get started — have you used YouCoded before on another device?
 
   1. Yes — I have a backup to restore from
   2. No — this is my first time
@@ -91,7 +91,7 @@ Re-read the file. Confirm Phase 0 appears before Phase 1, the question text is v
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/skills/setup-wizard/SKILL.md
 git commit -m "feat(setup-wizard): add Phase 0 prior-use question and routing"
 ```
@@ -101,7 +101,7 @@ git commit -m "feat(setup-wizard): add Phase 0 prior-use question and routing"
 ## Task 2: Add Phase 0A (GitHub restore sub-flow) to SKILL.md
 
 **Files:**
-- Modify: `plugins/destinclaude/core/skills/setup-wizard/SKILL.md`
+- Modify: `plugins/youcoded-core/core/skills/setup-wizard/SKILL.md`
 
 - [ ] **Step 1: Insert Phase 0A immediately after the Phase 0 block (before Phase 1)**
 
@@ -222,7 +222,7 @@ Re-read the file. Confirm the bash commands are present verbatim, Phase 0A ends 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/skills/setup-wizard/SKILL.md
 git commit -m "feat(setup-wizard): add Phase 0A GitHub restore sub-flow"
 ```
@@ -232,7 +232,7 @@ git commit -m "feat(setup-wizard): add Phase 0A GitHub restore sub-flow"
 ## Task 3: Add Phase 0B (Drive restore sub-flow) to SKILL.md
 
 **Files:**
-- Modify: `plugins/destinclaude/core/skills/setup-wizard/SKILL.md`
+- Modify: `plugins/youcoded-core/core/skills/setup-wizard/SKILL.md`
 
 - [ ] **Step 1: Insert Phase 0B immediately after Phase 0A (before Phase 1)**
 
@@ -253,7 +253,7 @@ If `gdrive:` is already listed in `rclone listremotes`, skip setup and go straig
 
 ### Step 3: Ask for Drive root
 
-Ask: "Where does DestinClaude store files on your Google Drive? This is the top-level folder name. (default: Claude)"
+Ask: "Where does YouCoded store files on your Google Drive? This is the top-level folder name. (default: Claude)"
 
 Store the answer as `DRIVE_ROOT`. Use `Claude` if the user presses Enter without answering.
 
@@ -305,7 +305,7 @@ Re-read the file. Confirm bash commands are present, `$DRIVE_ROOT` is used consi
 - [ ] **Step 3: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/skills/setup-wizard/SKILL.md
 git commit -m "feat(setup-wizard): add Phase 0B Drive restore sub-flow"
 ```
@@ -315,7 +315,7 @@ git commit -m "feat(setup-wizard): add Phase 0B Drive restore sub-flow"
 ## Task 4: Add Phase 0C (abbreviated dependency check) and update Phase 5 skip logic
 
 **Files:**
-- Modify: `plugins/destinclaude/core/skills/setup-wizard/SKILL.md`
+- Modify: `plugins/youcoded-core/core/skills/setup-wizard/SKILL.md`
 
 - [ ] **Step 1: Insert Phase 0C immediately after Phase 0B (before Phase 1)**
 
@@ -372,7 +372,7 @@ Confirm Phase 0C appears after Phase 0B and before Phase 1. Confirm Phase 5 Step
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/skills/setup-wizard/SKILL.md
 git commit -m "feat(setup-wizard): add Phase 0C abbreviated check, guard Phase 5 templates on restore"
 ```
@@ -382,7 +382,7 @@ git commit -m "feat(setup-wizard): add Phase 0C abbreviated check, guard Phase 5
 ## Task 5: Update README.md
 
 **Files:**
-- Modify: `plugins/destinclaude/README.md`
+- Modify: `plugins/youcoded-core/README.md`
 
 - [ ] **Step 1: Find the "Get Started" section**
 
@@ -404,7 +404,7 @@ Confirm the new entry is present, correctly placed, and doesn't disrupt surround
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add README.md
 git commit -m "docs: add returning-user entry to README Get Started section"
 ```
@@ -414,7 +414,7 @@ git commit -m "docs: add returning-user entry to README Get Started section"
 ## Task 6: Update docs/quickstart.md
 
 **Files:**
-- Modify: `plugins/destinclaude/docs/quickstart.md`
+- Modify: `plugins/youcoded-core/docs/quickstart.md`
 
 - [ ] **Step 1: Find the Configure section**
 
@@ -436,7 +436,7 @@ Confirm the note is present and renders as a blockquote.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add docs/quickstart.md
 git commit -m "docs: add restore note to quickstart"
 ```
@@ -446,7 +446,7 @@ git commit -m "docs: add restore note to quickstart"
 ## Task 7: Update docs/for-beginners/03-installing-the-toolkit.md
 
 **Files:**
-- Modify: `plugins/destinclaude/docs/for-beginners/03-installing-the-toolkit.md`
+- Modify: `plugins/youcoded-core/docs/for-beginners/03-installing-the-toolkit.md`
 
 - [ ] **Step 1: Find the wizard walkthrough**
 
@@ -458,7 +458,7 @@ Insert the following before `### 1. Environment Check`:
 
 ```markdown
 ### 0. Prior Use Check
-Claude asks whether you've used DestinClaude before. If you're coming from another device with a backup on GitHub or Google Drive, say yes and choose your backup source — Claude will restore your data and skip the setup steps that aren't needed. If this is your first time, say no and continue normally.
+Claude asks whether you've used YouCoded before. If you're coming from another device with a backup on GitHub or Google Drive, say yes and choose your backup source — Claude will restore your data and skip the setup steps that aren't needed. If this is your first time, say no and continue normally.
 
 ```
 
@@ -473,7 +473,7 @@ Confirm step 0 appears before step 1, the language is non-technical and matches 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add docs/for-beginners/03-installing-the-toolkit.md
 git commit -m "docs: add step 0 (prior use check) to beginner wizard walkthrough"
 ```
@@ -483,7 +483,7 @@ git commit -m "docs: add step 0 (prior use check) to beginner wizard walkthrough
 ## Task 8: Update bootstrap/prerequisites.md
 
 **Files:**
-- Modify: `plugins/destinclaude/bootstrap/prerequisites.md`
+- Modify: `plugins/youcoded-core/bootstrap/prerequisites.md`
 
 - [ ] **Step 1: Find the "After the Script" section**
 
@@ -494,7 +494,7 @@ Read `bootstrap/prerequisites.md`. Locate `## After the Script`. It currently sa
 Replace the current "After the Script" paragraph with:
 
 ```markdown
-The script ends by launching Claude Code automatically and starting the setup wizard. The first thing Claude will ask is whether you've used DestinClaude before — if you're restoring from another device, say yes and choose your backup source. If this is your first time, say no and Claude will walk you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
+The script ends by launching Claude Code automatically and starting the setup wizard. The first thing Claude will ask is whether you've used YouCoded before — if you're restoring from another device, say yes and choose your backup source. If this is your first time, say no and Claude will walk you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
 ```
 
 - [ ] **Step 3: Read back and verify**
@@ -504,7 +504,7 @@ Confirm the updated paragraph is present, accurately describes both paths (resto
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add bootstrap/prerequisites.md
 git commit -m "docs: update prerequisites 'After the Script' section for restore path"
 ```
@@ -514,7 +514,7 @@ git commit -m "docs: update prerequisites 'After the Script' section for restore
 ## Task 9: Update core/specs/backup-system-spec.md
 
 **Files:**
-- Modify: `plugins/destinclaude/core/specs/backup-system-spec.md`
+- Modify: `plugins/youcoded-core/core/specs/backup-system-spec.md`
 
 - [ ] **Step 1: Read the current spec**
 
@@ -554,7 +554,7 @@ Confirm the new subsection is present, version is bumped, and changelog entry is
 - [ ] **Step 5: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/specs/backup-system-spec.md
 git commit -m "docs(spec): add interactive restore section to backup-system-spec v3.3"
 ```
@@ -564,7 +564,7 @@ git commit -m "docs(spec): add interactive restore section to backup-system-spec
 ## Task 10: Update core/specs/personal-sync-spec.md
 
 **Files:**
-- Modify: `plugins/destinclaude/core/specs/personal-sync-spec.md`
+- Modify: `plugins/youcoded-core/core/specs/personal-sync-spec.md`
 
 - [ ] **Step 1: Read the current spec**
 
@@ -585,7 +585,7 @@ Confirm the rationale cell is updated and the table still renders correctly.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ~/.claude/plugins/destinclaude
+cd ~/.claude/plugins/youcoded-core
 git add core/specs/personal-sync-spec.md
 git commit -m "docs(spec): clarify session-start pull relationship to wizard restore in personal-sync-spec"
 ```
@@ -594,7 +594,7 @@ git commit -m "docs(spec): clarify session-start pull relationship to wizard res
 
 ## Task 11: Sync to ~/.claude symlink targets
 
-**Note:** The SKILL.md at `~/.claude/skills/setup-wizard/SKILL.md` is a symlink to `plugins/destinclaude/core/skills/setup-wizard/SKILL.md`. No action needed — edits to the plugin source are automatically reflected. Verify after Task 4:
+**Note:** The SKILL.md at `~/.claude/skills/setup-wizard/SKILL.md` is a symlink to `plugins/youcoded-core/core/skills/setup-wizard/SKILL.md`. No action needed — edits to the plugin source are automatically reflected. Verify after Task 4:
 
 - [ ] **Step 1: Verify symlink**
 
@@ -608,7 +608,7 @@ Expected: prints the Phase 0 heading. If it prints nothing, the symlink is broke
 
 ```bash
 rm -rf ~/.claude/skills/setup-wizard
-ln -sf ~/.claude/plugins/destinclaude/core/skills/setup-wizard ~/.claude/skills/setup-wizard
+ln -sf ~/.claude/plugins/youcoded-core/core/skills/setup-wizard ~/.claude/skills/setup-wizard
 ```
 
 ---

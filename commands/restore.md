@@ -4,7 +4,7 @@ description: Restore personal data from a backup (Google Drive, GitHub, or iClou
 
 # /restore — Ad-Hoc Personal Data Restore
 
-Restore personal data from a backup outside of the setup wizard. Use this when you want to pull data from a backup on a machine that already has DestinClaude installed.
+Restore personal data from a backup outside of the setup wizard. Use this when you want to pull data from a backup on a machine that already has YouCoded installed.
 
 ## Step 1: Check current state
 
@@ -51,8 +51,8 @@ Ask:
 ### Option 3: iCloud
 
 1. Detect iCloud folder:
-   - macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/DestinClaude/`
-   - Windows: `~/iCloudDrive/DestinClaude/` or `~/Apple/CloudDocs/DestinClaude/`
+   - macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/YouCoded/`
+   - Windows: `~/iCloudDrive/YouCoded/` or `~/Apple/CloudDocs/YouCoded/`
 2. If not found, ask the user to point to their iCloud Drive folder
 3. Copy to staging: `cp -r "$ICLOUD_PATH/" "$CLAUDE_DIR/.restore-staging/"`
 

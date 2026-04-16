@@ -36,7 +36,7 @@ Claude Code's default system prompt is optimized for software engineering. But m
 
 ## User Mandates
 
-- (2026-04-08) Output styles must use the Claude Code plugin format (`.claude-plugin/plugin.json` + `hooks/hooks.json`), not the DestinClaude skill format. They are standalone plugins users can enable/disable independently.
+- (2026-04-08) Output styles must use the Claude Code plugin format (`.claude-plugin/plugin.json` + `hooks/hooks.json`), not the YouCoded skill format. They are standalone plugins users can enable/disable independently.
 - (2026-04-08) Each style must include explicit "NOT a software engineering tool" language. The base Claude Code system prompt is strongly code-oriented — subtle hints don't override it.
 - (2026-04-08) Tools (file I/O, bash, web search) must remain available. The styles reposition Claude's default behavior, they don't remove capabilities.
 
@@ -61,7 +61,7 @@ The `session-start.sh` script outputs a JSON object with `hookSpecificOutput.add
 ## Known Issues & Planned Updates
 
 - Distribution path not yet established — plugins need marketplace entries and/or plugins-manifest.json registration for automatic discovery
-- See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for open items
+- See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for open items
 
 ## Change Log
 

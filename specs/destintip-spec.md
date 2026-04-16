@@ -6,7 +6,7 @@
 
 ## Purpose
 
-An adaptive toolkit hint system that helps DestinClaude users discover features they haven't used yet. Tips are curated per session based on the user's comfort level, usage history, and a rotation algorithm, then injected into Claude's system prompt via the existing SessionStart hook. Claude weaves tips naturally into conversation when contextually relevant.
+An adaptive toolkit hint system that helps YouCoded users discover features they haven't used yet. Tips are curated per session based on the user's comfort level, usage history, and a rotation algorithm, then injected into Claude's system prompt via the existing SessionStart hook. Claude weaves tips naturally into conversation when contextually relevant.
 
 Inspired by the `★ Insight` output style plugins (Anthropic's `explanatory-output-style` and `learning-output-style` marketplace plugins), which inject behavioral instructions via `SessionStart` → `additionalContext`. DestinTip follows the same mechanism but with dynamic, state-aware tip selection instead of static instructions.
 
@@ -21,7 +21,7 @@ Inspired by the `★ Insight` output style plugins (Anthropic's `explanatory-out
 
 | Decision | Rationale | Alternatives considered |
 |----------|-----------|----------------------|
-| Integrated into DestinClaude core layer, not a standalone plugin | Needs native access to `config.json` (comfort level), toolkit state, and the existing `session-start.sh` lifecycle. Standalone plugin would require duplicating state reads and couldn't subsume the `/toolkit` reminder. | Standalone plugin (rejected: no access to toolkit state, users install separately), optional layer (rejected: over-isolation for a lightweight feature) |
+| Integrated into YouCoded core layer, not a standalone plugin | Needs native access to `config.json` (comfort level), toolkit state, and the existing `session-start.sh` lifecycle. Standalone plugin would require duplicating state reads and couldn't subsume the `/toolkit` reminder. | Standalone plugin (rejected: no access to toolkit state, users install separately), optional layer (rejected: over-isolation for a lightweight feature) |
 | Single JSON catalog file (`core/data/destintip-catalog.json`) | Centralized curation of all tips with per-tip metadata. Easy to review, edit, and contribute to. The catalog is small (~20 entries) so a single file stays manageable. | Hardcoded in prompt string (rejected: can't filter/rotate), distributed in SKILL.md files (rejected: requires globbing, fragile convention, hard to curate quality) |
 | Prompt injection via `additionalContext` (Approach C) | Proven pattern from Anthropic's Insight plugins. Session-level rotation with usage-aware selection provides 90% of contextual value without runtime hook complexity. | Pure static prompt (rejected: no adaptation), runtime PostToolUse hooks for real-time detection (rejected: fragile pattern matching, adds latency, high maintenance) |
 | 4 tips selected per session | Enough variety to cover different conversation directions; small enough to keep token cost low (~300-500 tokens). | All tips (rejected: bloats prompt, no rotation), 1-2 tips (rejected: too narrow, misses conversational variety) |
@@ -193,7 +193,7 @@ Tips available this session:
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Changelog
 

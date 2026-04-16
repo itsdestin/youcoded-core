@@ -4,7 +4,7 @@
 # Responsibilities: toolkit root discovery, VERSION migration trigger,
 # branch safety warning, and lightweight session context injection.
 #
-# What used to live here but was moved to the host app (DestinCode
+# What used to live here but was moved to the host app (YouCoded
 # desktop/Android): sync-health checks, announcement fetch, update
 # checks, integrity/symlink repair, plugin/MCP registration, DestinTip
 # selection, layer enumeration. The app runs reconcilers on launch —
@@ -12,7 +12,7 @@
 set -u
 
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
-TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude"
+TOOLKIT_ROOT="$HOME/.claude/plugins/youcoded-core"
 STATE_DIR="$CLAUDE_DIR/toolkit-state"
 VERSION_FILE="$TOOLKIT_ROOT/VERSION"
 LAST_RUN_FILE="$STATE_DIR/.last-run-version"
@@ -69,12 +69,12 @@ if [[ -d "$TOOLKIT_ROOT/.git" ]] || ( cd "$TOOLKIT_ROOT" 2>/dev/null && git rev-
         fi
     fi
     if [[ -n "$_BRANCH" && -n "$_DEFAULT" && "$_BRANCH" != "$_DEFAULT" ]]; then
-        _append_ctx "WARNING: destinclaude toolkit is on branch '$_BRANCH' (default: '$_DEFAULT'). Switch branches before running /update unless this checkout is intentional."
+        _append_ctx "WARNING: youcoded-core toolkit is on branch '$_BRANCH' (default: '$_DEFAULT'). Switch branches before running /update unless this checkout is intentional."
     fi
 fi
 
 # --- Encyclopedia context injection ----------------------------------------
-# The encyclopedia package (destinclaude-encyclopedia) writes user data to
+# The encyclopedia package (youcoded-core-encyclopedia) writes user data to
 # ~/.claude/encyclopedia. We don't inspect the package directory — only the
 # user-data dir — so this hook stays agnostic of which packages are installed.
 if [[ -d "$CLAUDE_DIR/encyclopedia" ]]; then

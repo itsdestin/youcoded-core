@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse hook for Bash
-# Blocks git checkout (branch switches) in the main destinclaude plugin directory.
+# Blocks git checkout (branch switches) in the main youcoded-core plugin directory.
 # The main plugin dir must stay on master. Feature work uses worktrees.
 set -euo pipefail
 
@@ -16,7 +16,7 @@ COMMAND=$(echo "$INPUT" | node -e "
 
 [[ -z "$COMMAND" ]] && exit 0
 
-PLUGIN_DIR="$HOME/.claude/plugins/destinclaude"
+PLUGIN_DIR="$HOME/.claude/plugins/youcoded-core"
 
 # Strip quoted strings (single and double) to avoid matching text inside
 # commit messages, echo statements, heredocs, etc.
@@ -24,7 +24,7 @@ PLUGIN_DIR="$HOME/.claude/plugins/destinclaude"
 STRIPPED=$(echo "$COMMAND" | sed -E "s/\"[^\"]*\"//g; s/'[^']*'//g")
 
 # Only care about commands that touch the plugin repo
-if ! echo "$STRIPPED" | grep -qiE "(destinclaude|plugins/destinclaude)" 2>/dev/null; then
+if ! echo "$STRIPPED" | grep -qiE "(youcoded-core|plugins/youcoded-core)" 2>/dev/null; then
     exit 0
 fi
 
@@ -40,11 +40,11 @@ if echo "$STRIPPED" | grep -qE "git (checkout|switch)" 2>/dev/null; then
     fi
     # Allow creating new branches (but warn — they should use worktrees)
     if echo "$STRIPPED" | grep -qE "git (checkout|switch)\s+-[bB]" 2>/dev/null; then
-        echo '{"decision":"block","reason":"BLOCKED: Do not create branches in the main plugin directory. Use a git worktree instead:\n\n  cd '"$PLUGIN_DIR"' && git worktree add ~/destinclaude-worktrees/<branch-name> -b <branch-name>\n\nThen work in that directory. The main plugin directory must stay on master."}'
+        echo '{"decision":"block","reason":"BLOCKED: Do not create branches in the main plugin directory. Use a git worktree instead:\n\n  cd '"$PLUGIN_DIR"' && git worktree add ~/youcoded-core-worktrees/<branch-name> -b <branch-name>\n\nThen work in that directory. The main plugin directory must stay on master."}'
         exit 0
     fi
     # Block all other branch switches
-    echo '{"decision":"block","reason":"BLOCKED: Do not switch branches in the main destinclaude directory (~/.claude/plugins/destinclaude/). It must stay on master.\n\nMultiple Claude sessions share this directory. Switching branches causes cross-session conflicts.\n\nUse a git worktree instead:\n\n  cd '"$PLUGIN_DIR"' && git worktree add ~/destinclaude-worktrees/<branch-name> <branch-name>\n\nThen work in ~/destinclaude-worktrees/<branch-name>/ instead."}'
+    echo '{"decision":"block","reason":"BLOCKED: Do not switch branches in the main youcoded-core directory (~/.claude/plugins/youcoded-core/). It must stay on master.\n\nMultiple Claude sessions share this directory. Switching branches causes cross-session conflicts.\n\nUse a git worktree instead:\n\n  cd '"$PLUGIN_DIR"' && git worktree add ~/youcoded-core-worktrees/<branch-name> <branch-name>\n\nThen work in ~/youcoded-core-worktrees/<branch-name>/ instead."}'
     exit 0
 fi
 

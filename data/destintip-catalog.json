@@ -132,7 +132,7 @@
       "category": "core",
       "comfort_levels": ["power_user"],
       "requires_discovered": ["skill-creator"],
-      "text": "Built something cool with the toolkit? Type /contribute to package your improvements and share them back with other DestinClaude users.",
+      "text": "Built something cool with the toolkit? Type /contribute to package your improvements and share them back with other YouCoded users.",
       "context_hint": "Suggest when the user has created custom skills or made modifications they're proud of."
     },
     {

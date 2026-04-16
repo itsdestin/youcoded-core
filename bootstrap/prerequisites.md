@@ -32,8 +32,8 @@ The scripts check for these and install any that are missing:
 
 After checking prerequisites, the script downloads the toolkit itself:
 
-- **From:** `https://github.com/itsdestin/destinclaude`
-- **To:** `~/.claude/plugins/destinclaude/` (inside your Claude Code configuration directory)
+- **From:** `https://github.com/itsdestin/youcoded-core`
+- **To:** `~/.claude/plugins/youcoded-core/` (inside your Claude Code configuration directory)
 - **Size:** About 50 MB for the toolkit, plus about 150 MB for the desktop app (~200 MB total)
 - **What it contains:** Skills, hooks, commands, and templates — all plain text files you can read
 
@@ -49,7 +49,7 @@ After checking prerequisites, the script downloads the toolkit itself:
 
 ## After the Script
 
-The script ends by launching Claude Code automatically and starting the setup wizard. The first thing Claude will ask is whether you've used DestinClaude before — if you're restoring from another device, say yes and choose your backup source. If this is your first time, say no and Claude will walk you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
+The script ends by launching Claude Code automatically and starting the setup wizard. The first thing Claude will ask is whether you've used YouCoded before — if you're restoring from another device, say yes and choose your backup source. If this is your first time, say no and Claude will walk you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
 
 ## Uninstalling
 

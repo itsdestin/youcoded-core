@@ -1,28 +1,28 @@
 {
-  "_comment": "Desired-state declaration for settings.json hooks. Consumed by the app's HookReconciler on launch and after core install/update. Paths resolve under ~/.claude/plugins/destinclaude/ (the installed location). Timeout values are in SECONDS (Claude Code convention). Reconciliation: new hooks are added; missing properties are added; for timeouts, MAX(user, manifest) is enforced.",
+  "_comment": "Desired-state declaration for settings.json hooks. Consumed by the app's HookReconciler on launch and after core install/update. Paths resolve under ~/.claude/plugins/youcoded-core/ (the installed location). Timeout values are in SECONDS (Claude Code convention). Reconciliation: new hooks are added; missing properties are added; for timeouts, MAX(user, manifest) is enforced.",
   "hooks": {
     "SessionStart": [
       {
-        "command": "bash ~/.claude/plugins/destinclaude/hooks/session-start.sh",
+        "command": "bash ~/.claude/plugins/youcoded-core/hooks/session-start.sh",
         "timeout": 120,
         "required": true
       }
     ],
     "PreToolUse": [
       {
-        "command": "bash ~/.claude/plugins/destinclaude/hooks/write-guard.sh",
+        "command": "bash ~/.claude/plugins/youcoded-core/hooks/write-guard.sh",
         "matcher": "Write|Edit",
         "timeout": 10,
         "required": true
       },
       {
-        "command": "bash ~/.claude/plugins/destinclaude/hooks/worktree-guard.sh",
+        "command": "bash ~/.claude/plugins/youcoded-core/hooks/worktree-guard.sh",
         "matcher": "Bash|Agent",
         "timeout": 10,
         "required": true
       },
       {
-        "command": "bash ~/.claude/plugins/destinclaude/hooks/tool-router.sh",
+        "command": "bash ~/.claude/plugins/youcoded-core/hooks/tool-router.sh",
         "matcher": "mcp__claude_ai_Gmail.*|mcp__claude_ai_Google_Calendar.*",
         "timeout": 10,
         "required": false
@@ -30,7 +30,7 @@
     ],
     "Notification": [
       {
-        "command": "bash ~/.claude/plugins/destinclaude/hooks/statusline.sh",
+        "command": "bash ~/.claude/plugins/youcoded-core/hooks/statusline.sh",
         "timeout": 10,
         "required": false
       }

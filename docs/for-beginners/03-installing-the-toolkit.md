@@ -6,12 +6,12 @@ Open your terminal and copy-paste the command for your system. It handles everyt
 
 **On Mac or Linux (Terminal):**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/itsdestin/destinclaude/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh
+curl -fsSL https://raw.githubusercontent.com/itsdestin/youcoded-core/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh
 ```
 
 **On Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/itsdestin/destinclaude/master/bootstrap/install.ps1 -OutFile install.ps1
+iwr -useb https://raw.githubusercontent.com/itsdestin/youcoded-core/master/bootstrap/install.ps1 -OutFile install.ps1
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
@@ -21,7 +21,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 ## Step 2: Say "Set Me Up"
 
-After the installer finishes, the DestinCode app opens automatically. Start a conversation and say **"set me up"** — Claude will walk you through the rest.
+After the installer finishes, the YouCoded app opens automatically. Start a conversation and say **"set me up"** — Claude will walk you through the rest.
 
 If the app didn't open, you can launch it from your Start Menu (Windows), Spotlight (Mac), or app launcher (Linux). Or open a terminal and type `claude`.
 
@@ -30,7 +30,7 @@ If the app didn't open, you can launch it from your Start Menu (Windows), Spotli
 Here's what to expect — the whole process takes about 10 minutes:
 
 ### Prior Use Check
-Claude asks whether you've used DestinClaude before. If you're coming from another device with a backup, say yes — Claude will restore your data and skip ahead. If this is your first time, say no.
+Claude asks whether you've used YouCoded before. If you're coming from another device with a backup, say yes — Claude will restore your data and skip ahead. If this is your first time, say no.
 
 ### Layer Selection
 Claude asks which parts of the toolkit you want:
@@ -68,7 +68,7 @@ If you want to start over completely, tell Claude `/toolkit-uninstall` — it cl
 <summary>Already have Claude Code and Git? Manual install instead</summary>
 
 ```bash
-git clone https://github.com/itsdestin/destinclaude.git ~/.claude/plugins/destinclaude
+git clone https://github.com/itsdestin/youcoded-core.git ~/.claude/plugins/youcoded-core
 claude
 > /setup-wizard
 ```

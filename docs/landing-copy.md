@@ -133,7 +133,7 @@ Conventions:
 
 **Footnote under the grid:**
 
-> Features marked <WeCoded> come from the [WeCoded marketplace](https://github.com/itsdestin/destinclaude), installable from within the app.
+> Features marked <WeCoded> come from the [WeCoded marketplace](https://github.com/itsdestin/youcoded-core), installable from within the app.
 
 ---
 

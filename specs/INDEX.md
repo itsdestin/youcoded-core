@@ -5,7 +5,7 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Feature | Type | Spec Location | Version |
 |---------|------|--------------|---------|
 | Specs System | system | specs/specs-system-spec.md | 3.2 |
-| DestinClaude Toolkit | system | specs/destinclaude-spec.md | 3.0 |
+| YouCoded Toolkit | system | specs/youcoded-core-spec.md | 3.0 |
 | System Architecture | system | specs/system-architecture-spec.md | 1.6 |
 | Backup & Sync | system | specs/backup-system-spec.md | 5.0 |
 | Remote Access | system | specs/remote-access-spec.md | 1.0 |
@@ -19,8 +19,8 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | Landing Page | system | specs/landing-page-spec.md | 1.4 |
 | Output Styles | system | specs/output-styles-spec.md | 1.0 |
 | Setup Wizard | skill | skills/setup-wizard/specs/setup-wizard-spec.md | 2.0 |
-| Theme System | desktop (destincode repo) | destincode/desktop/docs/theme-spec.md | 1.0 |
-| Transcript Watcher | desktop (destincode repo) | destincode/desktop/docs/transcript-watcher-spec.md | 1.2 |
+| Theme System | desktop (youcoded repo) | youcoded/desktop/docs/theme-spec.md | 1.0 |
+| Transcript Watcher | desktop (youcoded repo) | youcoded/desktop/docs/transcript-watcher-spec.md | 1.2 |
 
 ## Moved to marketplace packages
 
@@ -39,8 +39,8 @@ The following skills were extracted from the core toolkit in the phase-3 decompo
 
 ## External Admin Tooling
 
-Tools for the repo owner that live in a separate private repo and are never distributed to public DestinClaude users.
+Tools for the repo owner that live in a separate private repo and are never distributed to public YouCoded users.
 
 | Tool | Repo | Purpose |
 |------|------|---------|
-| announce | [itsdestin/destinclaude-admin](https://github.com/itsdestin/destinclaude-admin) (private) | Owner-only skill for creating/clearing/viewing announcements |
+| announce | [itsdestin/youcoded-core-admin](https://github.com/itsdestin/youcoded-core-admin) (private) | Owner-only skill for creating/clearing/viewing announcements |

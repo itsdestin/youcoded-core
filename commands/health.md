@@ -4,7 +4,7 @@ description: Quick health check — verify the toolkit is installed and hooks ar
 
 Run a lightweight health check on the installed toolkit. Use this when the user wants to confirm everything is working, or after troubleshooting an issue.
 
-Post-decomposition, the DestinCode app owns reconciliation (hooks, MCPs, integration context) on every launch. This check verifies the results — it does not install anything.
+Post-decomposition, the YouCoded app owns reconciliation (hooks, MCPs, integration context) on every launch. This check verifies the results — it does not install anything.
 
 ## Steps
 
@@ -20,8 +20,8 @@ Post-decomposition, the DestinCode app owns reconciliation (hooks, MCPs, integra
 2. **Core checks.**
 
    - [ ] `git --version` succeeds
-   - [ ] Toolkit root exists: `~/.claude/plugins/destinclaude/` and contains `VERSION` and `plugin.json`
-   - [ ] `enabledPlugins["destinclaude@destincode"]` is `true` in `~/.claude/settings.json`
+   - [ ] Toolkit root exists: `~/.claude/plugins/youcoded-core/` and contains `VERSION` and `plugin.json`
+   - [ ] `enabledPlugins["youcoded-core@youcoded"]` is `true` in `~/.claude/settings.json`
    - [ ] At least one plugin-owned hook is registered in `~/.claude/settings.json` under `hooks.*` (confirms the app's HookReconciler ran)
    - [ ] `~/.claude/settings.json` does not contain hook entries whose command points inside the plugin root at a file that no longer exists (the reconciler's prune pass should have cleared these on the last app launch — if any remain, warn that reconciliation didn't complete)
 
@@ -58,6 +58,6 @@ Post-decomposition, the DestinCode app owns reconciliation (hooks, MCPs, integra
      [per step 4 above]
    ```
 
-6. **If anything failed:** Show "These items need attention:" with plain-English guidance. Most failures here indicate the app's startup reconcilers did not run — suggest restarting the DestinCode app. For dependency issues (missing `git`, etc.), show the install command for the current platform.
+6. **If anything failed:** Show "These items need attention:" with plain-English guidance. Most failures here indicate the app's startup reconcilers did not run — suggest restarting the YouCoded app. For dependency issues (missing `git`, etc.), show the install command for the current platform.
 
 7. **If everything passed:** Show "Everything looks good! All [N] checks passed."

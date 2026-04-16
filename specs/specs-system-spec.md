@@ -22,7 +22,7 @@ A living specification system for every feature in the user's Claude automation 
 - Every SKILL.md must include a spec reminder comment at the top: `<!-- SPEC: Read specs/{name}-spec.md before modifying this file -->`. This puts the enforcement reminder at the point of action. (2026-03-14)
 - Design docs produced during brainstorming are preserved in `plans/` directories as frozen point-in-time artifacts. They are not authoritative (specs are); they provide historical context for decisions. (2026-03-16, revised from 2026-03-14)
 - Implementation sections in specs should focus on architecture and flow (how pieces connect, what calls what, key flows), not line-by-line code documentation. Detail remains proportional to complexity. (2026-03-14)
-- Every spec must include a "Known Issues & Planned Updates" section with a pointer to GitHub Issues (`https://github.com/itsdestin/destinclaude/issues`). New bugs and feature ideas are filed as GitHub Issues, not tracked inline in specs. Private-only specs (not in the public plugin repo) may optionally keep inline Planned Updates sections. (2026-03-23, revised from 2026-03-14)
+- Every spec must include a "Known Issues & Planned Updates" section with a pointer to GitHub Issues (`https://github.com/itsdestin/youcoded-core/issues`). New bugs and feature ideas are filed as GitHub Issues, not tracked inline in specs. Private-only specs (not in the public plugin repo) may optionally keep inline Planned Updates sections. (2026-03-23, revised from 2026-03-14)
 - Specs use `{topic}-spec.md` naming — no date prefix; version tracked in frontmatter (2026-03-16)
 - Designs use `{topic}-design (MM-DD-YYYY).md` naming — point-in-time architecture decisions (2026-03-16)
 - Plans use `{topic}-plan (MM-DD-YYYY).md` naming — implementation checklists (2026-03-16)
@@ -75,7 +75,7 @@ When a new skill is created via skill-creator, a first-draft spec is generated a
 
 ## Known Issues & Planned Updates
 
-See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known issues and planned updates.
+See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known issues and planned updates.
 
 ## Change Log
 

@@ -1,19 +1,19 @@
 <!-- SPEC: Read core/specs/remote-access-spec.md before modifying this file -->
 ---
 name: remote-setup
-description: Set up remote access for DestinCode — installs Tailscale, configures password, and walks you through connecting from your phone. Use when the user says "set up remote access", "remote setup", "I want to use DestinCode from my phone", or similar.
+description: Set up remote access for YouCoded — installs Tailscale, configures password, and walks you through connecting from your phone. Use when the user says "set up remote access", "remote setup", "I want to use YouCoded from my phone", or similar.
 ---
 
 # Remote Access Setup
 
-You are setting up remote access for DestinCode so the user can access it from their phone or any other device. Be conversational and explain things simply — the user may not be technical.
+You are setting up remote access for YouCoded so the user can access it from their phone or any other device. Be conversational and explain things simply — the user may not be technical.
 
 **IMPORTANT:** Never tell the user to run a command themselves or in a separate window. Always run commands directly using the Bash tool. The only user action should be signing in via a browser window that pops up automatically.
 
 **Goal:** By the end, the user will have:
 1. Tailscale installed and authenticated
 2. A remote access password set
-3. DestinCode accessible from their phone
+3. YouCoded accessible from their phone
 
 ---
 
@@ -31,7 +31,7 @@ tailscale version 2>/dev/null && echo "TAILSCALE_INSTALLED=true" || echo "TAILSC
 tailscale status 2>/dev/null && echo "TAILSCALE_CONNECTED=true" || echo "TAILSCALE_CONNECTED=false"
 
 # Check if remote config exists
-cat ~/.claude/destincode-remote.json 2>/dev/null || echo "NO_CONFIG"
+cat ~/.claude/youcoded-remote.json 2>/dev/null || echo "NO_CONFIG"
 
 # Detect platform
 uname -s 2>/dev/null || echo "Windows"
@@ -128,7 +128,7 @@ const password = process.argv[1];
 const salt = crypto.randomBytes(16).toString('hex');
 const hash = crypto.scryptSync(password, salt, 64).toString('hex');
 const stored = salt + ':' + hash;
-const configPath = path.join(os.homedir(), '.claude', 'destincode-remote.json');
+const configPath = path.join(os.homedir(), '.claude', 'youcoded-remote.json');
 let config = { enabled: true, port: 9900, passwordHash: null, trustTailscale: true };
 try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
 config.passwordHash = stored;
@@ -160,11 +160,11 @@ Tell the user:
 > **3. Open your browser** and go to:
 > `http://TAILSCALE_IP:9900`
 >
-> That's it! You should see the DestinCode login screen. If you enabled Tailscale trust, you'll be logged in automatically.
+> That's it! You should see the YouCoded login screen. If you enabled Tailscale trust, you'll be logged in automatically.
 
 Replace `TAILSCALE_IP` with their actual Tailscale IP from Step 3.
 
-> "You can also find this URL anytime by clicking the gear icon in DestinCode and looking under the Tailscale section. There's a QR code you can scan too."
+> "You can also find this URL anytime by clicking the gear icon in YouCoded and looking under the Tailscale section. There's a QR code you can scan too."
 
 ---
 
@@ -181,7 +181,7 @@ node -e "
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const configPath = path.join(os.homedir(), '.claude', 'destincode-remote.json');
+const configPath = path.join(os.homedir(), '.claude', 'youcoded-remote.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 console.log('Remote access:', config.enabled ? 'enabled' : 'disabled');
 console.log('Password:', config.passwordHash ? 'set' : 'NOT SET');
@@ -195,7 +195,7 @@ const http = require('http');
 http.get('http://localhost:9900', (res) => {
   console.log('Remote server: listening (HTTP', res.statusCode, ')');
 }).on('error', () => {
-  console.log('Remote server: NOT RUNNING — restart DestinCode to activate');
+  console.log('Remote server: NOT RUNNING — restart YouCoded to activate');
 });
 "
 ```
@@ -207,4 +207,4 @@ Summarize:
 > - Password: set
 > - Tailscale trust: enabled (no password needed from your devices)
 >
-> Open that URL on your phone to start using DestinCode remotely. The settings gear in DestinCode has a QR code you can scan too."
+> Open that URL on your phone to start using YouCoded remotely. The settings gear in YouCoded has a QR code you can scan too."
