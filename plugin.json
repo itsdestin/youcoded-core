@@ -1,7 +1,7 @@
 {
   "name": "youcoded-core",
   "description": "YouCoded core — safety hooks, commands, setup wizard. Extended by optional marketplace packages (encyclopedia, inbox, themes, drive, messaging, output styles).",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": {
     "name": "itsdestin"
   },

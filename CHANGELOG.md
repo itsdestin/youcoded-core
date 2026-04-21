@@ -2,6 +2,15 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.1.0] - 2026-04-20
+
+Small release. Tool-router hook gutted in favor of the google-services marketplace bundle; docs and spec layout cleaned up to match.
+
+### Changed
+- **`hooks/tool-router.sh`** — Now an empty pass-through. Previously blocked Claude.ai's native Gmail and Google Calendar MCP tools and redirected to "gws" CLI equivalents. The google-services marketplace bundle provides real Gmail/Calendar skills built on gws, so the redirect-to-not-yet-built-gws shim is no longer needed (a0cd618, #115).
+- **`specs/system-architecture-spec.md` + `docs/system-architecture.md`** — Updated Hook Architecture table and Session Lifecycle bullet to describe the pass-through behavior instead of the removed block+redirect. The hook comment now acknowledges that the hooks-manifest matcher is scoped to Gmail/Calendar only.
+- **`specs/destinclaude-spec.md` → `specs/youcoded-core-spec.md`** — Renamed to match what `specs/INDEX.md` has pointed to since the rebrand. File contents were already rebranded; only the filename lagged.
+
 ## [1.0.1] - 2026-04-15
 
 ### Fixed
