@@ -90,7 +90,7 @@ Local (~/.claude/)
 | `session-end-sync.sh` | SessionEnd | `.*` | Sync current session JSONL + conversation index to configured backends (no debounce) | None |
 | `check-inbox.sh` | (utility) | — | Check inbox providers for items, called by session-start.sh | None |
 | ~~`sync-encyclopedia.sh`~~ | — | — | Removed — encyclopedia sync consolidated into `sync.sh` | — |
-| `announcement-fetch.js` | (utility) | — | Fetch broadcast announcements from GitHub repo | Writes `.announcement-cache.json` |
+| ~~`announcement-fetch.js`~~ | — | — | Removed — announcement fetch moved to the YouCoded app (desktop + Android). The app writes `.announcement-cache.json`; statusline.sh still reads it. | — |
 | `usage-fetch.js` | (utility) | — | Retrieve and cache API usage/rate-limit data | Writes `.usage-cache.json` |
 | `statusline.sh` | (statusLine) | — | Render multi-line status bar for Claude Code | Reads topics, sync-status, caches |
 

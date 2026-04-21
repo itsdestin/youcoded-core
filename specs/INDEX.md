@@ -40,4 +40,4 @@ Tools for the repo owner that live in a separate private repo and are never dist
 
 | Tool | Repo | Purpose |
 |------|------|---------|
-| announce | [itsdestin/youcoded-core-admin](https://github.com/itsdestin/youcoded-core-admin) (private) | Owner-only skill for creating/clearing/viewing announcements |
+| announce | [itsdestin/youcoded-core-admin](https://github.com/itsdestin/youcoded-core-admin) (private) | Owner-only skill for creating/clearing/viewing announcements. Targets `youcoded/announcements.txt` (app repo) — announcement ownership moved to the app. |

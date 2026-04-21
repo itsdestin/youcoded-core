@@ -2,12 +2,12 @@
 
 **Version:** 1.10
 **Last updated:** 2026-03-22
-**Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`, `core/hooks/announcement-fetch.js`
+**Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`
 (Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
 
 ## Purpose
 
-A real-time information display system for Claude Code sessions. Four components work together: (1) **statusline.sh** renders a multi-line status bar showing session topic, sync status, model/context info, rate limits, announcements, and toolkit version; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint; (4) **announcement-fetch.js** fetches broadcast announcements from the youcoded-core GitHub repo.
+A real-time information display system for Claude Code sessions. Three components work together: (1) **statusline.sh** renders a multi-line status bar showing session topic, sync status, model/context info, rate limits, announcements, and toolkit version; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint. Announcement data is read from `~/.claude/.announcement-cache.json`, which is written by the YouCoded desktop (Electron) and Android (Kotlin) app services — the toolkit no longer owns the fetch.
 
 ## User Mandates
 
@@ -27,11 +27,11 @@ A real-time information display system for Claude Code sessions. Four components
 | Color thresholds: green/yellow/red at standard breakpoints | Context remaining: <50% yellow, <20% red. Usage: ≥50% yellow, ≥80% red. Intuitive traffic-light pattern. | Single color (rejected: loses at-a-glance urgency signal) |
 | `printf '%b\n'` for all ANSI output | POSIX-portable escape handling. `echo -e` is non-standard and fails in some shells (dash, sh). | `echo -e` (rejected: non-portable), `$'\033[...'` ANSI-C quoting (rejected: less readable) |
 | Basic 16-color ANSI only (no 256-color or truecolor) | Claude Code's statusline renderer (Ink-based) does not support 256-color (`38;5;NNNm`) or truecolor (`38;2;R;G;Bm`) sequences — they silently render as default text. All statusline ANSI must use basic SGR codes (30–37, 90–97, bold, dim, reset). Announcement text uses `printf '%s\n'` (not `%b`) to pass raw ANSI bytes from node without reinterpretation. | 256-color (rejected: silently dropped by renderer), truecolor (rejected: same), combined SGR params with 256-color (rejected: some parsers can't handle `ESC[1;38;5;NNNm`) |
-| Config-based sibling discovery with symlink fallback | Scripts need to find sibling files (e.g., `usage-fetch.js`, `announcement-fetch.js`). Primary: reads `toolkit_root` from `~/.claude/toolkit-state/config.json` and derives `$toolkit_root/core/hooks/`. Fallback: `readlink -f \|\| realpath \|\| python3` chain. Config lookup is essential on Windows where hooks are copies (not symlinks) — symlink resolution returns `~/.claude/hooks/` which may not contain utility scripts. | Symlink-only resolution (rejected in v1.6: broke on Windows copy-based installs — utility scripts not found), bare `BASH_SOURCE[0]` (rejected: returns symlink path, not real path) |
+| Config-based sibling discovery with symlink fallback | Scripts need to find sibling files (e.g., `usage-fetch.js`). Primary: reads `toolkit_root` from `~/.claude/toolkit-state/config.json` and derives `$toolkit_root/core/hooks/`. Fallback: `readlink -f \|\| realpath \|\| python3` chain. Config lookup is essential on Windows where hooks are copies (not symlinks) — symlink resolution returns `~/.claude/hooks/` which may not contain utility scripts. | Symlink-only resolution (rejected in v1.6: broke on Windows copy-based installs — utility scripts not found), bare `BASH_SOURCE[0]` (rejected: returns symlink path, not real path) |
 | macOS Keychain fallback for credentials | Claude Max subscribers on macOS store OAuth tokens in Keychain, not `.credentials.json`. Uses `execFileSync('security', ...)` (safe, no shell injection). | `execSync` with string interpolation (rejected: shell injection surface), file-only (rejected: breaks for all macOS Max subscribers) |
 | Prune topic/marker files older than 7 days, at most once per day | Prevents `~/.claude/topics/` from accumulating stale files across sessions without running cleanup on every invocation | No cleanup (rejected: unbounded growth), cleanup on every invocation (rejected: unnecessary filesystem churn) |
 | `hookSpecificOutput` JSON for Auto-Title delivery | Ensures the reminder appears in Claude's context as a system-reminder, not as plain hook output that might be ignored | Plain stdout (rejected: not reliably surfaced to Claude), file-based signaling (rejected: Claude doesn't poll files) |
-| Fetch announcements only on session start (no per-render TTL) | Keeps statusline render latency at zero; announcements are not time-critical enough to justify per-render fetching. Cache age of 7 days used as stale threshold to handle offline users. | Per-render fetch (rejected: adds network latency to every tool use), 30-min TTL (rejected: unnecessary complexity for a broadcast-only system) |
+| Toolkit only reads the announcement cache; the app owns the fetch | Keeps statusline render latency at zero — it reads `~/.claude/.announcement-cache.json` via a single `node -e` call. The YouCoded desktop and Android app services own fetching `youcoded/announcements.txt` and writing the cache. Cache age of 7 days used as stale threshold to handle users who run the CLI without the app open. | Toolkit-owned fetch (removed: announcement ownership moved to the app — `announcements.txt` no longer lives in this repo) |
 
 ## Current Implementation
 
@@ -60,18 +60,10 @@ A real-time information display system for Claude Code sessions. Four components
   ├─ Fetches https://api.anthropic.com/api/oauth/usage
   └─ Writes cache, outputs JSON
 
-[Session start] → session-start.sh
-  └─ Launches announcement-fetch.js in the background (nohup, non-blocking)
-
-[Announcement fetch] → announcement-fetch.js
-  ├─ Fetches https://raw.githubusercontent.com/itsdestin/youcoded-core/master/announcements.txt
-  ├─ Parses message + optional YYYY-MM-DD expiry prefix (zero-padded only)
-  └─ Writes ~/.claude/.announcement-cache.json atomically (tmp → rename)
 ```
 
 **Announcements subsystem:**
-- `session-start.sh` launches `announcement-fetch.js` in the background on every session start
-- `announcement-fetch.js` fetches the raw GitHub file, parses message + optional expiry, writes `~/.claude/.announcement-cache.json` atomically
+- `~/.claude/.announcement-cache.json` is written by the YouCoded desktop app's `AnnouncementService` (Electron/TypeScript) and the Android app's `AnnouncementService` (Kotlin). The source file is `youcoded/announcements.txt` in the app repo (`https://raw.githubusercontent.com/itsdestin/youcoded/master/announcements.txt`). The toolkit no longer owns the fetch.
 - `statusline.sh` reads the cache on every render via a single `node -e` call; displays a bold yellow `★ message` fragment inline on the toolkit version line (line 5) if the message is present, not expired, and cache is < 7 days old
 
 ### Output Format (up to 5 lines)
@@ -90,7 +82,7 @@ A real-time information display system for Claude Code sessions. Four components
 | `~/.claude/topics/marker-{sid}` | Throttle timestamp | Pruned after 7 days |
 | `~/.claude/topics/.prune-marker` | Last-prune timestamp | Persistent |
 | `~/.claude/.usage-cache.json` | Cached API usage response | Overwritten every 5 min |
-| `~/.claude/.announcement-cache.json` | Written by announcement-fetch.js; read by statusline.sh on every render | Overwritten on each session start |
+| `~/.claude/.announcement-cache.json` | Written by the YouCoded app (desktop Electron service + Android Kotlin service); read by statusline.sh on every render | Overwritten by the app on each fetch interval |
 | `~/.claude/toolkit-state/.sync-marker` | Last sync timestamp (used by /sync for staleness display) | Updated by sync.sh after each cycle |
 | `~/.claude/.sync-warnings` | Sync health warnings written by session-start.sh | Reset each session start |
 | `~/.claude/toolkit-state/update-status.json` | Toolkit version check result | Written by session-start.sh |
@@ -107,7 +99,7 @@ A real-time information display system for Claude Code sessions. Four components
 
 ## Dependencies
 
-- Depends on: sync.sh (updates `.sync-marker`), session-start.sh (writes `update-status.json`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json` or macOS Keychain), Claude Code session JSON (stdin), announcement-fetch.js (writes `.announcement-cache.json`), Node.js 18+ (`fetch` built-in required for announcement-fetch.js)
+- Depends on: sync.sh (updates `.sync-marker`), session-start.sh (writes `update-status.json`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json` or macOS Keychain), Claude Code session JSON (stdin), YouCoded app (writes `.announcement-cache.json` — desktop Electron service or Android Kotlin service)
 - Depended on by: CLAUDE.md Auto-Title instructions (define Claude's behavior when it sees the reminder)
 
 ## Known Issues & Planned Updates

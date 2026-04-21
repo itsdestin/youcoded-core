@@ -2,6 +2,10 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## Unreleased
+
+- **Announcement ownership moved to the app.** `announcements.txt` is no longer in this repo — it now lives in `youcoded/announcements.txt` (the app repo). The toolkit's statusline still reads `~/.claude/.announcement-cache.json` to render the ★ line, but the app's native services (desktop Electron + Android Kotlin) now own the fetch/write responsibility. The legacy `announcement-fetch.js` has been removed from the app, and the `/announce` admin skill in `youcoded-admin` was retargeted to the new location.
+
 ## [1.1.1] - 2026-04-20
 
 Version bump for unified release. No functional changes — v1.1.1 is a youcoded-only patch (Windows test-mock fix so desktop installer CI actually succeeds); the toolkit version tracks along to keep the app + toolkit in lockstep.

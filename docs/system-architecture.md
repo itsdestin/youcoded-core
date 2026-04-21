@@ -40,7 +40,6 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `todo-capture.sh` | PostToolUse | Captures TODO items from conversation |
 | `checklist-reminder.sh` | Stop | Reminds about system change checklist if system files were modified |
 | `usage-fetch.js` | PostToolUse | Tracks API usage statistics |
-| `announcement-fetch.js` | SessionStart | Fetches announcements from GitHub, caches to `~/.claude/.announcement-cache.json` |
 | `check-inbox.sh` | SessionStart | Checks configured inbox sources for unprocessed items |
 | `session-end-sync.sh` | SessionEnd | Ensures all conversation JSONL files are backed up on session exit (bypasses debounce) |
 | `done-sound.sh` | Stop | Plays audio notification when Claude finishes a task (cross-platform) |
