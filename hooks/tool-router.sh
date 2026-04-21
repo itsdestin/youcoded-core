@@ -7,8 +7,11 @@
 # the redirect-to-not-yet-built-gws shim is no longer needed and has been
 # removed. See docs/superpowers/specs/2026-04-16-google-services-design.md.
 #
-# The hook is kept in place (empty pass-through) so that future tool-routing
-# rules can be added here without re-wiring the hooks manifest.
+# The hook is kept in place (empty pass-through) so that future Gmail/Calendar
+# tool-routing rules can be added here without re-wiring the hooks manifest.
+# The matcher in hooks-manifest.json scopes invocation to the Gmail/Calendar
+# MCP namespaces only — if a future rule needs to target a different tool,
+# broaden the manifest matcher too.
 
 # Source shared infrastructure (trap handlers, error capture, rotation)
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

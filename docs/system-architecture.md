@@ -34,7 +34,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `sync.sh` | PostToolUse | Backs up personal data and system config to configured backends (Drive, GitHub, iCloud). Updates write registry. 15-min debounce. |
 | `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
 | `worktree-guard.sh` | PreToolUse | Blocks branch switches in main plugin directory — enforces worktree usage for concurrent sessions |
-| `tool-router.sh` | PreToolUse | Blocks Claude.ai Gmail/Calendar MCP tools, redirects to GWS CLI |
+| `tool-router.sh` | PreToolUse | No-op pass-through for Gmail/Calendar MCP calls; reserved for future tool-routing rules (real Gmail/Calendar routing now lives in the google-services marketplace bundle) |
 | `contribution-detector.sh` | SessionStart | Detects local toolkit improvements, suggests contributing upstream |
 | `title-update.sh` | PostToolUse | Updates conversation title based on context |
 | `todo-capture.sh` | PostToolUse | Captures TODO items from conversation |

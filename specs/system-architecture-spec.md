@@ -81,7 +81,7 @@ Local (~/.claude/)
 | `contribution-detector.sh` | SessionStart | `startup` | Detect toolkit contributions and offer to submit upstream | None |
 | `write-guard.sh` | PreToolUse | `Write\|Edit` | Block writes when another active session owns the file | Reads `.write-registry.json` |
 | `worktree-guard.sh` | PreToolUse | `Bash` | Block git branch switches in the main plugin directory | None |
-| `tool-router.sh` | PreToolUse | `mcp__claude_ai_Gmail__\|mcp__claude_ai_Google_Calendar__` | Block Claude.ai native Gmail/Calendar MCP tools; redirect to GWS CLI equivalents | None |
+| `tool-router.sh` | PreToolUse | `mcp__claude_ai_Gmail__\|mcp__claude_ai_Google_Calendar__` | Empty pass-through reserved for future Gmail/Calendar tool-routing rules. Previously redirected to GWS CLI shims; Gmail/Calendar routing is now provided by the google-services marketplace bundle (see `docs/superpowers/specs/2026-04-16-google-services-design.md`). | None |
 | `sync.sh` | PostToolUse | `Write\|Edit` | Update write registry, debounced sync to configured backends (Drive/GitHub/iCloud) | Writes `.write-registry.json`, `.sync-marker` |
 | `title-update.sh` | PostToolUse | `.*` | Prompt Claude to set session topic (10-min throttle) | Reads/writes `~/.claude/topics/marker-{sid}` |
 | `todo-capture.sh` | UserPromptSubmit | `.*` | Capture task mentions from user prompts to Todoist | None |
@@ -109,7 +109,7 @@ Local (~/.claude/)
 
 **During:**
 - Every Write|Edit → `write-guard.sh` (PreToolUse) checks for conflicts → `sync.sh` (PostToolUse) updates registry + debounced sync to backends
-- Claude.ai Gmail/Calendar MCP calls → `tool-router.sh` (PreToolUse) blocks and redirects to GWS CLI
+- Claude.ai Gmail/Calendar MCP calls → `tool-router.sh` (PreToolUse) passes through as a no-op (real Gmail/Calendar routing now handled by the google-services marketplace bundle)
 - Every tool use → `title-update.sh` (PostToolUse) throttled topic reminder
 - Skills load their SKILL.md (includes system rules footer)
 - On-demand docs (system-architecture.md, skills.md, work.md) read when relevant
