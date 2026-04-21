@@ -2,6 +2,10 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.1.1] - 2026-04-20
+
+Version bump for unified release. No functional changes — v1.1.1 is a youcoded-only patch (Windows test-mock fix so desktop installer CI actually succeeds); the toolkit version tracks along to keep the app + toolkit in lockstep.
+
 ## [1.1.0] - 2026-04-20
 
 Small release. Tool-router hook gutted in favor of the google-services marketplace bundle; docs and spec layout cleaned up to match.
