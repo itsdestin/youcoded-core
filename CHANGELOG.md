@@ -2,9 +2,25 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
-## Unreleased
+## [1.1.2] - 2026-04-21
 
-- **Announcement ownership moved to the app.** `announcements.txt` is no longer in this repo — it now lives in `youcoded/announcements.txt` (the app repo). The toolkit's statusline still reads `~/.claude/.announcement-cache.json` to render the ★ line, but the app's native services (desktop Electron + Android Kotlin) now own the fetch/write responsibility. The legacy `announcement-fetch.js` has been removed from the app, and the `/announce` admin skill in `youcoded-admin` was retargeted to the new location.
+Patch release — announcement ownership moved to the YouCoded app. The toolkit's
+statusline still reads `~/.claude/.announcement-cache.json` to render the ★ line,
+but the app's native services (desktop Electron + Android Kotlin) now own the
+fetch/write. Source-of-truth `announcements.txt` moved from this repo to
+`itsdestin/youcoded`. Version tracks along with the v1.1.2 app release to keep
+the app + toolkit in lockstep; no functional toolkit code changed.
+
+### Changed
+- **`announcements.txt` removed** — Now lives in `itsdestin/youcoded` (app repo);
+  the public URL is `raw.githubusercontent.com/itsdestin/youcoded/master/announcements.txt`.
+- **`specs/statusline-spec.md` → 1.11** — Documents the design-decision reversal:
+  fetch ownership moved to the app, statusline only reads the cache. Feature
+  location, dependencies, and data-flow updated.
+- **`specs/system-architecture-spec.md` → 1.8** — Hook architecture table tombstones
+  `announcement-fetch.js` (no longer a toolkit-owned hook).
+- **`docs/system-architecture.md`** — Removed reference to toolkit-owned
+  announcement fetch.
 
 ## [1.1.1] - 2026-04-20
 
