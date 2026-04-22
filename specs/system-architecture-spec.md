@@ -1,7 +1,7 @@
 # System Design — Spec
 
-**Version:** 1.7
-**Last updated:** 2026-04-07
+**Version:** 1.8
+**Last updated:** 2026-04-21
 **Feature location:** `~/.claude/` (entire system)
 
 ## Purpose
@@ -186,3 +186,4 @@ See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known
 | 2026-03-26 | 1.5 | Added mandate: Claude must never direct users to run commands — all commands run via Bash tool; only GUI interactions (e.g., browser sign-in) are acceptable user actions | Mandate | owner | |
 | 2026-04-05 | 1.6 | Sync consolidation: replaced git-sync.sh + personal-sync.sh with unified sync.sh. Updated component table, dependency relationships, data flow (removed Git section, added multi-backend sync), hook architecture table (2 rows → 1), execution order note, and session lifecycle. | Update | owner | |
 | 2026-04-07 | 1.7 | Added session-end-sync.sh to hook table and session lifecycle End section. Updated hook count 15→16. Parameterized literal gdrive:Claude/ paths to gdrive:{DRIVE_ROOT}/. | Update | owner | |
+| 2026-04-21 | 1.8 | Tombstoned `announcement-fetch.js` in the hook architecture table — announcement fetch ownership moved to the YouCoded app (desktop Electron service + Android Kotlin service). Toolkit statusline still reads the cache file but no longer owns the fetch. | Update | Destin | |

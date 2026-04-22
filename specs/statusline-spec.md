@@ -1,7 +1,7 @@
 # Statusline & Auto-Title — Spec
 
-**Version:** 1.10
-**Last updated:** 2026-03-22
+**Version:** 1.11
+**Last updated:** 2026-04-21
 **Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`
 (Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
 
@@ -120,3 +120,4 @@ See [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues) for known
 | 2026-03-19 | 1.7 | Documented sync warnings subsystem (`.sync-warnings` file, DANGER/WARN severity prefixes, warning types, `/sync for info` hint). Documented "New Session" default fallback behavior. Documented independent rate limit coloring. Added `.sync-warnings` to file locations table. Fixed changelog version ordering (1.4/1.5 were swapped). | Update | Destin | |
 | 2026-03-19 | 1.8 | Moved announcement from right-aligned line 1 fragment to inline on toolkit version line (line 5). Removed terminal width detection code (unreliable in hook subprocess — `tput cols` returns default 80, `$COLUMNS` unset, `stty` fails). Update available line now includes dim `\| Run /update` hint. | Update | Destin | |
 | 2026-03-20 | 1.9 | Added ANSI color restriction: basic 16-color only (Claude Code's Ink-based statusline renderer silently drops 256-color and truecolor). Announcement fragment now output via `printf '%s\n'` to avoid `%b` reinterpretation of raw ANSI bytes from node. Removed dim separator before announcement. Stopped tracking hooks in `destin-claude-config` repo (root cause of stale hook restoration on every session start). Cleaned up orphan files. | Update | Destin | |
+| 2026-04-21 | 1.11 | Announcement fetch ownership moved to the YouCoded app. Reversed the prior "Fetch announcements only on session start" design decision — desktop Electron and Android Kotlin services now own the 1h fetch and write `~/.claude/.announcement-cache.json`; the toolkit's statusline only reads the cache. `core/hooks/announcement-fetch.js` removed (in app repo: `desktop/hook-scripts/announcement-fetch.js` deleted, replaced by `desktop/src/main/announcement-service.ts` and `app/.../runtime/AnnouncementService.kt`). Source of truth `announcements.txt` moved from this repo to `itsdestin/youcoded`. Feature location, dependencies, and data-flow updated accordingly. (v1.10 was an unlogged interim revision; collapsed into this entry.) | Update | Destin | |
