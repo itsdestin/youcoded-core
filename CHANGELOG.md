@@ -2,6 +2,10 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.2.0] - 2026-04-22
+
+Version bump for unified release. No functional toolkit changes — v1.2.0 is a youcoded app release (in-app changelog popup, in-app update download/launch installer, ESC overlay system, sync UX polish, marketplace integration polish). Toolkit version tracks along to keep the app + toolkit in lockstep.
+
 ## [1.1.2] - 2026-04-21
 
 Patch release — announcement ownership moved to the YouCoded app. The toolkit's
