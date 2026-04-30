@@ -2,6 +2,11 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.2.2] - 2026-04-29
+
+Version bump for unified release. No functional toolkit changes — v1.2.2 is a youcoded app release (Tier 2 Android terminal rewrite, opt-out telemetry, native Claude Code installer, Open Tasks / Context popup / Performance Settings, mobile marketplace polish, echo-driven PTY submit, vendored terminal-emulator at v0.118.1). Toolkit version tracks along to keep the app + toolkit in lockstep.
+
+
 ## [1.2.1] - 2026-04-23
 
 Version bump for unified release. No functional changes.
