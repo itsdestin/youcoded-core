@@ -2,6 +2,10 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.2.3] - 2026-05-01
+
+Version bump for unified release. No functional toolkit changes — v1.2.3 is a youcoded app patch release (R8 reflection footgun fix in Android PluginInstaller, Android dev/release build parity infrastructure, attention classifier multi-word gerund + counter-rescue accuracy fix, drawer card-flicker fix on desktop, chat-bubble long-URL wrapping, marketplace install-state matching by pluginName). Toolkit version tracks along to keep the app + toolkit in lockstep.
+
 ## [1.2.2] - 2026-04-29
 
 Version bump for unified release. No functional toolkit changes — v1.2.2 is a youcoded app release (Tier 2 Android terminal rewrite, opt-out telemetry, native Claude Code installer, Open Tasks / Context popup / Performance Settings, mobile marketplace polish, echo-driven PTY submit, vendored terminal-emulator at v0.118.1). Toolkit version tracks along to keep the app + toolkit in lockstep.
