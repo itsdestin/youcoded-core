@@ -2,6 +2,10 @@
 
 All notable changes to YouCoded Core will be documented in this file.
 
+## [1.2.4] - 2026-05-18
+
+Version bump for unified release. No functional toolkit changes — v1.2.4 is a youcoded app release (device-ID-hash analytics redesign, bug-report environment diagnostics, three Linux platform-parity fixes, theme-effects chrome masking + rAF pause, PRIVACY/TERMS/SECURITY docs). Toolkit version tracks along to keep the app + toolkit in lockstep.
+
 ## [1.2.3] - 2026-05-01
 
 Version bump for unified release. No functional toolkit changes — v1.2.3 is a youcoded app patch release (R8 reflection footgun fix in Android PluginInstaller, Android dev/release build parity infrastructure, attention classifier multi-word gerund + counter-rescue accuracy fix, drawer card-flicker fix on desktop, chat-bubble long-URL wrapping, marketplace install-state matching by pluginName). Toolkit version tracks along to keep the app + toolkit in lockstep.
