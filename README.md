@@ -1,67 +1,40 @@
-# YouCoded
+# YouCoded Core
 
-**The plugin toolkit that powers [YouCoded](https://github.com/itsdestin/youcoded).**
+**The bundled foundation plugin for [YouCoded](https://github.com/itsdestin/youcoded)** — safety hooks, a first-run setup wizard, and diagnostic commands for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-YouCoded is a collection of skills, hooks, commands, and tools for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It adds journaling, a living personal encyclopedia, task management, text messaging, cross-device sync, and more — all through plain-English conversation.
+> **Status: being phased out.** `write-guard` is moving into the YouCoded app natively, and the personalization skills that used to live here (journaling, personal encyclopedia, task inbox, text messaging, theme building, output styles) are now independent plugins in the [WeCoded marketplace](https://github.com/itsdestin/wecoded-marketplace). This repo will be archived once the app no longer bundles it. New features belong in the app or a marketplace plugin, not here.
 
 Looking for the app? See **[YouCoded](https://github.com/itsdestin/youcoded)** — available on Windows, macOS, Linux, and Android.
 
 ## Install
 
-The YouCoded app installs this toolkit automatically. If you want to install it standalone with Claude Code:
+The YouCoded app installs this plugin automatically. To install it standalone with Claude Code:
 
 ```bash
 git clone https://github.com/itsdestin/youcoded-core.git ~/.claude/plugins/youcoded-core
 claude
-> /setup-wizard
+# then ask Claude to "run the setup wizard"
 ```
 
 ## What's Inside
 
-Three layers, each a standalone [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code/plugins). Install what you need:
+A single Claude Code plugin (one `plugin.json` at the repo root):
 
-| Layer | Depends On | What It Adds |
-|-------|-----------|-------------|
-| **Core** | Nothing | Foundation — hooks, specs system, memory templates, commands, theme builder |
-| **Life** | Core | Journaling assistant, personal encyclopedia, Google Drive sync |
-| **Productivity** | Core | Inbox processing (Todoist, Gmail, etc.), text messaging, skill creator |
+- **Hooks** — `session-start`, `write-guard` (same-machine write-concurrency guard), `worktree-guard` (single-branch policy), `tool-router`, and `statusline`
+- **Skills** — `setup-wizard` (conversational first-run: Claude Pro/Max sign-in + environment bootstrap) and `remote-setup` (remote-access pairing flow)
+- **Commands** — `/update`, `/health`, `/diagnose`
 
-### Core Features
-- **Session hooks** — auto-sync, statusline, write guards, worktree guard
-- **Specs system** — structured, versioned documentation that persists across conversations
-- **Memory templates** — organized persistent memory for Claude
-- **Commands** — `/setup-wizard`, `/update`, `/health`, `/diagnose`, `/sync`, `/toolkit`, `/theme-builder`
-- **Theme builder** — build immersive YouCoded theme packs with custom colors, wallpapers, mascots, and effects
-- **Contribution detector** — notices your improvements and offers to share them upstream
-- **Output styles** — Conversational, Academic, and Professional modes that reposition Claude as a general assistant instead of a coding tool. Great for students, professionals, and anyone who uses Claude Code as their primary Claude interface
-
-### Life Features
-- **Journaling assistant** — conversational daily journaling with Socratic prompts
-- **Encyclopedia system** — a living biography built from 8 modular source files
-- **Personal data sync** — automated backup via Google Drive, GitHub, or iCloud
-
-### Productivity Features
-- **Claude's Inbox** — processes notes and tasks from Todoist, Drive, Gmail, Apple Notes, and more
-- **Skill creator** — build, test, and benchmark new skills
-- **Text messaging** — read and send SMS/RCS through Claude (via Google Messages)
+Journaling, the personal encyclopedia, task inbox processing, text messaging, theme building, and output styles are **no longer part of this plugin** — install them from the [WeCoded marketplace](https://github.com/itsdestin/wecoded-marketplace) inside the app.
 
 ## Commands
 
-After setup, type `/toolkit` to see all installed features and available modules:
-
-```
-/toolkit
-```
-
-## Updating
-
-```
-/update
-```
+- `/update` — reconcile hooks into `settings.json` and run migrations
+- `/health` — diagnostic summary
+- `/diagnose` — deeper diagnostic output
 
 ## Contributing
 
-Report bugs or request features via [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues). See the [Contributing Guide](docs/contributing.md) for details, or type `/contribute` and Claude handles the rest.
+Report bugs or request features via [GitHub Issues](https://github.com/itsdestin/youcoded-core/issues). See the [Contributing Guide](docs/contributing.md) for details.
 
 ## License
 
